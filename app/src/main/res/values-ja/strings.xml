@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Accord</string>
+    <string name="bottom_nav_search">検索</string>
+    <string name="bottom_nav_library">ライブラリ</string>
+    <string name="bottom_nav_browse">参照</string>
+    <string name="bottom_nav_home">ホーム</string>
+    <string name="default_track">未再生</string>
+    <string name="top_picks">トップのおすすめ</string>
+    <string name="btn_continue">続行</string>
+    <string name="welcome_to">ようこそ</string>
+    <string name="welcome_page_introduction">あなたの Android デバイスで広告に邪魔されることなくローカルの曲やプレイリストを再生します。音楽をダウンロードしてオフラインで楽しめます。空間オーディオで全方位に広がるサウンドを体験しましょう。</string>
+    <string name="disclaimer">Accord はフリーウェアなオフラインアプリです。Accord は、あなたの個人的なデータをオンラインで送信したり、いかなる目的にも一切使用をしません。Accord のソースコードは GPL-3.0 に基づきオンラインで公開されています。これには一定の制限が適用されます。</string>
+    <string name="check_source_code"><a href="https://github.com/AkaneFoundation/Accord"><u>ソースコードを確認する …</u></a></string>
+    <string name="need_permissions">権限が必要です</string>
+    <string name="permission_title_desc">音楽を正常に再生するには、権限の許可が必要です。各エントリの説明をご確認ください。</string>
+    <string name="storage">ストレージ</string>
+    <string name="storage_desc">音楽へのアクセスを許可</string>
+    <string name="music">音楽</string>
+    <string name="Album">アルバム</string>
+    <string name="album_desc">アルバムカバーへのアクセスを許可</string>
+    <string name="album_cover_special_desc">アルバムカバーのアクセス許可がなければ、アルバムのカバー画像を漠然と読み取ることしかできません。</string>
+    <string name="allow">許可</string>
+    <string name="allowed">許可済み</string>
+    <string name="sort">並べ替え</string>
+    <string name="category_songs">曲</string>
+    <string name="category_albums">アルバム</string>
+    <string name="category_artists">アーティスト</string>
+    <string name="category_genres">ジャンル</string>
+    <string name="category_dates">日付</string>
+    <string name="play">再生</string>
+    <string name="shuffle">シャッフル</string>
+    <string name="category_playlists">プレイリスト</string>
+</resources>
