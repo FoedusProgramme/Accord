@@ -18,7 +18,9 @@ import uk.akane.accord.ui.components.lyrics.LyricsViewModel
 import uk.akane.cupertino.widget.OverlayTextView
 import uk.akane.cupertino.widget.divider.OverlayDivider
 import uk.akane.cupertino.widget.image.OverlayHintView
+import uk.akane.cupertino.widget.image.SimpleImageView
 import uk.akane.cupertino.widget.slider.OverlaySlider
+import uk.akane.cupertino.widget.special.BlendView
 
 class FullPlayer @JvmOverloads constructor(
     context: Context,
@@ -40,6 +42,7 @@ class FullPlayer @JvmOverloads constructor(
     private var speakerFullHintView: OverlayHintView
     private var currentTimestampTextView: OverlayTextView
     private var leftTimestampTextView: OverlayTextView
+    private var coverSimpleImageView: SimpleImageView
 
     private var lyricsViewModel: LyricsViewModel? = null
     private val floatingPanelLayout: FloatingPanelLayout?
@@ -58,6 +61,7 @@ class FullPlayer @JvmOverloads constructor(
         speakerFullHintView = findViewById(R.id.speaker_full_hint)
         currentTimestampTextView = findViewById(R.id.current_timestamp)
         leftTimestampTextView = findViewById(R.id.left_timeStamp)
+        coverSimpleImageView = findViewById(R.id.cover)
 
         blendView.setImageUri(context.getUriToDrawable(R.drawable.eg))
         blendView.startRotationAnimation()

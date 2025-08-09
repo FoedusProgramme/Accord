@@ -21,9 +21,6 @@
 
     <color name="windowColor">#000</color>
 
-    <!-- Blend View -->
-    <color name="frontShadeColor">#40000000</color>
-
     <!-- Bottom Navigation -->
     <color name="bottomNavigationColor">#E5E5E5</color>
     <color name="bottomNavigationPanelColor">#FCFCFC</color>

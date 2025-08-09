@@ -7,7 +7,7 @@
         <item name="labelVisibilityMode">labeled</item>
         <item name="itemIconTint">@color/cl_bottom_nav_label</item>
         <item name="itemTextColor">@color/cl_bottom_nav_label</item>
-        <item name="itemRippleColor">@color/accentColorFainted</item>
+        <item name="itemRippleColor">@android:color/transparent</item>
         <item name="elevation">0dp</item>
         <item name="itemPaddingTop">@dimen/bottom_nav_item_padding_top</item>
         <item name="itemPaddingBottom">@dimen/bottom_nav_item_padding_bottom</item>
@@ -23,7 +23,7 @@
         <item name="android:fontFamily">@font/inter_medium</item>
         <item name="android:textStyle">normal</item>
         <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">12.5sp</item>
+        <item name="android:textSize">10sp</item>
         <item name="android:textColorHighlight">@color/accentColor</item>
         <item name="android:letterSpacing">0.01</item>
     </style>
@@ -154,7 +154,7 @@
         <item name="cornerSize">8dp</item>
     </style>
     <style name="Widget.Accord.ActionPanel.FullPlayer.Cover.Shape">
-        <item name="cornerSize">8dp</item>
+        <item name="cornerRadius">@dimen/full_cover_radius</item>
     </style>
     <style name="Widget.Accord.Main.Browse" />
     <style name="Widget.Accord.Main.Browse.TabLayout" parent="TextAppearance.Design.Tab">

@@ -16,8 +16,6 @@
     <color name="defaultCoverColor">#30FFFFFF</color>
     <color name="dividerColor">#12FFFFFF</color>
 
-    <color name="frontShadeColor">#66000000</color>
-
     <color name="bottomNavigationColor">#000000</color>
     <color name="bottomNavigationPanelColor">#111114</color>
     <color name="bottomNavigationDividerColor">#38383A</color>

@@ -1,7 +1,6 @@
 package uk.akane.accord.ui
 
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Bundle
@@ -15,9 +14,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
@@ -31,7 +28,6 @@ import uk.akane.accord.logic.isEssentialPermissionGranted
 import uk.akane.accord.logic.utils.MediaUtils
 import uk.akane.accord.logic.utils.UiUtils
 import uk.akane.accord.setupwizard.fragments.SetupWizardFragment
-import uk.akane.accord.setupwizard.fragments.WelcomePageFragment
 import uk.akane.accord.ui.components.FloatingPanelLayout
 import uk.akane.accord.ui.viewmodels.AccordViewModel
 import uk.akane.cupertino.widget.utils.AnimationUtils
@@ -41,7 +37,8 @@ class MainActivity : AppCompatActivity() {
     private val accordViewModel: AccordViewModel by viewModels()
 
     companion object {
-        const val DESIRED_SHRINK_RATIO = 0.85f
+        const val DESIRED_BOTTOM_SHEET_OPEN_RATIO = 0.9f
+        const val DESIRED_BOTTOM_SHEET_DISPLAY_RATIO = 0.85F
     }
 
     private lateinit var bottomNavigationView: BottomNavigationView
@@ -121,7 +118,7 @@ class MainActivity : AppCompatActivity() {
                     )
                     isWindowColorSet = true
                 }
-                shrinkContainer(value)
+                shrinkContainer(value, DESIRED_BOTTOM_SHEET_OPEN_RATIO)
                 val cornerProgress = (screenCorners.getAvgRadius() - bottomDefaultRadius) * value + bottomDefaultRadius
                 Log.d("TAG", "screenCorners: ${screenCorners.getAvgRadius()}, cp: $cornerProgress")
                 floatingPanelLayout.panelCornerRadius = cornerProgress
@@ -166,19 +163,19 @@ class MainActivity : AppCompatActivity() {
         context.resources.configuration.uiMode and
                 Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
-    private fun shrinkContainer(value: Float) {
+    private fun shrinkContainer(value: Float, ratio: Float) {
         shrinkContainerLayout.alpha = (1f - value).coerceIn(0.5f, 1f)
         shrinkContainerLayout.apply {
-            scaleX = (1f - DESIRED_SHRINK_RATIO) * (1f - value) + DESIRED_SHRINK_RATIO
-            scaleY = (1f - DESIRED_SHRINK_RATIO) * (1f - value) + DESIRED_SHRINK_RATIO
+            scaleX = (1f - ratio) * (1f - value) + ratio
+            scaleY = (1f - ratio) * (1f - value) + ratio
         }
     }
 
-    private fun shrinkFloatingPanel(value: Float) {
+    private fun shrinkFloatingPanel(value: Float, ratio: Float) {
         floatingPanelLayout.alpha = (1f - value).coerceIn(0.5f, 1f)
         floatingPanelLayout.apply {
-            scaleX = (1f - DESIRED_SHRINK_RATIO) * (1f - value) + DESIRED_SHRINK_RATIO
-            scaleY = (1f - DESIRED_SHRINK_RATIO) * (1f - value) + DESIRED_SHRINK_RATIO
+            scaleX = (1f - ratio) * (1f - value) + ratio
+            scaleY = (1f - ratio) * (1f - value) + ratio
         }
     }
 
@@ -220,7 +217,7 @@ class MainActivity : AppCompatActivity() {
 
                     containerCardView.updateLayoutParams<MarginLayoutParams> {
                         topMargin =
-                            ((1F - DESIRED_SHRINK_RATIO + 0.05F) / 2 * screenHeight).toInt()
+                            ((1F - DESIRED_BOTTOM_SHEET_DISPLAY_RATIO + 0.05F) / 2 * screenHeight).toInt()
                     }
 
                     containerCardView.translationY = screenHeight
@@ -236,8 +233,8 @@ class MainActivity : AppCompatActivity() {
                             duration = AnimationUtils.LONG_DURATION
                         ) { animatedValue ->
                             containerCardView.translationY = animatedValue
-                            shrinkContainer(1f - animatedValue / screenHeight)
-                            shrinkFloatingPanel(1f - animatedValue / screenHeight)
+                            shrinkContainer(1f - animatedValue / screenHeight, DESIRED_BOTTOM_SHEET_DISPLAY_RATIO)
+                            shrinkFloatingPanel(1f - animatedValue / screenHeight, DESIRED_BOTTOM_SHEET_DISPLAY_RATIO)
                         }
                     }
                 }
@@ -265,8 +262,8 @@ class MainActivity : AppCompatActivity() {
             }
         ) { animatedValue ->
             containerCardView.translationY = animatedValue
-            shrinkContainer(1f - animatedValue / screenHeight)
-            shrinkFloatingPanel(1f - animatedValue / screenHeight)
+            shrinkContainer(1f - animatedValue / screenHeight, DESIRED_BOTTOM_SHEET_DISPLAY_RATIO)
+            shrinkFloatingPanel(1f - animatedValue / screenHeight, DESIRED_BOTTOM_SHEET_DISPLAY_RATIO)
         }
     }
 
