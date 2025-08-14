@@ -10,6 +10,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
+import android.graphics.RenderEffect
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.util.Log
@@ -225,20 +226,11 @@ class FloatingPanelLayout @JvmOverloads constructor(
         return x in boundLeft..boundRight && y in boundTop..boundBottom
     }
 
-    private val maskPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
-    }
-
     override fun dispatchDraw(canvas: Canvas) {
         // Draw background
         canvas.drawPath(path, shadowPaint)
-
-        val saveCount = canvas.saveLayer(0f, 0f, width.toFloat(), height.toFloat(), null)
-
+        canvas.clipPath(path)
         super.dispatchDraw(canvas)
-
-        canvas.drawPath(path, maskPaint)
-        canvas.restoreToCount(saveCount)
     }
 
     @SuppressLint("ClickableViewAccessibility")
