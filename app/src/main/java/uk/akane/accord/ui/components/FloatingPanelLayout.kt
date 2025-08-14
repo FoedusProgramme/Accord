@@ -8,6 +8,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.util.Log
@@ -142,7 +144,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
             it.pivotY = 0F
 
             it.doOnLayout {
-                updateTransitionFraction(fraction, 0F)
+                updateTransitionFraction(fraction)
             }
         }
     }
@@ -152,20 +154,18 @@ class FloatingPanelLayout @JvmOverloads constructor(
     private val startRadius = 36F.dp.px
     private val endRadius = 10F.dp.px
 
-    private fun updateTransitionFraction(fraction: Float, deltaY: Float) {
+    private fun updateTransitionFraction(fraction: Float) {
         transitionImageView?.let {
             if (it.width != 0) {
                 val rawDelta = fullScreenView.height - previewView.height - previewView.marginBottom
                 val initialScale = previewCoverBoxMetrics / it.width.toFloat() * previewView.scaleX
                 val initialTranslationX = + previewCoverMargin.toFloat() * previewView.scaleX - previewCoverHorizontalMargin * fraction
-                val initialTranslationY = deltaY + previewCoverMargin
 
                 it.scaleX = lerp(initialScale, 1f, fraction)
                 it.scaleY = lerp(initialScale, 1f, fraction)
                 it.translationX = lerp(initialTranslationX, fullCoverX - previewCoverHorizontalMargin.toFloat(), fraction)
                 it.translationY = lerp(previewCoverMargin.toFloat(), -rawDelta.toFloat() + fullCoverY, fraction)
 
-                Log.d("TAG", "tsx: ")
                 it.setPadding(lerp(startPadding, 0F, fraction).toInt())
                 it.elevation = lerp(0F, endElevation, fraction)
                 it.updateCornerRadius(lerp(startRadius, endRadius, fraction).toInt())
@@ -177,15 +177,14 @@ class FloatingPanelLayout @JvmOverloads constructor(
         if (newFraction == fraction && fraction != 0F && fraction != 1F) return
         fraction = newFraction
 
-        val deltaY = (fullScreenView.height - previewView.height - previewView.marginBottom) * fraction
-        // Preview
-        previewView.scaleX =
-            ((fullScreenView.width - previewView.width) * fraction) / previewView.width + 1f
-        previewView.scaleY = previewView.scaleX
-        previewView.translationY =
-            -deltaY
+        val deltaY = lerp(0f, (fullScreenView.height - previewView.height - previewView.marginBottom).toFloat(), fraction)
 
-        updateTransitionFraction(fraction, -deltaY)
+        // Preview
+        previewView.scaleX = lerp(1f, fullScreenView.width.toFloat() / previewView.width, fraction)
+        previewView.scaleY = previewView.scaleX
+        previewView.translationY = -deltaY
+
+        updateTransitionFraction(fraction)
 
         // Full
         fullScreenView.scaleX = (previewView.width * previewView.scaleX) / fullScreenView.width
@@ -215,8 +214,8 @@ class FloatingPanelLayout @JvmOverloads constructor(
             panelCornerRadius
         )
 
-        previewView.alpha = 1f - fraction
-        fullScreenView.alpha = fraction
+        previewView.alpha = lerp(1f, 0f, fraction)
+        fullScreenView.alpha = lerp(0f, 1f, fraction)
 
         invalidate()
         triggerSlide(fraction)
@@ -226,10 +225,20 @@ class FloatingPanelLayout @JvmOverloads constructor(
         return x in boundLeft..boundRight && y in boundTop..boundBottom
     }
 
+    private val maskPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+    }
+
     override fun dispatchDraw(canvas: Canvas) {
+        // Draw background
         canvas.drawPath(path, shadowPaint)
-        canvas.clipPath(path)
+
+        val saveCount = canvas.saveLayer(0f, 0f, width.toFloat(), height.toFloat(), null)
+
         super.dispatchDraw(canvas)
+
+        canvas.drawPath(path, maskPaint)
+        canvas.restoreToCount(saveCount)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -297,7 +306,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
                 if (isSlidingUp) 1.0F else 0F
             ).apply {
                 flingValueAnimator = this
-                interpolator = AnimationUtils.easingInterpolator
+                interpolator = AnimationUtils.easingStandardInterpolator
                 duration = supposedDuration
 
                 addUpdateListener {
@@ -340,6 +349,25 @@ class FloatingPanelLayout @JvmOverloads constructor(
     override fun onShowPress(e: MotionEvent) {}
 
     override fun onSingleTapUp(e: MotionEvent): Boolean {
+        if (state == SlideStatus.COLLAPSED) {
+            flingValueAnimator?.cancel()
+            flingValueAnimator = null
+
+            ValueAnimator.ofFloat(
+                fraction,
+                1F
+            ).apply {
+                flingValueAnimator = this
+                duration = (MAXIMUM_ANIMATION_TIME + MINIMUM_ANIMATION_TIME) / 2
+                interpolator = AnimationUtils.easingStandardInterpolator
+
+                addUpdateListener {
+                    updateTransform(animatedValue as Float)
+                }
+
+                start()
+            }
+        }
         return true
     }
 
@@ -354,7 +382,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
             ).apply {
                 flingValueAnimator = this
                 duration = (MAXIMUM_ANIMATION_TIME + MINIMUM_ANIMATION_TIME) / 2
-                interpolator = AnimationUtils.easingInterpolator
+                interpolator = AnimationUtils.easingStandardInterpolator
 
                 addUpdateListener {
                     updateTransform(animatedValue as Float)
@@ -408,6 +436,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         onSlideListeners.clear()
+        removeView(transitionImageView)
         transitionImageView = null
         super.onDetachedFromWindow()
     }

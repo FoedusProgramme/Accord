@@ -25,6 +25,7 @@ import com.google.android.material.shape.CornerFamily
 import uk.akane.accord.R
 import uk.akane.accord.logic.enableEdgeToEdgeProperly
 import uk.akane.accord.logic.isEssentialPermissionGranted
+import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.logic.utils.MediaUtils
 import uk.akane.accord.logic.utils.UiUtils
 import uk.akane.accord.setupwizard.fragments.SetupWizardFragment
@@ -195,18 +196,18 @@ class MainActivity : AppCompatActivity() {
                 Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
     private fun shrinkContainer(value: Float, ratio: Float) {
-        shrinkContainerLayout.alpha = (1f - value).coerceIn(0.5f, 1f)
+        shrinkContainerLayout.alpha = lerp(1f, 0.5f, value)
         shrinkContainerLayout.apply {
-            scaleX = (1f - ratio) * (1f - value) + ratio
-            scaleY = (1f - ratio) * (1f - value) + ratio
+            scaleX = lerp(1f, ratio, value)
+            scaleY = lerp(1f, ratio, value)
         }
     }
 
     private fun shrinkFloatingPanel(value: Float, ratio: Float) {
-        floatingPanelLayout.alpha = (1f - value).coerceIn(0.5f, 1f)
+        floatingPanelLayout.alpha = lerp(1f, 0.5f, value)
         floatingPanelLayout.apply {
-            scaleX = (1f - ratio) * (1f - value) + ratio
-            scaleY = (1f - ratio) * (1f - value) + ratio
+            scaleX = lerp(1f, ratio, value)
+            scaleY = lerp(1f, ratio, value)
         }
     }
 

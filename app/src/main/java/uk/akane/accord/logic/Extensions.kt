@@ -12,6 +12,8 @@ import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
@@ -119,6 +121,42 @@ fun View.enableEdgeToEdgePaddingListener(
     }
 }
 
+fun TextView.enableEdgeToEdgeListener(
+    ime: Boolean = false,
+    top: Boolean = false,
+    extra: ((Insets) -> Unit)? = null
+) {
+    if (fitsSystemWindows) throw IllegalArgumentException("must have fitsSystemWindows disabled")
+
+    val originalLp = layoutParams as ViewGroup.MarginLayoutParams
+    val ml = originalLp.leftMargin
+    val mt = originalLp.topMargin
+    val mr = originalLp.rightMargin
+    val mb = originalLp.bottomMargin
+
+    ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
+        val mask = WindowInsetsCompat.Type.systemBars() or
+                WindowInsetsCompat.Type.displayCutout() or
+                if (ime) WindowInsetsCompat.Type.ime() else 0
+
+        val i = insets.getInsets(mask)
+
+        val lp = v.layoutParams as ViewGroup.MarginLayoutParams
+        lp.leftMargin = ml + i.left
+        lp.topMargin = mt + if (top) i.top else 0
+        lp.rightMargin = mr + i.right
+        lp.bottomMargin = mb + i.bottom
+        v.layoutParams = lp
+
+        extra?.invoke(i)
+
+        WindowInsetsCompat.Builder(insets)
+            .setInsets(mask, Insets.NONE)
+            .setInsetsIgnoringVisibility(mask, Insets.NONE)
+            .build()
+    }
+}
+
 // enableEdgeToEdge() without enforcing contrast, magic based on androidx EdgeToEdge.kt
 fun ComponentActivity.enableEdgeToEdgeProperly() {
     if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
@@ -133,7 +171,7 @@ fun ComponentActivity.enableEdgeToEdgeProperly() {
 fun ViewPager2.setCurrentItemInterpolated(
     item: Int,
     duration: Long = AnimationUtils.FAST_DURATION,
-    interpolator: TimeInterpolator = AnimationUtils.easingInterpolator,
+    interpolator: TimeInterpolator = AnimationUtils.easingStandardInterpolator,
     pagePxWidth: Int = width
 ) {
     val pxToDrag: Int = pagePxWidth * (item - currentItem)
