@@ -32,6 +32,7 @@
         app:layout_constraintTop_toBottomOf="@id/divider"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/title"
         style="@style/Widget.Accord.ActionPanel.FullPlayer.Cover.Shape"
         />
 
@@ -39,15 +40,17 @@
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:textSize="19.5sp"
+        android:fontFamily="@font/inter_semibold"
+        android:textSize="20sp"
         android:includeFontPadding="false"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="52dp"
         android:text="食人梦"
-        android:layout_marginHorizontal="@dimen/full_cover_radius"
+        android:maxLines="1"
+        android:layout_marginStart="36dp"
+        android:layout_marginEnd="16dp"
         app:textViewLayer="standard"
         app:layout_constraintTop_toBottomOf="@id/cover"
-        app:layout_constraintStart_toStartOf="@id/cover"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/star"
         />
 
@@ -56,10 +59,11 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:fontFamily="@font/inter_regular"
-        android:textSize="19.5sp"
+        android:textSize="20sp"
         android:includeFontPadding="false"
         android:text="VH (Vast &amp; Hazy)"
         app:textViewLayer="primary"
+        android:maxLines="1"
         app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintStart_toStartOf="@id/title"
         app:layout_constraintEnd_toEndOf="@id/title"
@@ -78,7 +82,7 @@
         android:layout_width="0dp"
         android:layout_height="28dp"
         android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="32dp"
         app:momentum="false"
         app:resizeFactor="2.5"
         app:layout_constraintTop_toBottomOf="@id/subtitle"
@@ -91,7 +95,7 @@
         android:layout_height="48dp"
         android:layout_width="48dp"
         android:layout_marginBottom="36dp"
-        app:iconSize="32dp"
+        app:iconSize="36dp"
         app:viewLayer="primary"
         app:icon="@drawable/ic_bulletin_select"
         app:layout_constraintStart_toEndOf="@id/airplay"
@@ -103,7 +107,7 @@
         android:id="@+id/airplay"
         android:layout_height="48dp"
         android:layout_width="48dp"
-        app:iconSize="32dp"
+        app:iconSize="36dp"
         app:viewLayer="primary"
         app:icon="@drawable/ic_airplay_radio"
         app:layout_constraintStart_toEndOf="@id/caption"
@@ -116,7 +120,7 @@
         android:id="@+id/caption"
         android:layout_height="48dp"
         android:layout_width="48dp"
-        app:iconSize="32dp"
+        app:iconSize="36dp"
         app:viewLayer="primary"
         app:icon="@drawable/ic_quote_select"
         app:layout_constraintStart_toStartOf="parent"
@@ -139,12 +143,12 @@
         android:id="@+id/ellipsis"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_marginEnd="@dimen/full_cover_radius"
         app:layout_constraintTop_toTopOf="@id/title"
         app:layout_constraintBottom_toBottomOf="@id/subtitle"
-        app:layout_constraintEnd_toEndOf="@id/cover"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="36dp"
         app:icon="@drawable/ic_ellipsis"
-        app:iconSize="29dp"
+        app:iconSize="30dp"
         />
 
     <uk.akane.cupertino.widget.image.OverlayHintView
@@ -154,17 +158,21 @@
         app:layout_constraintBottom_toTopOf="@id/list"
         app:layout_constraintStart_toStartOf="@id/title"
         android:layout_marginBottom="16dp"
-        app:icon="@drawable/ic_speaker_2dp"
+        android:layout_marginStart="-8dp"
+        app:icon="@drawable/ic_speaker_anim"
+        app:iconSize="28.5dp"
         />
 
     <uk.akane.cupertino.widget.image.OverlayHintView
         android:id="@+id/speaker_full_hint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="-8dp"
         app:layout_constraintTop_toTopOf="@id/speaker_hint"
         app:layout_constraintBottom_toBottomOf="@id/speaker_hint"
         app:layout_constraintEnd_toEndOf="@id/ellipsis"
-        app:icon="@drawable/ic_speaker_full_2dp"
+        app:icon="@drawable/ic_speaker_wave_3_anim"
+        app:iconSize="28.5dp"
         />
 
     <uk.akane.cupertino.widget.slider.OverlaySlider
@@ -173,6 +181,9 @@
         android:layout_height="32dp"
         android:paddingVertical="4dp"
         app:overshoot="true"
+        app:sidePadding="8dp"
+        android:layout_marginStart="-4dp"
+        android:layout_marginEnd="-4dp"
         app:layout_constraintTop_toTopOf="@id/speaker_hint"
         app:layout_constraintBottom_toBottomOf="@id/speaker_hint"
         app:layout_constraintStart_toEndOf="@id/speaker_hint"
@@ -206,6 +217,52 @@
         app:textViewLayer="secondary"
         app:layout_constraintTop_toTopOf="@id/current_timestamp"
         app:layout_constraintEnd_toEndOf="@id/ellipsis"
+        />
+
+    <uk.akane.cupertino.widget.button.StateAnimatedVectorButton
+        android:id="@+id/main_control_btn"
+        android:layout_height="100dp"
+        android:layout_width="100dp"
+        app:iconSize="80dp"
+        android:foreground="@drawable/rp_round"
+        app:icon="@drawable/ic_play_anim"
+        app:iconState="@drawable/ic_pause_anim"
+        app:layout_constraintTop_toBottomOf="@id/progressBar"
+        app:layout_constraintBottom_toTopOf="@id/volume_slider"
+        app:layout_constraintStart_toEndOf="@id/backward_btn"
+        app:layout_constraintEnd_toStartOf="@id/forward_btn"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        />
+
+    <uk.akane.cupertino.widget.button.AnimatedVectorButton
+        android:id="@+id/forward_btn"
+        android:layout_height="94dp"
+        android:layout_width="94dp"
+        app:iconSize="64dp"
+        app:icon="@drawable/ic_forward_anim"
+        android:foreground="@drawable/rp_round"
+        android:layout_marginStart="12dp"
+        app:layout_constraintTop_toTopOf="@id/main_control_btn"
+        app:layout_constraintBottom_toBottomOf="@id/main_control_btn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/main_control_btn"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        />
+
+    <uk.akane.cupertino.widget.button.AnimatedVectorButton
+        android:id="@+id/backward_btn"
+        android:layout_height="94dp"
+        android:layout_width="94dp"
+        android:rotation="180"
+        app:iconSize="64dp"
+        app:icon="@drawable/ic_forward_anim"
+        android:foreground="@drawable/rp_round"
+        android:layout_marginEnd="12dp"
+        app:layout_constraintTop_toTopOf="@id/main_control_btn"
+        app:layout_constraintBottom_toBottomOf="@id/main_control_btn"
+        app:layout_constraintEnd_toStartOf="@id/main_control_btn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed"
         />
 
     <include

@@ -111,6 +111,14 @@ class FullPlayer @JvmOverloads constructor(
                 speakerHintView.transformValue = fraction
                 speakerFullHintView.transformValue = fraction
             }
+
+            override fun onEmphasizeStartLeft() {
+                speakerHintView.playAnim()
+            }
+
+            override fun onEmphasizeStartRight() {
+                speakerFullHintView.playAnim()
+            }
         })
 
         progressOverlaySlider.addEmphasizeListener(object : OverlaySlider.EmphasizeListener {
