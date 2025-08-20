@@ -21,4 +21,7 @@
     <color name="bottomNavigationDividerColor">#38383A</color>
     <color name="bottomNavigationInactiveTextColor">#98989F</color>
     <color name="bottomSheetPreviewPlayerShadowColor">#00000000</color>
+
+    <color name="popupMenuColorDodge">#8C8C8C</color>
+    <color name="popupMenuPlain">#D1252525</color>
 </resources>
