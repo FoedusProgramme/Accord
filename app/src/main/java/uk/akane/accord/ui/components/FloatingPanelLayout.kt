@@ -136,6 +136,12 @@ class FloatingPanelLayout @JvmOverloads constructor(
     private var popupTransformFraction = 0F
     private var popupInitialLocationX = 0
     private var popupInitialLocationY = 0
+    private var popupCurrentRadius = 0F
+
+    private var popupRenderNodeDirty = true
+    private var lastPopupWidth = 0
+    private var lastPopupHeight = 0
+
 
     data class MenuEntry(
         val iconRes: Int,
@@ -305,7 +311,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
         if (popupTransformFraction != 0f) {
             calculatePopupBounds()
             drawBlurredBackground()
-            drawPopup(popupTransformFraction, canvas)
+            drawPopup(canvas)
         }
     }
 
@@ -326,47 +332,54 @@ class FloatingPanelLayout @JvmOverloads constructor(
             if (isRetract) 0F else 1F,
         ) {
             popupTransformFraction = it
-            invalidate()
+            @Suppress("DEPRECATION")
+            invalidate(
+                popupLeft.toInt(),
+                popupTop.toInt(),
+                popupRight.toInt(),
+                popupBottom.toInt()
+            )
         }
     }
 
     private fun calculatePopupBounds() {
-        popupLeft =
-            lerp(
-                popupInitialLocationX.toFloat(),
-                (popupInitialLocationX - popupWidth),
-                popupTransformFraction
-            )
-        popupTop =
-            lerp(
-                popupInitialLocationY.toFloat(),
-                (popupInitialLocationY - popupHeight),
-                popupTransformFraction
-            )
-
-        /*
-        popupPath.reset()
-        popupPath.addRoundRect(
-            popupLeft,
-            popupTop,
-            popupRight,
-            popupBottom,
-            lerp(0F, popupRadius, popupTransformFraction)
+        popupLeft = lerp(
+            popupInitialLocationX.toFloat(),
+            (popupInitialLocationX - popupWidth),
+            popupTransformFraction
+        )
+        popupTop = lerp(
+            popupInitialLocationY.toFloat(),
+            (popupInitialLocationY - popupHeight),
+            popupTransformFraction
         )
 
-         */
+        popupCurrentRadius = lerp(0F, popupRadius, popupTransformFraction)
 
-        Log.d("TAG", "radi: ${lerp(0F, popupRadius, popupTransformFraction)}")
-        popupRenderNode.setOutline(
-            0,
-            0,
-            (popupRight - popupLeft).toInt(),
-            (popupBottom - popupTop).toInt(),
-            lerp(0F, popupRadius, popupTransformFraction)
-        )
+        val newWidth = (popupRight - popupLeft).toInt()
+        val newHeight = (popupBottom - popupTop).toInt()
+
+        if (newWidth != lastPopupWidth || newHeight != lastPopupHeight) {
+            popupRenderNodeDirty = true
+            lastPopupWidth = newWidth
+            lastPopupHeight = newHeight
+
+            popupRenderNode.setOutline(0, 0, newWidth, newHeight, popupCurrentRadius)
+            popupRenderNode.setPosition(popupLeft.toInt(), popupTop.toInt(), popupRight.toInt(), popupBottom.toInt())
+        }
     }
 
     private fun drawBlurredBackground() {
+        if (!popupRenderNodeDirty) {
+            popupRenderNode.setPosition(
+                popupLeft.toInt(),
+                popupTop.toInt(),
+                popupRight.toInt(),
+                popupBottom.toInt()
+            )
+            return
+        }
+
         popupRenderNode.setPosition(
             popupLeft.toInt(),
             popupTop.toInt(),
@@ -374,19 +387,46 @@ class FloatingPanelLayout @JvmOverloads constructor(
             popupBottom.toInt()
         )
 
-        val recordingCanvas = popupRenderNode.beginRecording(popupWidth.toInt(), popupHeight.toInt())
-
+        val recordingCanvas = popupRenderNode.beginRecording(lastPopupWidth, lastPopupHeight)
         recordingCanvas.translate(-popupLeft, -popupTop)
         recordingCanvas.drawRenderNode(contentRenderNode)
-        recordingCanvas.drawColor(popupColorDodge, BlendMode.COLOR_DODGE)
-        recordingCanvas.drawColor(popupColorPlain)
         recordingCanvas.translate(popupLeft, popupTop)
-
         popupRenderNode.endRecording()
+
+        popupRenderNodeDirty = false
     }
 
-    private fun drawPopup(fraction: Float, canvas: Canvas) {
+
+    private val popupForegroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+
+    private fun drawPopup(canvas: Canvas) {
         canvas.drawRenderNode(popupRenderNode)
+
+        popupForegroundPaint.color = popupColorDodge
+        popupForegroundPaint.blendMode = BlendMode.COLOR_DODGE
+        canvas.drawRoundRect(
+            popupLeft,
+            popupTop,
+            popupRight,
+            popupBottom,
+            popupCurrentRadius,
+            popupCurrentRadius,
+            popupForegroundPaint
+        )
+
+        popupForegroundPaint.color = popupColorPlain
+        popupForegroundPaint.blendMode = null
+        canvas.drawRoundRect(
+            popupLeft,
+            popupTop,
+            popupRight,
+            popupBottom,
+            popupCurrentRadius,
+            popupCurrentRadius,
+            popupForegroundPaint
+        )
     }
 
 
