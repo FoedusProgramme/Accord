@@ -49,7 +49,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="12dp"
         android:fontFamily="@font/inter_medium"
-        android:text="食人梦"
+        android:text="@string/default_track"
         android:textColor="@color/onSurfaceColor"
         android:includeFontPadding="false"
         android:textSize="16sp"

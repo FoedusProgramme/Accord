@@ -32,7 +32,7 @@
             android:layout_gravity="bottom"
             app:menu="@menu/bottom_nav"
             style="@style/BottomNavigation.BottomNavigationView"
-            app:itemIconSize="32dp"
+            app:itemIconSize="30dp"
             android:background="@drawable/shape_bottom_nav" />
 
     </com.google.android.material.card.MaterialCardView>

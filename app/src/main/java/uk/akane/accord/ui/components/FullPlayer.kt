@@ -85,28 +85,6 @@ class FullPlayer @JvmOverloads constructor(
         starTransformButton = findViewById(R.id.star)
         ellipsisButton = findViewById(R.id.ellipsis)
 
-        ellipsisButton.setOnCheckedChangeListener { v, checked ->
-            Log.d("TAG", "location: ${v.left}, ${v.top}")
-            floatingPanelLayout.callUpPopup(
-                !checked,
-                listOf(
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.Spacer(),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.Spacer(),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.Spacer(),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                ),
-                v.left + v.width,
-                v.top
-            )
-        }
-
         blendView.setImageUri(context.getUriToDrawable(R.drawable.eg))
         blendView.startRotationAnimation()
         clipToOutline = true
@@ -142,8 +120,6 @@ class FullPlayer @JvmOverloads constructor(
                 speakerFullHintView.playAnim()
             }
         })
-
-        ellipsisButton
 
         progressOverlaySlider.addEmphasizeListener(object : OverlaySlider.EmphasizeListener {
             override fun onEmphasizeVertical(translationX: Float, translationY: Float) {

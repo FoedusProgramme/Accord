@@ -316,11 +316,3 @@ fun Context.isAlbumPermissionGranted() =
 fun Context.isEssentialPermissionGranted() =
     (!hasMediaPermissionSeparation() && (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) ||
             (hasMediaPermissionSeparation() && (checkSelfPermission(android.Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED))
-
-inline fun <T> Iterable<T>.sumOf(selector: (T) -> Float): Float {
-    var sum = 0f
-    for (element in this) {
-        sum += selector(element)
-    }
-    return sum
-}

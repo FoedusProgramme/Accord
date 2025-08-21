@@ -23,7 +23,6 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.navigation.NavigationBarView.OnItemSelectedListener
 import com.google.android.material.shape.CornerFamily
 import uk.akane.accord.R
-import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.enableEdgeToEdgeProperly
 import uk.akane.accord.logic.isEssentialPermissionGranted
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
