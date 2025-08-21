@@ -8,7 +8,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Outline
+import android.graphics.Path
 import android.graphics.Rect
+import android.graphics.RenderNode
 import android.net.Uri
 import android.os.Build
 import android.view.View
@@ -304,6 +307,28 @@ fun Context.getUriToDrawable(
             + '/' + this.resources.getResourceTypeName(drawableId)
             + '/' + this.resources.getResourceEntryName(drawableId)).toUri()
     return imageUri
+}
+
+fun RenderNode.setOutline(
+    left: Int = 0,
+    top: Int = 0,
+    right: Int = width,
+    bottom: Int = height,
+    radius: Float = 0F
+) {
+    val outline = Outline().apply {
+        setRoundRect(left, top, right, bottom, radius)
+    }
+    setOutline(outline)
+}
+
+fun RenderNode.setOutline(
+    path: Path
+) {
+    val outline = Outline().apply {
+        setPath(path)
+    }
+    setOutline(outline)
 }
 
 fun Context.hasMediaPermissionSeparation() =
