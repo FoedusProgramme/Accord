@@ -394,7 +394,10 @@ class FloatingPanelLayout @JvmOverloads constructor(
             popupDismissAction = dismissAction
         }
 
-        AnimationUtils.createValAnimator<Float>(
+        popupAnimator?.cancel()
+        popupAnimator = null
+
+        popupAnimator = AnimationUtils.createValAnimator<Float>(
             if (isRetract) 1F else 0F,
             if (isRetract) 0F else 1F,
             duration = 300L,
@@ -404,6 +407,8 @@ class FloatingPanelLayout @JvmOverloads constructor(
             invalidate()
         }
     }
+
+    private var popupAnimator: ValueAnimator? = null
 
     private fun calculatePopupBounds() {
         popupLeft = lerp(
@@ -483,9 +488,8 @@ class FloatingPanelLayout @JvmOverloads constructor(
         val alphaInt = lerp(
             0F,
             255F,
-            popupTransformFraction,
-            { t -> AnimationUtils.accelerateDecelerateInterpolator.getInterpolation(t) }
-        ).toInt()
+            popupTransformFraction
+        ) { t -> AnimationUtils.accelerateDecelerateInterpolator.getInterpolation(t) }.toInt()
 
         val layer = canvas.saveLayerAlpha(
             popupLeft,
@@ -594,7 +598,6 @@ class FloatingPanelLayout @JvmOverloads constructor(
                     }
                 }
             }
-
         }
     }
 
@@ -632,6 +635,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
             popupDismissAction?.invoke()
             return true
         }
+        if (popupTransformFraction != 0F) return true
         return if (isInsideBoundingBox(event.x, event.y) || isDragging) {
             if (gestureDetector.onTouchEvent(event)) {
                 true
