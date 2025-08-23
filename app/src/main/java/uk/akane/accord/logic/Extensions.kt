@@ -331,6 +331,15 @@ fun RenderNode.setOutline(
     setOutline(outline)
 }
 
+inline fun <T> Iterable<T>.sumOf(selector: (T) -> Float): Float {
+    var sum = 0f
+    for (element in this) {
+        sum += selector(element)
+    }
+    return sum
+}
+
+
 fun Context.hasMediaPermissionSeparation() =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 

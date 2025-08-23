@@ -89,19 +89,19 @@ class FullPlayer @JvmOverloads constructor(
             Log.d("TAG", "location: ${v.left}, ${v.top}")
             floatingPanelLayout.callUpPopup(
                 !checked,
-                listOf(
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.Spacer(),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.Spacer(),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.Spacer(),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                    FloatingPanelLayout.MenuEntry(0, 0),
-                ),
+                FloatingPanelLayout.PopupMenuBuilder()
+                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addSpacer()
+                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addSpacer()
+                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addSpacer()
+                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .build(),
                 v.left + v.width,
                 v.top
             )

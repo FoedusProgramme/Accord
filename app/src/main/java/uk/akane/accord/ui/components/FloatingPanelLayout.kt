@@ -4,23 +4,29 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BlendMode
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RenderEffect
 import android.graphics.RenderNode
 import android.graphics.Shader
+import android.graphics.drawable.Drawable
 import android.os.Parcelable
+import android.text.TextPaint
 import android.util.AttributeSet
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
@@ -36,6 +42,7 @@ import kotlinx.parcelize.Parcelize
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.setOutline
+import uk.akane.accord.logic.sp
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.cupertino.widget.dpToPx
 import uk.akane.cupertino.widget.image.SimpleImageView
@@ -90,35 +97,10 @@ class FloatingPanelLayout @JvmOverloads constructor(
     private var transitionImageView: SimpleImageView? = null
 
     var panelCornerRadius = 0F
+    private var currentPopupEntries: PopupEntries? = null
 
-    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = resources.getColor(R.color.bottomNavigationPanelColor, null)
-        style = Paint.Style.FILL
-    }
-
-    private var popupPath = Path()
-    private val popupEntry = mutableListOf<PopupEntry>()
     private val popupHeight: Float
-        get() = popupEntry.sumOf { it -> (it.heightInDp.dp.px) }
-
-    inline fun <T> Iterable<T>.sumOf(selector: (T) -> Float): Float {
-        var sum = 0f
-        for (element in this) {
-            sum += selector(element)
-        }
-        return sum
-    }
-
-    private val popupRenderNode = RenderNode("popupBlur").apply {
-        clipToOutline = true
-        setRenderEffect(
-            RenderEffect.createBlurEffect(
-                50.dp.px,
-                50.dp.px,
-                Shader.TileMode.MIRROR
-            )
-        )
-    }
+        get() = currentPopupEntries?.entries?.sumOf { it.heightInPx } ?: 0F
 
     private val popupWidth: Float
     private val popupRadius: Float
@@ -142,15 +124,76 @@ class FloatingPanelLayout @JvmOverloads constructor(
     private var lastPopupWidth = 0
     private var lastPopupHeight = 0
 
+    private var previewCoverBoxMetrics: Int = 0
+    private var previewCoverMargin: Int = 8.dpToPx(context)
+    private var previewCoverHorizontalMargin: Int = 12.dpToPx(context)
+
+    private var fullCoverX: Int = 0
+    private var fullCoverY: Int = 0
+
+    private var state: SlideStatus = SlideStatus.COLLAPSED
+
+    private var onSlideListeners: MutableList<OnSlideListener> = mutableListOf()
+
+    inline fun <T> Iterable<T>.sumOf(selector: (T) -> Float): Float {
+        var sum = 0f
+        for (element in this) {
+            sum += selector(element)
+        }
+        return sum
+    }
+
+    private val popupRenderNode = RenderNode("popupBlur").apply {
+        clipToOutline = true
+        setRenderEffect(
+            RenderEffect.createBlurEffect(
+                50.dp.px,
+                50.dp.px,
+                Shader.TileMode.MIRROR
+            )
+        )
+    }
+
+    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = resources.getColor(R.color.bottomNavigationPanelColor, null)
+        style = Paint.Style.FILL
+    }
+
+    @JvmInline
+    value class PopupEntries(val entries: List<PopupEntry>)
+
+    class PopupMenuBuilder {
+        private val menuEntryList: MutableList<PopupEntry> = mutableListOf()
+
+        fun addMenuEntry(resources: Resources, iconResId: Int, iconDescription: String): PopupMenuBuilder {
+            menuEntryList.add(
+                MenuEntry(
+                    ResourcesCompat.getDrawable(resources, iconResId, null)!!,
+                    iconDescription
+                )
+            )
+            return this
+        }
+
+        fun addSpacer(): PopupMenuBuilder {
+            menuEntryList.add(Spacer())
+            return this
+        }
+
+        fun build() = PopupEntries(menuEntryList)
+    }
 
     data class MenuEntry(
-        val iconRes: Int,
-        val entryDescRes: Int
+        val icon: Drawable,
+        val string: String
     ) : PopupEntry(44)
 
     class Spacer() : PopupEntry(8)
 
-    abstract class PopupEntry(val heightInDp: Int)
+    abstract class PopupEntry(val heightInDp: Int) {
+        val heightInPx: Float
+            get() = heightInDp.dp.px
+    }
 
     init {
         inflate(context, R.layout.layout_floating_panel, this)
@@ -167,13 +210,6 @@ class FloatingPanelLayout @JvmOverloads constructor(
             updateTransform(fraction)
         }
     }
-
-    private var previewCoverBoxMetrics: Int = 0
-    private var previewCoverMargin: Int = 8.dpToPx(context)
-    private var previewCoverHorizontalMargin: Int = 12.dpToPx(context)
-
-    private var fullCoverX: Int = 0
-    private var fullCoverY: Int = 0
 
     fun setupMetrics(metrics: Int) {
         previewCoverBoxMetrics = metrics
@@ -203,8 +239,6 @@ class FloatingPanelLayout @JvmOverloads constructor(
 
             it.pivotX = 0F
             it.pivotY = 0F
-
-            it.visibility = INVISIBLE
 
             it.doOnLayout {
                 updateTransitionFraction(fraction)
@@ -317,15 +351,14 @@ class FloatingPanelLayout @JvmOverloads constructor(
 
     fun callUpPopup(
         isRetract: Boolean,
-        entryList: List<PopupEntry>,
+        entryList: PopupEntries,
         locationX: Int = 0,
         locationY: Int = 0
     ) {
-        popupInitialLocationX = locationX
-        popupInitialLocationY = locationY
+        popupInitialLocationX = locationX + 16.dp.px.toInt()
+        popupInitialLocationY = locationY - 12.dp.px.toInt()
 
-        popupEntry.clear()
-        popupEntry.addAll(entryList)
+        currentPopupEntries = entryList
 
         AnimationUtils.createValAnimator<Float>(
             if (isRetract) 1F else 0F,
@@ -398,14 +431,130 @@ class FloatingPanelLayout @JvmOverloads constructor(
 
 
     private val popupForegroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
+        color = popupColorDodge
+    }
+
+    private val contentColor = resources.getColor(R.color.onSurfaceColorSolid, null)
+
+    private val separatorColor = resources.getColor(R.color.popupMenuSeparator, null)
+    private val separatorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = separatorColor
+    }
+
+    private val largeSeparatorColor = resources.getColor(R.color.popupMenuLargeSeparator, null)
+    private val largeSeparatorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = largeSeparatorColor
+    }
+
+    val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = contentColor
+        textSize = 17.sp.px
+        typeface = ResourcesCompat.getFont(context, R.font.inter_regular)
+    }
+
+    private val popupForegroundShadePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = popupColorPlain
     }
 
     private fun drawPopup(canvas: Canvas) {
+        drawPopupRenderNode(canvas)
+        drawForegroundShade(canvas)
+        drawContent(canvas)
+    }
+
+    private fun drawPopupRenderNode(canvas: Canvas) {
+        popupRenderNode.alpha = popupTransformFraction
         canvas.drawRenderNode(popupRenderNode)
+    }
 
-        popupForegroundPaint.color = popupColorDodge
-        popupForegroundPaint.blendMode = BlendMode.COLOR_DODGE
+    private fun drawContent(canvas: Canvas) {
+        val alpha = (popupTransformFraction * 255).toInt()
+        separatorPaint.alpha = lerp(0F, Color.alpha(separatorColor).toFloat(), popupTransformFraction).toInt()
+        largeSeparatorPaint.alpha = lerp(0F, Color.alpha(largeSeparatorColor).toFloat(), popupTransformFraction).toInt()
+        textPaint.alpha = lerp(0F, Color.alpha(contentColor).toFloat(), popupTransformFraction).toInt()
+        val itemColor = ColorUtils.setAlphaComponent(contentColor, lerp(0F, 255F, popupTransformFraction).toInt())
+
+        var heightAccumulated = 0F
+        val horizontalMargin = 18.dp.px
+
+        currentPopupEntries!!.entries.forEachIndexed { index, entry ->
+            // Calculate bounds
+            val entryLeft = popupLeft
+            val entryTop = popupTop + heightAccumulated
+            val entryRight = popupRight
+            val entryBottom = entryTop + entry.heightInPx * popupTransformFraction
+
+            heightAccumulated += entry.heightInPx * popupTransformFraction
+
+            when (entry) {
+                is Spacer -> {
+                    canvas.drawRect(
+                        entryLeft,
+                        entryTop,
+                        entryRight,
+                        entryBottom,
+                        largeSeparatorPaint
+                    )
+                }
+                is MenuEntry -> {
+                    if (popupTransformFraction < 0.5F) return@forEachIndexed
+                    entry.icon.let { drawable ->
+                        val iconSize = entry.icon.intrinsicHeight
+                        val iconLeft = entryRight - iconSize - horizontalMargin
+                        val iconTop = (entryTop + entryBottom - iconSize) / 2f
+                        val iconRight = iconLeft + iconSize
+                        val iconBottom = iconTop + iconSize
+
+                        drawable.alpha = alpha
+                        drawable.setTint(itemColor)
+                        drawable.setBounds(
+                            iconLeft.toInt(),
+                            iconTop.toInt(),
+                            iconRight.toInt(),
+                            iconBottom.toInt()
+                        )
+                        drawable.draw(canvas)
+                    }
+
+                    entry.string.let { str ->
+                        val fm = textPaint.fontMetrics
+                        val textHeight = fm.descent - fm.ascent
+                        val offsetY = entryTop + (entryBottom - entryTop - textHeight) / 2f - fm.ascent
+
+                        val textLeft = entryLeft + horizontalMargin
+                        canvas.drawText(str, textLeft, offsetY, textPaint)
+                    }
+
+
+                    if (index != currentPopupEntries!!.entries.size - 1 &&
+                        currentPopupEntries!!.entries[index + 1] !is Spacer) {
+                        canvas.drawRect(
+                            entryLeft,
+                            entryBottom + 0.5.dp.px,
+                            entryRight,
+                            entryBottom,
+                            separatorPaint
+                        )
+                    }
+                }
+            }
+
+        }
+    }
+
+    private fun drawForegroundShade(canvas: Canvas) {
+        if (isDarkMode()) {
+            drawShade(popupForegroundPaint, popupColorDodge, BlendMode.COLOR_DODGE, canvas)
+            drawShade(popupForegroundShadePaint, popupColorPlain, null, canvas)
+        } else {
+            drawShade(popupForegroundShadePaint, popupColorPlain, null, canvas)
+            drawShade(popupForegroundPaint, popupColorDodge, BlendMode.COLOR_DODGE, canvas)
+        }
+    }
+
+    fun drawShade(paint: Paint, color: Int, blendMode: BlendMode? = null, canvas: Canvas) {
+        paint.alpha = lerp(0f, Color.alpha(color).toFloat(), popupTransformFraction).toInt()
+        paint.blendMode = blendMode
         canvas.drawRoundRect(
             popupLeft,
             popupTop,
@@ -413,21 +562,10 @@ class FloatingPanelLayout @JvmOverloads constructor(
             popupBottom,
             popupCurrentRadius,
             popupCurrentRadius,
-            popupForegroundPaint
-        )
-
-        popupForegroundPaint.color = popupColorPlain
-        popupForegroundPaint.blendMode = null
-        canvas.drawRoundRect(
-            popupLeft,
-            popupTop,
-            popupRight,
-            popupBottom,
-            popupCurrentRadius,
-            popupCurrentRadius,
-            popupForegroundPaint
+            paint
         )
     }
+
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -617,8 +755,6 @@ class FloatingPanelLayout @JvmOverloads constructor(
         fun onSlide(value: Float)
     }
 
-    private var state: SlideStatus = SlideStatus.COLLAPSED
-
     fun addOnSlideListener(listener: OnSlideListener) {
         onSlideListeners.add(listener)
     }
@@ -629,8 +765,6 @@ class FloatingPanelLayout @JvmOverloads constructor(
         transitionImageView = null
         super.onDetachedFromWindow()
     }
-
-    private var onSlideListeners: MutableList<OnSlideListener> = mutableListOf()
 
     override fun onSaveInstanceState(): Parcelable {
         val superState = super.onSaveInstanceState()
@@ -658,5 +792,9 @@ class FloatingPanelLayout @JvmOverloads constructor(
         const val MAXIMUM_ANIMATION_TIME = 320L
         const val SPEED_FACTOR = 2F
     }
+
+    private fun isDarkMode(): Boolean =
+        context.resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
 }

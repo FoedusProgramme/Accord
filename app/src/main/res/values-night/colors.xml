@@ -7,6 +7,7 @@
 
     <color name="surfaceColor">#000000</color>
     <color name="onSurfaceColor">#D9FFFFFF</color>
+    <color name="onSurfaceColorSolid">#FFFFFF</color>
     <color name="onSurfaceColorFainted">#0DFFFFFF</color>
     <color name="onSurfaceColorInactive">#80FFFFFF</color>
 
@@ -25,4 +26,6 @@
     <!-- Popup Menu -->
     <color name="popupMenuColorDodge">#8C8C8C</color>
     <color name="popupMenuPlain">#D1252525</color>
+    <color name="popupMenuSeparator">#B3808080</color>
+    <color name="popupMenuLargeSeparator">#29000000</color>
 </resources>
