@@ -90,17 +90,17 @@ class FullPlayer @JvmOverloads constructor(
             floatingPanelLayout.callUpPopup(
                 !checked,
                 FloatingPanelLayout.PopupMenuBuilder()
-                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addMenuEntry(resources, R.drawable.ic_info, R.string.popup_view_credits)
                     .addSpacer()
-                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
-                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addDestructiveMenuEntry(resources, R.drawable.ic_trash, R.string.popup_delete_from_library)
+                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_add_to_a_playlist)
                     .addSpacer()
-                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
-                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
-                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_song)
+                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_lyrics)
+                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_go_to_album)
+                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_create_station)
                     .addSpacer()
-                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
-                    .addMenuEntry(resources, R.drawable.ic_square, "Item")
+                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_undo_favorite)
                     .build(),
                 v.left + v.width,
                 v.top

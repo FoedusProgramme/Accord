@@ -71,8 +71,14 @@ object CalculationUtils {
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun lerp(start: Float, stop: Float, amount: Float): Float {
-        return start + (stop - start) * amount
+    inline fun lerp(
+        start: Float,
+        stop: Float,
+        amount: Float,
+        interpolator: (Float) -> Float = { it }
+    ): Float {
+        val t = interpolator(amount)
+        return start + (stop - start) * t
     }
 
     /**

@@ -34,4 +34,7 @@
     <color name="popupMenuPlain">#D1B3B3B3</color>
     <color name="popupMenuSeparator">#8C808080</color>
     <color name="popupMenuLargeSeparator">#14000000</color>
+
+    <!-- Colors -->
+    <color name="red">#FF3B30</color>
 </resources>

@@ -28,4 +28,7 @@
     <color name="popupMenuPlain">#D1252525</color>
     <color name="popupMenuSeparator">#B3808080</color>
     <color name="popupMenuLargeSeparator">#29000000</color>
+
+    <!-- Colors -->
+    <color name="red">#FF453A</color>
 </resources>

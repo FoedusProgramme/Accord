@@ -31,4 +31,12 @@
     <string name="shuffle">Shuffle</string>
     <string name="category_playlists">Playlists</string>
     <string name="whats_new_in_accord">What\'s new in Accord</string>
+    <string name="popup_view_credits">View Credits</string>
+    <string name="popup_delete_from_library">Delete from Library</string>
+    <string name="popup_add_to_a_playlist">Add to a Playlist…</string>
+    <string name="popup_share_song">Share Song…</string>
+    <string name="popup_share_lyrics">Share Lyrics…</string>
+    <string name="popup_go_to_album">Go to Album</string>
+    <string name="popup_create_station">Create Station</string>
+    <string name="popup_undo_favorite">Undo Favorite</string>
 </resources>

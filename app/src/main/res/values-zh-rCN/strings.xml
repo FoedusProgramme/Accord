@@ -21,4 +21,12 @@
     <string name="album_cover_special_desc">如果没有相册权限，我们只能模糊地读取您的专辑封面。</string>
     <string name="allow">获取</string>
     <string name="allowed">已获取</string>
+    <string name="popup_view_credits">查看制作人员</string>
+    <string name="popup_delete_from_library">从资料库中删除</string>
+    <string name="popup_add_to_a_playlist">添加到播放列表…</string>
+    <string name="popup_share_song">分享歌曲…</string>
+    <string name="popup_share_lyrics">分享歌词…</string>
+    <string name="popup_go_to_album">前往专辑</string>
+    <string name="popup_create_station">创建电台</string>
+    <string name="popup_undo_favorite">撤销喜爱</string>
 </resources>
