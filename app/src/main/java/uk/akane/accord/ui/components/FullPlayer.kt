@@ -3,6 +3,7 @@ package uk.akane.accord.ui.components
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
+import android.view.View
 import android.view.WindowInsets
 import android.widget.Button
 import androidx.appcompat.content.res.AppCompatResources
@@ -86,25 +87,13 @@ class FullPlayer @JvmOverloads constructor(
         ellipsisButton = findViewById(R.id.ellipsis)
 
         ellipsisButton.setOnCheckedChangeListener { v, checked ->
-            Log.d("TAG", "location: ${v.left}, ${v.top}")
-            floatingPanelLayout.callUpPopup(
-                !checked,
-                FloatingPanelLayout.PopupMenuBuilder()
-                    .addMenuEntry(resources, R.drawable.ic_info, R.string.popup_view_credits)
-                    .addSpacer()
-                    .addDestructiveMenuEntry(resources, R.drawable.ic_trash, R.string.popup_delete_from_library)
-                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_add_to_a_playlist)
-                    .addSpacer()
-                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_song)
-                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_lyrics)
-                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_go_to_album)
-                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_create_station)
-                    .addSpacer()
-                    .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_undo_favorite)
-                    .build(),
-                v.left + v.width,
-                v.top
-            )
+            callUpPlayerPopupMenu(v, true)
+        }
+
+        ellipsisButton.setOnLongClickListener {
+            // TODO tell floating panel to intercept gesture
+            callUpPlayerPopupMenu(it, true)
+            true
         }
 
         blendView.setImageUri(context.getUriToDrawable(R.drawable.eg))
@@ -165,6 +154,29 @@ class FullPlayer @JvmOverloads constructor(
 
         doOnLayout {
             floatingPanelLayout.addOnSlideListener(this)
+        }
+    }
+
+    private fun callUpPlayerPopupMenu(v: View, checked: Boolean = true) {
+        floatingPanelLayout.callUpPopup(
+            !checked,
+            FloatingPanelLayout.PopupMenuBuilder()
+                .addMenuEntry(resources, R.drawable.ic_info, R.string.popup_view_credits)
+                .addSpacer()
+                .addDestructiveMenuEntry(resources, R.drawable.ic_trash, R.string.popup_delete_from_library)
+                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_add_to_a_playlist)
+                .addSpacer()
+                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_song)
+                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_lyrics)
+                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_go_to_album)
+                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_create_station)
+                .addSpacer()
+                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_undo_favorite)
+                .build(),
+            v.left + v.width,
+            v.top
+        ) {
+            ellipsisButton.isChecked = false
         }
     }
 

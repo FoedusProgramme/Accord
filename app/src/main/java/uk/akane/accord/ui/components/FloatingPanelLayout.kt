@@ -18,11 +18,11 @@ import android.graphics.drawable.Drawable
 import android.os.Parcelable
 import android.text.TextPaint
 import android.util.AttributeSet
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
+import android.view.animation.LinearInterpolator
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.res.ResourcesCompat
@@ -133,6 +133,8 @@ class FloatingPanelLayout @JvmOverloads constructor(
     private var state: SlideStatus = SlideStatus.COLLAPSED
 
     private var onSlideListeners: MutableList<OnSlideListener> = mutableListOf()
+
+    private var popupDismissAction: (() -> Unit)? = null
 
     inline fun <T> Iterable<T>.sumOf(selector: (T) -> Float): Float {
         var sum = 0f
@@ -340,6 +342,10 @@ class FloatingPanelLayout @JvmOverloads constructor(
         return x in boundLeft..boundRight && y in boundTop..boundBottom
     }
 
+    private fun isInsidePopupMenu(x: Float, y: Float): Boolean {
+        return x in popupLeft..popupRight && y in popupTop..popupBottom
+    }
+
     private val contentRenderNode = RenderNode("content").apply {
         clipToOutline = true
     }
@@ -362,41 +368,54 @@ class FloatingPanelLayout @JvmOverloads constructor(
 
     fun callUpPopup(
         isRetract: Boolean,
-        entryList: PopupEntries,
+        entryList: PopupEntries?,
         locationX: Int = 0,
-        locationY: Int = 0
+        locationY: Int = 0,
+        dismissAction: (() -> Unit)? = null
     ) {
-        popupInitialLocationX = locationX + 16.dp.px.toInt()
-        popupInitialLocationY = locationY - 12.dp.px.toInt()
+        if (popupTransformFraction != 0F && popupTransformFraction != 1F) {
+            dismissAction?.invoke()
+            return
+        }
 
-        currentPopupEntries = entryList
+        if (locationX != 0) {
+            popupInitialLocationX = locationX + 16.dp.px.toInt()
+        }
+
+        if (locationY != 0) {
+            popupInitialLocationY = locationY - 12.dp.px.toInt()
+        }
+
+        if (entryList != null) {
+            currentPopupEntries = entryList
+        }
+
+        if (dismissAction != null) {
+            popupDismissAction = dismissAction
+        }
 
         AnimationUtils.createValAnimator<Float>(
             if (isRetract) 1F else 0F,
             if (isRetract) 0F else 1F,
+            duration = 300L,
+            interpolator = AnimationUtils.linearInterpolator
         ) {
             popupTransformFraction = it
-            @Suppress("DEPRECATION")
-            invalidate(
-                popupLeft.toInt(),
-                popupTop.toInt(),
-                popupRight.toInt(),
-                popupBottom.toInt()
-            )
+            invalidate()
         }
     }
 
     private fun calculatePopupBounds() {
         popupLeft = lerp(
-            popupInitialLocationX.toFloat() - popupWidth * 0.1F,
+            popupInitialLocationX - popupWidth * 0.1F,
             (popupInitialLocationX - popupWidth),
             popupTransformFraction
-        )
+        ) { f -> AnimationUtils.linearOutSlowInInterpolator.getInterpolation(f) }
         popupTop = lerp(
-            popupInitialLocationY.toFloat() - popupHeight * 0.1F,
+            popupInitialLocationY - popupHeight * 0.1F,
             (popupInitialLocationY - popupHeight),
             popupTransformFraction
-        )
+        ) { f -> AnimationUtils.fastOutSlowInInterpolator.getInterpolation(f) }
 
         val newWidth = (popupRight - popupLeft).toInt()
         val newHeight = (popupBottom - popupTop).toInt()
@@ -461,7 +480,12 @@ class FloatingPanelLayout @JvmOverloads constructor(
     }
 
     private fun drawPopup(canvas: Canvas) {
-        val alphaInt = (popupTransformFraction * 255).toInt().coerceIn(0, 255)
+        val alphaInt = lerp(
+            0F,
+            255F,
+            popupTransformFraction,
+            { t -> AnimationUtils.accelerateDecelerateInterpolator.getInterpolation(t) }
+        ).toInt()
 
         val layer = canvas.saveLayerAlpha(
             popupLeft,
@@ -483,19 +507,23 @@ class FloatingPanelLayout @JvmOverloads constructor(
         canvas.drawRenderNode(popupRenderNode)
     }
 
+    private val horizontalMargin = 18.dp.px
+    private val iconCenterRightMargin = 27.dp.px
+
     private fun drawContent(canvas: Canvas) {
         canvas.withSave {
             var heightAccumulated = 0F
-            val horizontalMargin = 18.dp.px
-            val iconCenterRightMargin = 27.dp.px
 
-            val scale = lerp(0.1F, 1.0F, popupTransformFraction)
+            val scale = (popupInitialLocationX - popupLeft) / popupWidth
 
             canvas.scale(scale, scale, popupLeft, popupTop)
 
+            val distanceX = popupLeft - (popupInitialLocationX - popupWidth)
+            val distanceY = popupTop - (popupInitialLocationY - popupHeight)
+
             canvas.translate(
-                lerp(popupWidth * 0.9F, 0F, popupTransformFraction),
-                lerp(popupHeight * 0.9F, 0F, popupTransformFraction),
+                distanceX,
+                distanceY,
             )
 
             currentPopupEntries!!.entries.forEachIndexed { index, entry ->
@@ -593,10 +621,17 @@ class FloatingPanelLayout @JvmOverloads constructor(
         )
     }
 
-
+    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+        return popupTransformFraction == 1F
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (popupTransformFraction == 1F && !isInsidePopupMenu(event.x, event.y)) {
+            callUpPopup(true, null)
+            popupDismissAction?.invoke()
+            return true
+        }
         return if (isInsideBoundingBox(event.x, event.y) || isDragging) {
             if (gestureDetector.onTouchEvent(event)) {
                 true
