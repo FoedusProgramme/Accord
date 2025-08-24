@@ -339,9 +339,12 @@ inline fun <T> Iterable<T>.sumOf(selector: (T) -> Float): Float {
     return sum
 }
 
-
 fun Context.hasMediaPermissionSeparation() =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+
+fun Context.isDarkMode(): Boolean =
+    resources.configuration.uiMode and
+            Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
 fun Context.isAlbumPermissionGranted() =
     (hasMediaPermissionSeparation() && (checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED)) ||

@@ -1,10 +1,7 @@
 package uk.akane.accord.ui
 
-import android.content.Context
-import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Bundle
-import android.util.Log
 import android.view.RoundedCorner
 import android.view.View
 import android.view.ViewGroup
@@ -20,10 +17,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.navigation.NavigationBarView.OnItemSelectedListener
 import com.google.android.material.shape.CornerFamily
 import uk.akane.accord.R
 import uk.akane.accord.logic.enableEdgeToEdgeProperly
+import uk.akane.accord.logic.isDarkMode
 import uk.akane.accord.logic.isEssentialPermissionGranted
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.logic.utils.MediaUtils
@@ -123,7 +120,7 @@ class MainActivity : AppCompatActivity() {
             override fun onSlideStatusChanged(status: FloatingPanelLayout.SlideStatus) {
                 when (status) {
                     FloatingPanelLayout.SlideStatus.EXPANDED -> {
-                        if (!isDarkMode(this@MainActivity) &&
+                        if (!isDarkMode() &&
                             floatingPanelLayout.insetController.isAppearanceLightStatusBars) {
                             floatingPanelLayout.insetController
                                 .isAppearanceLightStatusBars = false
@@ -134,13 +131,13 @@ class MainActivity : AppCompatActivity() {
                             scaleX = 1f
                             scaleY = 1f
                         }
-                        if (!isDarkMode(this@MainActivity) && ! floatingPanelLayout.insetController.isAppearanceLightStatusBars) {
+                        if (!isDarkMode() && ! floatingPanelLayout.insetController.isAppearanceLightStatusBars) {
                             floatingPanelLayout.insetController
                                 .isAppearanceLightStatusBars = true
                         }
                     }
                     FloatingPanelLayout.SlideStatus.SLIDING -> {
-                        if (!isDarkMode(this@MainActivity) && ! floatingPanelLayout.insetController.isAppearanceLightStatusBars) {
+                        if (!isDarkMode() && ! floatingPanelLayout.insetController.isAppearanceLightStatusBars) {
                             floatingPanelLayout.insetController
                                 .isAppearanceLightStatusBars = true
                         }
@@ -190,10 +187,6 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-
-    private fun isDarkMode(context: Context): Boolean =
-        context.resources.configuration.uiMode and
-                Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
     private fun shrinkContainer(value: Float, ratio: Float) {
         shrinkContainerLayout.alpha = lerp(1f, 0.5f, value)

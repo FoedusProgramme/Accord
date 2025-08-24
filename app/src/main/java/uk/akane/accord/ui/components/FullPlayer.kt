@@ -87,12 +87,12 @@ class FullPlayer @JvmOverloads constructor(
         ellipsisButton = findViewById(R.id.ellipsis)
 
         ellipsisButton.setOnCheckedChangeListener { v, checked ->
-            callUpPlayerPopupMenu(v, true)
+            callUpPlayerPopupMenu(v)
         }
 
         ellipsisButton.setOnLongClickListener {
             // TODO tell floating panel to intercept gesture
-            callUpPlayerPopupMenu(it, true)
+            callUpPlayerPopupMenu(it)
             true
         }
 
@@ -157,10 +157,9 @@ class FullPlayer @JvmOverloads constructor(
         }
     }
 
-    private fun callUpPlayerPopupMenu(v: View, checked: Boolean = true) {
+    private fun callUpPlayerPopupMenu(v: View) {
         floatingPanelLayout.callUpPopup(
-            !checked,
-            FloatingPanelLayout.PopupMenuBuilder()
+            PopupHelper.PopupMenuBuilder()
                 .addMenuEntry(resources, R.drawable.ic_info, R.string.popup_view_credits)
                 .addSpacer()
                 .addDestructiveMenuEntry(resources, R.drawable.ic_trash, R.string.popup_delete_from_library)
@@ -211,6 +210,21 @@ class FullPlayer @JvmOverloads constructor(
             else -> {
                 coverSimpleImageView.alpha = 0F
             }
+        }
+    }
+
+    var previousState = false
+    fun freeze() {
+        previousState = blendView.isRunning
+        blendView.stopRotationAnimation()
+    }
+
+    fun unfreeze() {
+        // TODO: Make it on demand
+        if (previousState) {
+            blendView.startRotationAnimation()
+        } else {
+            blendView.stopRotationAnimation()
         }
     }
 
