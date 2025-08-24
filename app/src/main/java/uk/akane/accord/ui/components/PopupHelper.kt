@@ -87,6 +87,7 @@ class PopupHelper(
         textSize = 17.sp.px
         typeface = ResourcesCompat.getFont(context, R.font.inter_regular)
     }
+    val textPaintFontMetrics: Paint.FontMetrics by lazy { textPaint.fontMetrics }
 
     // RenderNode
     private val popupRenderNode = RenderNode("popupBlur").apply {
@@ -108,7 +109,9 @@ class PopupHelper(
     fun drawPopup(canvas: Canvas) {
         if (popupTransformFraction != 0f) {
             calculatePopupBounds()
-            drawBlurredBackground()
+            if (!popupRenderNode.hasDisplayList()) {
+                drawBlurredBackground()
+            }
             drawPopupContent(canvas)
         }
     }
@@ -151,6 +154,17 @@ class PopupHelper(
 
         popupAnimator?.cancel()
         popupAnimator = null
+
+        if (!isRetract) {
+            popupRenderNode.discardDisplayList()
+        }
+
+        popupRenderNode.setPosition(
+            (popupInitialLocationX - popupWidth).toInt(),
+            (popupInitialLocationY - popupHeight).toInt(),
+            popupInitialLocationX,
+            popupInitialLocationY
+        )
 
         doOnStart.invoke()
 
@@ -215,22 +229,20 @@ class PopupHelper(
             lastPopupWidth = newWidth
             lastPopupHeight = newHeight
 
-            popupRenderNode.setOutline(0, 0, newWidth, newHeight, popupRadius)
-            popupRenderNode.setPosition(popupLeft.toInt(), popupTop.toInt(), popupRight.toInt(), popupBottom.toInt())
+            popupRenderNode.setOutline(
+                (popupLeft - popupInitialLocationX + popupWidth).toInt(),
+                (popupTop - popupInitialLocationY + popupHeight).toInt(),
+                popupWidth.toInt(),
+                popupHeight.toInt(),
+                popupRadius)
         }
     }
 
     private fun drawBlurredBackground() {
         if (!popupRenderNodeDirty) return
 
-        val w = (popupRight - popupLeft).toInt()
-        val h = (popupBottom - popupTop).toInt()
-        val recordingCanvas = popupRenderNode.beginRecording(w, h)
-
-        recordingCanvas.translate(-popupLeft, -popupTop)
-
-        recordingCanvas.clipRect(popupLeft, popupTop, popupRight, popupBottom)
-
+        val recordingCanvas = popupRenderNode.beginRecording(popupWidth.toInt(), popupHeight.toInt())
+        recordingCanvas.translate(-popupInitialLocationX + popupWidth, -popupInitialLocationY + popupHeight)
         recordingCanvas.drawRenderNode(contentRenderNode)
 
         popupRenderNode.endRecording()
@@ -298,7 +310,7 @@ class PopupHelper(
                         }
 
                         entry.string.let { str ->
-                            val fm = textPaint.fontMetrics
+                            val fm = textPaintFontMetrics
                             val textHeight = fm.descent - fm.ascent
                             val offsetY =
                                 entryTop + (entryBottom - entryTop - textHeight) / 2f - fm.ascent
