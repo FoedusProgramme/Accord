@@ -16,6 +16,7 @@ import androidx.core.view.marginLeft
 import androidx.core.view.marginRight
 import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
+import uk.akane.cupertino.widget.special.BlendView
 import uk.akane.accord.R
 import uk.akane.accord.logic.getUriToDrawable
 import uk.akane.accord.ui.components.lyrics.LyricsViewModel
@@ -27,7 +28,6 @@ import uk.akane.cupertino.widget.divider.OverlayDivider
 import uk.akane.cupertino.widget.image.OverlayHintView
 import uk.akane.cupertino.widget.image.SimpleImageView
 import uk.akane.cupertino.widget.slider.OverlaySlider
-import uk.akane.cupertino.widget.special.BlendView
 
 class FullPlayer @JvmOverloads constructor(
     context: Context,
@@ -97,7 +97,6 @@ class FullPlayer @JvmOverloads constructor(
         }
 
         blendView.setImageUri(context.getUriToDrawable(R.drawable.eg))
-        blendView.startRotationAnimation()
         clipToOutline = true
 
         fadingEdgeLayout.visibility = GONE
@@ -215,16 +214,16 @@ class FullPlayer @JvmOverloads constructor(
 
     var previousState = false
     fun freeze() {
-        previousState = blendView.isRunning
-        blendView.stopRotationAnimation()
+        previousState = blendView.running
+        blendView.stopAnimation()
     }
 
     fun unfreeze() {
         // TODO: Make it on demand
         if (previousState) {
-            blendView.startRotationAnimation()
+            blendView.startAnimation()
         } else {
-            blendView.stopRotationAnimation()
+            blendView.stopAnimation()
         }
     }
 

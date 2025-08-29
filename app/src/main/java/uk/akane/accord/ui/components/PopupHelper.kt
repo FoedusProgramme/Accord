@@ -76,13 +76,13 @@ class PopupHelper(
     private var popupAnimator: ValueAnimator? = null
 
     // Popup paint
-    private val popupForegroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = popupColorDodge }
-    private val separatorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = separatorColor }
-    private val largeSeparatorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = largeSeparatorColor }
-    private val popupForegroundShadePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = popupColorPlain }
+    private val popupForegroundPaint = Paint().apply { color = popupColorDodge }
+    private val separatorPaint = Paint().apply { color = separatorColor }
+    private val largeSeparatorPaint = Paint().apply { color = largeSeparatorColor }
+    private val popupForegroundShadePaint = Paint().apply { color = popupColorPlain }
 
     // Content paint
-    val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+    val textPaint = TextPaint().apply {
         color = contentColor
         textSize = 17.sp.px
         typeface = ResourcesCompat.getFont(context, R.font.inter_regular)
