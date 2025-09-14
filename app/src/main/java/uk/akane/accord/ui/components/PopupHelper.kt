@@ -30,10 +30,10 @@ class PopupHelper(
     private var currentPopupEntries: PopupEntries? = null
 
     // Popup properties
-    private val popupWidth: Float = 250.dp.px
+    private val popupWidth: Float = 270.dp.px
     private val popupHeight: Float
         get() = currentPopupEntries?.entries?.sumOf { it.heightInPx } ?: 0F
-    private val popupRadius: Float = 12.dp.px
+    private val popupRadius: Float = 14.dp.px
     private val popupItemHorizontalMargin = 18.dp.px
     private val popupIconCenterToRightMargin = 27.dp.px
 
@@ -84,7 +84,7 @@ class PopupHelper(
     // Content paint
     val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         color = contentColor
-        textSize = 17.sp.px
+        textSize = 18.sp.px
         typeface = ResourcesCompat.getFont(context, R.font.inter_regular)
     }
     val textPaintFontMetrics: Paint.FontMetrics by lazy { textPaint.fontMetrics }
@@ -400,9 +400,9 @@ class PopupHelper(
         val icon: Drawable,
         val string: String,
         val isDestructive: Boolean = false
-    ) : PopupEntry(44)
+    ) : PopupEntry(48)
 
-    class Spacer() : PopupEntry(8)
+    class Spacer() : PopupEntry(10)
 
     abstract class PopupEntry(val heightInDp: Int) {
         val heightInPx by lazy { heightInDp.dp.px }

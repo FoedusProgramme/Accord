@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="38dp"
+    android:layout_marginHorizontal="22dp"
+    android:layout_marginBottom="15dp"
+    android:layout_marginTop="2dp"
+    android:background="@drawable/search_bar_background">
+
+    <ImageView
+        android:id="@+id/search_icon"
+        android:layout_width="19dp"
+        android:layout_height="19dp"
+        android:src="@drawable/ic_magnifying_glass"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="10dp"
+        app:tint="@color/labels_tertiary"
+        />
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:hint="@string/bottom_nav_search"
+        android:textColor="@color/onSurfaceColor"
+        android:textColorHint="@color/labels_tertiary"
+        android:fontFamily="@font/inter_medium"
+        android:autofillHints=""
+        android:textSize="18sp"
+        android:lineHeight="22dp"
+        android:layout_marginStart="6dp"
+        android:inputType="text"
+        android:singleLine="true"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintStart_toEndOf="@id/search_icon"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

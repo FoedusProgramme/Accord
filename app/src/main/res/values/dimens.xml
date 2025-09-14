@@ -16,8 +16,9 @@
     <dimen name="tablayout_height">40dp</dimen>
     <dimen name="tablayout_bottom_margin">8dp</dimen>
     <dimen name="scroller_width">36dp</dimen>
-    <dimen name="scroller_char_size">10dp</dimen>
+    <dimen name="scroller_char_size">12sp</dimen>
     <dimen name="full_cover_radius">10dp</dimen>
     <dimen name="preview_player_horizontal_margin">12dp</dimen>
     <dimen name="standard_side_padding">26.5dp</dimen>
+    <dimen name="bottom_navigation_gradient_height">33dp</dimen>
 </resources>

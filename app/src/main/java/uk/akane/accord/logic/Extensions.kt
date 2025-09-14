@@ -339,6 +339,16 @@ inline fun <T> Iterable<T>.sumOf(selector: (T) -> Float): Float {
     return sum
 }
 
+fun inverseLerp(a: Float, b: Float, v: Float, clamp: Boolean = false): Float {
+    if (a == b) return 0f
+
+    var t = (v - a) / (b - a)
+    if (clamp) {
+        t = t.coerceIn(0f, 1f)
+    }
+    return t
+}
+
 fun Context.hasMediaPermissionSeparation() =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
@@ -353,3 +363,7 @@ fun Context.isAlbumPermissionGranted() =
 fun Context.isEssentialPermissionGranted() =
     (!hasMediaPermissionSeparation() && (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) ||
             (hasMediaPermissionSeparation() && (checkSelfPermission(android.Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED))
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun hasScopedStorageWithMediaTypes(): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU

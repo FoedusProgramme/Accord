@@ -5,6 +5,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -12,15 +14,19 @@ import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import uk.akane.accord.R
+import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.adapters.browse.SongAdapter
+import uk.akane.accord.ui.components.NavigationBar
 import uk.akane.accord.ui.viewmodels.AccordViewModel
 
-class SongFragment : Fragment(), Observer<List<MediaItem>> {
+class SongFragment : Fragment() {
 
+    private val activity
+        get() = requireActivity() as MainActivity
     private lateinit var recyclerView: RecyclerView
     private lateinit var songAdapter: SongAdapter
     private lateinit var layoutManager: LinearLayoutManager
-    private val accordViewModel: AccordViewModel by activityViewModels()
+    private lateinit var navigationBar: NavigationBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,24 +35,32 @@ class SongFragment : Fragment(), Observer<List<MediaItem>> {
     ): View? {
         val rootView = inflater.inflate(R.layout.fragment_browse_song, container, false)
 
+        navigationBar = rootView.findViewById(R.id.navigation_bar)
+
+        ViewCompat.setOnApplyWindowInsetsListener(navigationBar) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            navigationBar.setPadding(
+                navigationBar.paddingLeft,
+                systemBars.top,
+                navigationBar.paddingRight,
+                navigationBar.paddingBottom
+            )
+            insets
+        }
+
         recyclerView = rootView.findViewById(R.id.rv)
-        songAdapter = SongAdapter()
+        songAdapter = SongAdapter(requireContext(), this)
         layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = songAdapter
         recyclerView.layoutManager = layoutManager
 
-        accordViewModel.mediaItemList.observeForever(this)
+        navigationBar.attach(recyclerView)
+
+        rootView.findViewById<View>(R.id.popback).setOnClickListener {
+            activity.fragmentSwitcherView.popBackTopFragmentIfExists()
+        }
+
         return rootView
-    }
-
-    override fun onDestroyView() {
-        accordViewModel.mediaItemList.removeObserver(this)
-        super.onDestroyView()
-    }
-
-    override fun onChanged(value: List<MediaItem>) {
-        Log.d("TAG", "CHANGED!!!!!!")
-        songAdapter.update(value.toMutableList())
     }
 
 }

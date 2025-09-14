@@ -29,4 +29,17 @@
     <string name="popup_go_to_album">前往专辑</string>
     <string name="popup_create_station">创建电台</string>
     <string name="popup_undo_favorite">撤销喜爱</string>
+    <string name="library_head_playlist">播放列表</string>
+    <string name="library_head_artist">艺人</string>
+    <string name="library_head_album">专辑</string>
+    <string name="library_head_song">歌曲</string>
+    <string name="library_head_genre">类型</string>
+    <string name="category_dates">日期</string>
+    <string name="play">播放</string>
+    <string name="shuffle">随机播放</string>
+    <string name="category_songs">歌曲</string>
+    <string name="category_albums">专辑</string>
+    <string name="category_artists">艺人</string>
+    <string name="category_genres">主题</string>
+    <string name="category_playlists">播放列表</string>
 </resources>

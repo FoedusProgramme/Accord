@@ -15,6 +15,7 @@ import android.widget.FrameLayout
 import androidx.core.view.doOnLayout
 import uk.akane.accord.R
 import kotlin.math.min
+import androidx.core.content.withStyledAttributes
 
 open class FadingVerticalEdgeLayout : FrameLayout {
     private var fadeTop = false
@@ -49,22 +50,27 @@ open class FadingVerticalEdgeLayout : FrameLayout {
             resources.displayMetrics
         ).toInt()
         if (attrs != null) {
-            val arr =
-                context.obtainStyledAttributes(attrs, R.styleable.FadingVerticalEdgeLayout, 0, 0)
-            val flags = arr.getInt(R.styleable.FadingVerticalEdgeLayout_fel_edge, 0)
-            fadeTop = flags and FADE_EDGE_TOP == FADE_EDGE_TOP
-            fadeBottom = flags and FADE_EDGE_BOTTOM == FADE_EDGE_BOTTOM
-            gradientSizeTop =
-                arr.getDimensionPixelSize(R.styleable.FadingVerticalEdgeLayout_fel_size_top, defaultSize)
-            gradientSizeBottom =
-                arr.getDimensionPixelSize(R.styleable.FadingVerticalEdgeLayout_fel_size_bottom, defaultSize)
-            if (fadeTop && gradientSizeTop > 0) {
-                gradientDirtyFlags = gradientDirtyFlags or DIRTY_FLAG_TOP
+            context.withStyledAttributes(attrs, R.styleable.FadingVerticalEdgeLayout, 0, 0) {
+                val flags = getInt(R.styleable.FadingVerticalEdgeLayout_fel_edge, 0)
+                fadeTop = flags and FADE_EDGE_TOP == FADE_EDGE_TOP
+                fadeBottom = flags and FADE_EDGE_BOTTOM == FADE_EDGE_BOTTOM
+                gradientSizeTop =
+                    getDimensionPixelSize(
+                        R.styleable.FadingVerticalEdgeLayout_fel_size_top,
+                        defaultSize
+                    )
+                gradientSizeBottom =
+                    getDimensionPixelSize(
+                        R.styleable.FadingVerticalEdgeLayout_fel_size_bottom,
+                        defaultSize
+                    )
+                if (fadeTop && gradientSizeTop > 0) {
+                    gradientDirtyFlags = gradientDirtyFlags or DIRTY_FLAG_TOP
+                }
+                if (fadeBottom && gradientSizeBottom > 0) {
+                    gradientDirtyFlags = gradientDirtyFlags or DIRTY_FLAG_BOTTOM
+                }
             }
-            if (fadeBottom && gradientSizeBottom > 0) {
-                gradientDirtyFlags = gradientDirtyFlags or DIRTY_FLAG_BOTTOM
-            }
-            arr.recycle()
         } else {
             gradientSizeBottom = defaultSize
             gradientSizeTop = gradientSizeBottom

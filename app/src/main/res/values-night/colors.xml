@@ -31,4 +31,29 @@
 
     <!-- Colors -->
     <color name="red">#FF453A</color>
+
+    <!-- Navigation Bar -->
+    <color name="navigationBarTitle">#FFFFFF</color>
+    <color name="navigationBarDivider">#26000000</color>
+    <color name="navigationBarEllipsisBackground">#3D787880</color>
+    <color name="navigationBarExpandedBackground">#000000</color>
+    <color name="navigationBarBlurAppendColor">#7C7C7C</color>
+
+    <!-- Search bar -->
+    <color name="searchBarBackground">#3D787880</color>
+    <color name="labels_tertiary">#99EBEBF5</color>
+
+    <!-- Color palette -->
+    <color name="systemRed">#FF453A</color>
+    <color name="systemOrange">#FF9F0A</color>
+    <color name="systemYellow">#FFD60A</color>
+    <color name="systemGreen">#30D158</color>
+    <color name="systemMint">#63E6E2</color>
+    <color name="systemTeal">#40CBE0</color>
+    <color name="systemCyan">#64D2FF</color>
+    <color name="systemBlue">#0A84FF</color>
+    <color name="systemIndigo">#5E5CE6</color>
+    <color name="systemPurple">#BF5AF2</color>
+    <color name="systemPink">#FF375F</color>
+    <color name="systemBrown">#AC8E68</color>
 </resources>

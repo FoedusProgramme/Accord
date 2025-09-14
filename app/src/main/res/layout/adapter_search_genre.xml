@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImageView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/imageView"
+    android:layout_width="match_parent"
+    android:layout_height="120dp"
+    android:layout_marginHorizontal="6dp"
+    android:layout_marginBottom="12dp"
+    android:scaleType="centerCrop"
+    android:clipToOutline="true"
+    android:background="@drawable/bg_adapter_search"
+    />

@@ -10,4 +10,38 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <uk.akane.accord.ui.components.NavigationBar
+        android:id="@+id/navigation_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="@string/category_songs"
+        app:hasLargeMenuItems="false"
+        app:hasReturnButton="true"
+        app:returnButtonText="@string/bottom_nav_library">
+
+        <include layout="@layout/layout_search_bar" />
+
+    </uk.akane.accord.ui.components.NavigationBar>
+
+    <Button
+        android:id="@+id/popback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="popback"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+    <uk.akane.accord.ui.components.AlphabetScroller
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="2dp"
+        app:layout_constraintTop_toTopOf="@id/navigation_bar"
+        app:layout_constraintBottom_toBottomOf="@id/rv"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

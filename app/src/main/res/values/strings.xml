@@ -39,4 +39,9 @@
     <string name="popup_go_to_album">Go to Album</string>
     <string name="popup_create_station">Create Station</string>
     <string name="popup_undo_favorite">Undo Favorite</string>
+    <string name="library_head_playlist">Playlist</string>
+    <string name="library_head_artist">Artist</string>
+    <string name="library_head_album">Album</string>
+    <string name="library_head_song">Song</string>
+    <string name="library_head_genre">Genre</string>
 </resources>

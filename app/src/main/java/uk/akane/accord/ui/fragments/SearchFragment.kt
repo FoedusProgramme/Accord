@@ -4,24 +4,58 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import com.google.android.material.appbar.AppBarLayout
+import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import uk.akane.accord.R
-import uk.akane.accord.logic.applyOffsetListener
-import uk.akane.accord.logic.enableEdgeToEdgePaddingListener
+import uk.akane.accord.ui.MainActivity
+import uk.akane.accord.ui.adapters.SearchAdapter
+import uk.akane.accord.ui.components.NavigationBar
+import uk.akane.accord.ui.viewmodels.AccordViewModel
 
 class SearchFragment: Fragment() {
-    private lateinit var appBarLayout: AppBarLayout
+    private val accordViewModel: AccordViewModel by activityViewModels()
+    private lateinit var navigationBar: NavigationBar
+    private lateinit var recyclerView: RecyclerView
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val rootView = inflater.inflate(R.layout.fragment_search, container, false)
-        appBarLayout = rootView.findViewById(R.id.appbarlayout)
+        navigationBar = rootView.findViewById(R.id.navigation_bar)
+        recyclerView = rootView.findViewById(R.id.rv)
 
-        appBarLayout.enableEdgeToEdgePaddingListener()
-        appBarLayout.applyOffsetListener()
+        ViewCompat.setOnApplyWindowInsetsListener(navigationBar) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            navigationBar.setPadding(
+                navigationBar.paddingLeft,
+                systemBars.top,
+                navigationBar.paddingRight,
+                navigationBar.paddingBottom
+            )
+            recyclerView.setPadding(
+                recyclerView.paddingLeft,
+                recyclerView.paddingTop,
+                recyclerView.paddingRight,
+                systemBars.bottom + resources.getDimensionPixelSize(R.dimen.bottom_nav_height)
+            )
+            insets
+        }
+
+        recyclerView.layoutManager = GridLayoutManager(context, 2)
+        recyclerView.adapter = SearchAdapter(requireContext(), this)
+        navigationBar.attach(recyclerView)
+
         return rootView
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        navigationBar.onVisibilityChangedFromFragment(hidden)
     }
 }

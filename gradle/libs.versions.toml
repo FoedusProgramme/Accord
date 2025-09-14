@@ -1,4 +1,5 @@
 [versions]
+coil = "3.3.0"
 core = "1.16.0"
 coreSplashscreen = "1.2.0-rc01"
 activity = "1.10.1"
@@ -29,6 +30,7 @@ androidx-window = { group = "androidx.window", name = "window", version.ref = "w
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+coil = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenapibypass" }

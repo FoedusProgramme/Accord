@@ -2,6 +2,7 @@ package uk.akane.accord.ui
 
 import android.content.res.Resources
 import android.os.Bundle
+import android.util.Log
 import android.view.RoundedCorner
 import android.view.View
 import android.view.ViewGroup
@@ -15,9 +16,15 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.shape.CornerFamily
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import uk.akane.accord.Accord
 import uk.akane.accord.R
 import uk.akane.accord.logic.enableEdgeToEdgeProperly
 import uk.akane.accord.logic.isDarkMode
@@ -36,9 +43,6 @@ import uk.akane.cupertino.widget.navigation.FragmentSwitcherView
 import uk.akane.cupertino.widget.utils.AnimationUtils
 
 class MainActivity : AppCompatActivity() {
-
-    private val accordViewModel: AccordViewModel by viewModels()
-
     companion object {
         const val DESIRED_BOTTOM_SHEET_OPEN_RATIO = 0.9f
         const val DESIRED_BOTTOM_SHEET_DISPLAY_RATIO = 0.85F
@@ -47,8 +51,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bottomNavigationView: BottomNavigationView
     private lateinit var floatingPanelLayout: FloatingPanelLayout
     private lateinit var shrinkContainerLayout: MaterialCardView
-    private lateinit var fragmentSwitcherView: FragmentSwitcherView
     private lateinit var screenCorners: UiUtils.ScreenCorners
+    lateinit var fragmentSwitcherView: FragmentSwitcherView
 
     private var bottomInset: Int = 0
     private var bottomDefaultRadius: Int = 0
@@ -70,16 +74,18 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        if (isEssentialPermissionGranted()) {
-            if (accordViewModel.mediaItemList.value?.isNotEmpty() != true) {
-                MediaUtils.updateLibraryWithInCoroutine(accordViewModel, this)
-            }
-        } else {
+        if (!isEssentialPermissionGranted()) {
             insertContainer(SetupWizardFragment {
-                if (accordViewModel.mediaItemList.value?.isNotEmpty() != true) {
-                    MediaUtils.updateLibraryWithInCoroutine(accordViewModel, this)
-                }
+                updateLibrary()
             })
+        } else {
+            Log.d("TAG", "yes we have permission")
+            updateLibrary()
+            lifecycleScope.launch {
+                reader?.songListFlow?.collect { songs ->
+                    Log.d("TAG", "collected song list: ${songs.size}")
+                }
+            }
         }
 
         bottomNavigationView = findViewById(R.id.bottom_nav)
@@ -291,5 +297,20 @@ class MainActivity : AppCompatActivity() {
             shrinkFloatingPanel(1f - animatedValue / screenHeight, DESIRED_BOTTOM_SHEET_DISPLAY_RATIO)
         }
     }
+
+    fun updateLibrary(then: (() -> Unit)? = null) {
+        CoroutineScope(Dispatchers.Default).launch {
+            reader?.refresh()
+            withContext(Dispatchers.Main) {
+                then?.let { it() }
+            }
+        }
+    }
+
+    inline val accord: Accord
+        get() = application as Accord
+
+    inline val reader
+        get() = accord.reader
 
 }

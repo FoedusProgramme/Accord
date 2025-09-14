@@ -2,7 +2,7 @@
 <layer-list
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:top="33dp">
+        android:top="@dimen/bottom_navigation_gradient_height">
         <shape>
             <solid
                 android:color="@color/bottomNavigationColor"
@@ -10,7 +10,7 @@
         </shape>
     </item>
     <item
-        android:height="33dp"
+        android:height="@dimen/bottom_navigation_gradient_height"
         android:gravity="top">
         <shape>
             <gradient

@@ -7,6 +7,7 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import uk.akane.accord.R
+import uk.akane.accord.logic.dp
 
 class AlphabetScroller @JvmOverloads constructor(
     context: Context,
@@ -28,14 +29,14 @@ class AlphabetScroller @JvmOverloads constructor(
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         setMeasuredDimension(
             scrollerWidth,
-            MeasureSpec.makeMeasureSpec((letters.size * (paint.textSize + 10)).toInt(), MeasureSpec.EXACTLY) // 文字高度 + 间距
+            MeasureSpec.makeMeasureSpec((letters.size * (paint.textSize + SCROLLER_TEXT_PADDING.dp.px * 2)).toInt(), MeasureSpec.EXACTLY) // 文字高度 + 间距
         )
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        var y = paint.textSize + 5
+        var y = paint.textSize + SCROLLER_TEXT_PADDING.dp.px
 
         letters.forEach { letter ->
             canvas.drawText(
@@ -44,7 +45,11 @@ class AlphabetScroller @JvmOverloads constructor(
                 y,
                 paint
             )
-            y += paint.textSize + 10
+            y += paint.textSize + SCROLLER_TEXT_PADDING.dp.px * 2
         }
+    }
+
+    companion object {
+        const val SCROLLER_TEXT_PADDING = 2
     }
 }
