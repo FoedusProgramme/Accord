@@ -1,23 +1,18 @@
 package uk.akane.accord.ui.fragments.browse
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
-import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import uk.akane.accord.R
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.adapters.browse.SongAdapter
 import uk.akane.accord.ui.components.NavigationBar
-import uk.akane.accord.ui.viewmodels.AccordViewModel
 
 class SongFragment : Fragment() {
 
@@ -49,7 +44,7 @@ class SongFragment : Fragment() {
         }
 
         recyclerView = rootView.findViewById(R.id.rv)
-        songAdapter = SongAdapter(requireContext(), this)
+        songAdapter = SongAdapter(this)
         layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = songAdapter
         recyclerView.layoutManager = layoutManager
@@ -61,6 +56,11 @@ class SongFragment : Fragment() {
         }
 
         return rootView
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        navigationBar.onVisibilityChangedFromFragment(hidden)
     }
 
 }

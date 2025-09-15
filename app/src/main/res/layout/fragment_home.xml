@@ -12,4 +12,42 @@
         app:title="@string/bottom_nav_home"
         />
 
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="专属精选推荐"
+        android:textColor="@color/onSurfaceColor"
+        android:fontFamily="@font/inter_bold"
+        android:textSize="22sp"
+        android:layout_marginTop="14dp"
+        android:layout_marginStart="22dp"
+        android:includeFontPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/navigation_bar"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+    <TextView
+        android:id="@+id/subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="专属推荐"
+        android:textColor="@color/onSurfaceColorInactive"
+        app:layout_constraintStart_toStartOf="@id/title"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        android:textSize="15sp"
+        android:includeFontPadding="false"
+        />
+
+    <uk.akane.accord.ui.components.BannerView
+        android:layout_width="276dp"
+        android:layout_height="360dp"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/subtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:videoSrc="@raw/breeze"
+        app:placeholder="@drawable/breeze_preview"
+        />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -42,4 +42,5 @@
     <string name="category_artists">艺人</string>
     <string name="category_genres">主题</string>
     <string name="category_playlists">播放列表</string>
+    <string name="waves_at_max">声波满格</string>
 </resources>

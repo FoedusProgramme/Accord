@@ -1,7 +1,5 @@
 package uk.akane.accord.ui.adapters.browse
 
-import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,28 +7,32 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import uk.akane.accord.R
+import uk.akane.accord.logic.dp
 import uk.akane.accord.ui.MainActivity
 
 class SongAdapter(
-    context: Context,
     fragment: Fragment
 ) : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
 
-    private val list = mutableListOf<MediaItem>()
+    private val list = mutableListOf<SongListItem>()
 
     init {
-        fragment.lifecycleScope.launch {
-            (fragment.activity as MainActivity).reader?.songListFlow?.collectLatest { newList ->
-                Log.d("TAG", "newList: ${newList.size}")
-                submitList(newList)
+        fragment.viewLifecycleOwner.lifecycleScope.launch {
+            fragment.viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                (fragment.activity as MainActivity).reader?.songListFlow?.collectLatest { newList ->
+                    submitList(newList)
+                }
             }
         }
     }
@@ -38,50 +40,115 @@ class SongAdapter(
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
-    ): ViewHolder =
-        ViewHolder(
-            LayoutInflater.from(parent.context).inflate(
-                R.layout.layout_song_item, parent, false
-            )
+    ): ViewHolder {
+        val layoutId = when (viewType) {
+            VIEW_TYPE_CONTROL -> R.layout.layout_master_control
+            VIEW_TYPE_CATEGORY -> R.layout.adapter_category_header
+            else -> R.layout.layout_song_item
+        }
+        return ViewHolder(
+            LayoutInflater.from(parent.context).inflate(layoutId, parent, false)
         )
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return when (list[position]) {
+            is SongListItem.Control -> VIEW_TYPE_CONTROL
+            is SongListItem.Header -> VIEW_TYPE_CATEGORY
+            is SongListItem.Track -> VIEW_TYPE_NORMAL
+        }
+    }
 
     override fun onBindViewHolder(
         holder: ViewHolder,
         position: Int
     ) {
-        val item = list[position]
-        holder.cover.load(item.mediaMetadata.artworkUri) {
-            crossfade(true)
+        when (val item = list[position]) {
+            is SongListItem.Control -> {
+            }
+            is SongListItem.Header -> {
+                holder.title?.text = item.title
+                holder.subtitle?.visibility = View.GONE
+                holder.cover?.visibility = View.GONE
+            }
+            is SongListItem.Track -> {
+                holder.cover?.visibility = View.VISIBLE
+                holder.subtitle?.visibility = View.VISIBLE
+                holder.cover?.load(item.mediaItem.mediaMetadata.artworkUri) {
+                    crossfade(true)
+                    size(62.dp.px.toInt(), 62.dp.px.toInt())
+                }
+                holder.title?.text = item.mediaItem.mediaMetadata.title
+                holder.subtitle?.text = item.mediaItem.mediaMetadata.artist
+            }
         }
-        holder.title.text = item.mediaMetadata.title
-        holder.subtitle.text = item.mediaMetadata.subtitle
     }
 
     override fun getItemCount(): Int = list.size
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val cover = view.findViewById<ImageView>(R.id.cover)
-        val title = view.findViewById<TextView>(R.id.title)
-        val subtitle = view.findViewById<TextView>(R.id.subtitle)
+        val cover: ImageView? = view.findViewById(R.id.cover)
+        val title: TextView? = view.findViewById(R.id.title)
+        val subtitle: TextView? = view.findViewById(R.id.subtitle)
     }
 
-    private fun submitList(newList: List<MediaItem>) {
-        val diffResult = DiffUtil.calculateDiff(GenreDiffCallback(list, newList))
-        list.clear()
-        list.addAll(newList)
-        diffResult.dispatchUpdatesTo(this)
+    private suspend fun submitList(newList: List<MediaItem>) {
+        val grouped = newList
+            .groupBy { it.mediaMetadata.title?.firstOrNull()?.uppercaseChar() ?: '#' }
+            .toSortedMap()
+
+        val items = mutableListOf<SongListItem>()
+        items.add(SongListItem.Control)
+        for ((key, tracks) in grouped) {
+            items.add(SongListItem.Header(key.toString()))
+            items.addAll(tracks.map { SongListItem.Track(it) })
+        }
+
+        val diffResult = DiffUtil.calculateDiff(GenreDiffCallback(list, items))
+
+        withContext(Dispatchers.Main) {
+            list.clear()
+            list.addAll(items)
+            diffResult.dispatchUpdatesTo(this@SongAdapter)
+        }
     }
 
     class GenreDiffCallback(
-        private val oldList: List<MediaItem>,
-        private val newList: List<MediaItem>
+        private val oldList: List<SongListItem>,
+        private val newList: List<SongListItem>
     ) : DiffUtil.Callback() {
         override fun getOldListSize(): Int = oldList.size
         override fun getNewListSize(): Int = newList.size
+
         override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-            oldList[oldItemPosition].mediaId == newList[newItemPosition].mediaId
+            when {
+                oldList[oldItemPosition] is SongListItem.Control &&
+                        newList[newItemPosition] is SongListItem.Control -> true
+                oldList[oldItemPosition] is SongListItem.Header &&
+                        newList[newItemPosition] is SongListItem.Header ->
+                    (oldList[oldItemPosition] as SongListItem.Header).title ==
+                            (newList[newItemPosition] as SongListItem.Header).title
+                oldList[oldItemPosition] is SongListItem.Track &&
+                        newList[newItemPosition] is SongListItem.Track ->
+                    (oldList[oldItemPosition] as SongListItem.Track).mediaItem.mediaId ==
+                            (newList[newItemPosition] as SongListItem.Track).mediaItem.mediaId
+                else -> false
+            }
+
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-            oldList[oldItemPosition].mediaMetadata == newList[newItemPosition].mediaMetadata
+            oldList[oldItemPosition] == newList[newItemPosition]
     }
 
+    sealed class SongListItem {
+        object Control : SongListItem()
+        data class Header(val title: String) : SongListItem()
+        data class Track(val mediaItem: MediaItem) : SongListItem()
+    }
+
+
+    companion object {
+        const val VIEW_TYPE_NORMAL = 0
+        const val VIEW_TYPE_CONTROL = 1
+        const val VIEW_TYPE_CATEGORY = 2
+    }
 }

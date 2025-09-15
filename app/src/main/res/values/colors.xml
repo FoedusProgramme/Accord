@@ -65,4 +65,10 @@
     <color name="systemPurple">#AF52DE</color>
     <color name="systemPink">#FF2D55</color>
     <color name="systemBrown">#A2845E</color>
+    <color name="systemWhite">#FFFFFF</color>
+    <color name="systemBlack">#000000</color>
+
+    <!-- Banner -->
+    <color name="breezeGradientStart">#629FFF</color>
+    <color name="breezeGradientEnd">#2E76FF</color>
 </resources>

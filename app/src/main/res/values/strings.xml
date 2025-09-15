@@ -44,4 +44,5 @@
     <string name="library_head_album">Album</string>
     <string name="library_head_song">Song</string>
     <string name="library_head_genre">Genre</string>
+    <string name="waves_at_max">Breeze</string>
 </resources>

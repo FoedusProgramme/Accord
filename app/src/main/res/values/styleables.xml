@@ -24,4 +24,8 @@
         <attr name="hasLargeMenuItems" format="boolean"/>
         <attr name="hasReturnButton" format="boolean"/>
     </declare-styleable>
+    <declare-styleable name="BannerView">
+        <attr name="videoSrc" format="reference"/>
+        <attr name="placeholder" format="reference"/>
+    </declare-styleable>
 </resources>

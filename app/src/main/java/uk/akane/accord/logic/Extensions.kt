@@ -14,6 +14,7 @@ import android.graphics.Rect
 import android.graphics.RenderNode
 import android.net.Uri
 import android.os.Build
+import android.util.SparseIntArray
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -30,6 +31,8 @@ import androidx.core.text.TextUtilsCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.CollapsingToolbarLayout
@@ -367,3 +370,34 @@ fun Context.isEssentialPermissionGranted() =
 @Suppress("NOTHING_TO_INLINE")
 inline fun hasScopedStorageWithMediaTypes(): Boolean =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+
+fun RecyclerView.computeExactVerticalScrollOffset(): Int {
+    val lm = layoutManager as? LinearLayoutManager ?: return 0
+    val firstVisible = lm.findFirstVisibleItemPosition()
+    val firstView = lm.findViewByPosition(firstVisible) ?: return 0
+
+    // 用来缓存 item 高度
+    if (tag !is SparseIntArray) {
+        tag = SparseIntArray()
+    }
+    val heightCache = tag as SparseIntArray
+
+    // 缓存所有可见项的高度
+    for (i in lm.findFirstVisibleItemPosition()..lm.findLastVisibleItemPosition()) {
+        val v = lm.findViewByPosition(i)
+        if (v != null) {
+            heightCache.put(i, v.height)
+        }
+    }
+
+    // 累计前面所有项的高度
+    var scrolled = 0
+    for (i in 0 until firstVisible) {
+        scrolled += heightCache[i, 0] // 没有缓存时按 0 处理
+    }
+
+    // 再加上第一个可见项已滚动的部分
+    scrolled -= firstView.top
+
+    return scrolled
+}

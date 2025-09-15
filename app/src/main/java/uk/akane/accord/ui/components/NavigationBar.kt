@@ -112,12 +112,13 @@ class NavigationBar @JvmOverloads constructor(
     private val expandedTitleFontMetrics by lazy { expandedTitlePaint.fontMetrics }
     private val collapsedTitlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = resources.getColor(R.color.navigationBarTitle, null)
-        textSize = 17.sp.px
+        textSize = 18.sp.px
         textAlign = Paint.Align.CENTER
         typeface = ResourcesCompat.getFont(context, R.font.inter_semibold)
     }
 
     private var appendHeight = 0
+    private var childTopMargin = 0
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
@@ -131,6 +132,7 @@ class NavigationBar @JvmOverloads constructor(
         val child = getChildAt(0)
         if (child != null) {
             val lp = child.layoutParams as MarginLayoutParams
+            childTopMargin = lp.topMargin
             val childWidth = widthSize - paddingLeft - paddingRight - lp.leftMargin - lp.rightMargin
             child.measure(
                 MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY),
@@ -140,7 +142,7 @@ class NavigationBar @JvmOverloads constructor(
         }
 
         val desiredHeight = EXPANDED_STATE_HEIGHT.dp.px.toInt() +
-                EXPANDED_PADDED_HEIGHT.dp.px.toInt() +
+                calculateExpandedHeightPadding().toInt() +
                 (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt() +
                 paddingTop + paddingBottom +
                 appendHeight
@@ -210,7 +212,9 @@ class NavigationBar @JvmOverloads constructor(
         drawCollapsedTitle(canvas)
 
         if (shouldDrawReturnButton) {
-            drawReturnButton(canvas)
+            canvas.withTranslation(y = -translationY) {
+                drawReturnButton(canvas)
+            }
         }
     }
 
@@ -248,7 +252,7 @@ class NavigationBar @JvmOverloads constructor(
     }
 
     private fun drawExpandedTitle(canvas: Canvas) {
-        val topY = paddingTop + EXPANDED_PADDED_HEIGHT.dp.px + 3f.dp.px + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()
+        val topY = paddingTop + calculateExpandedHeightPadding() + 3f.dp.px + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()
 
         val baseline = topY - expandedTitleFontMetrics.ascent
 
@@ -260,6 +264,14 @@ class NavigationBar @JvmOverloads constructor(
         )
     }
 
+    private val returnTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = chevronColor
+        textSize = 18.sp.px
+        textAlign = Paint.Align.LEFT
+        typeface = ResourcesCompat.getFont(context, R.font.inter_regular)
+        isSubpixelText = true
+    }
+
     private fun drawCollapsedTitle(canvas: Canvas) {
         val paint = collapsedTitlePaint
         val text = titleText
@@ -267,19 +279,55 @@ class NavigationBar @JvmOverloads constructor(
         val x = width / 2f
 
         val fm = paint.fontMetrics
-        val y = height / 2f + (COLLAPSED_STATE_HEIGHT - appendHeight + paddingTop) / 2f - (fm.ascent + fm.descent) / 2f
+
+        val collapseExpandDiff = (EXPANDED_STATE_HEIGHT - COLLAPSED_STATE_HEIGHT).dp.px
+        val returnButtonTopTranslation = (if (shouldDrawReturnButton) (EXPANDED_PADDED_HEIGHT_RETURN) else 0).dp.px.toInt()
+
+        val collapsedTop = paddingTop + calculateExpandedHeightPadding() + collapseExpandDiff + returnButtonTopTranslation
+        val collapsedBottom = collapsedTop + COLLAPSED_STATE_HEIGHT.dp.px + childTopMargin
+        val centerY = (collapsedTop + collapsedBottom) / 2f
+
+        val baseline = centerY - (fm.ascent + fm.descent) / 2f
 
         paint.alpha = (255 * collapseProgress).toInt()
 
-        canvas.drawText(text, x, y, paint)
+        canvas.drawText(text, x, baseline, paint)
+
+        /*
+
+         */
     }
 
+    private fun drawReturnButton(canvas: Canvas) {
+        val chevronWidth = chevronDrawable.intrinsicWidth
+        val chevronHeight = (chevronWidth * (chevronDrawable.intrinsicHeight.toFloat() /
+                chevronDrawable.intrinsicWidth.toFloat())).toInt()
+
+        val centerY = paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f)
+
+        val chevronLeft = EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px.toInt()
+        val chevronTop = (centerY - chevronHeight / 2f).toInt()
+
+        chevronDrawable.setBounds(
+            chevronLeft,
+            chevronTop,
+            chevronLeft + chevronWidth,
+            chevronTop + chevronHeight
+        )
+        chevronDrawable.setTint(chevronColor)
+        chevronDrawable.draw(canvas)
+
+        val fm = returnTextPaint.fontMetrics
+        val baseline = centerY - (fm.ascent + fm.descent) / 2f
+        val textX = chevronLeft + chevronWidth + EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px
+        canvas.drawText(returnButtonText, textX, baseline, returnTextPaint)
+    }
 
     private fun drawMenuItems(canvas: Canvas) {
         val size = EXPANDED_MENU_ITEM_SIZE.dp.px
         val ellipsisSize = 18.dp.px
 
-        val topY = paddingTop + EXPANDED_PADDED_HEIGHT.dp.px + 3f.dp.px + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()
+        val topY = paddingTop + calculateExpandedHeightPadding() + 3f.dp.px + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()
         val baseline = topY - expandedTitleFontMetrics.ascent
         val textCenterY = baseline + (expandedTitleFontMetrics.ascent + expandedTitleFontMetrics.descent) / 2f
 
@@ -332,37 +380,6 @@ class NavigationBar @JvmOverloads constructor(
         ellipsisDrawable.draw(canvas)
     }
 
-    private val returnTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = chevronColor
-        textSize = 18.sp.px
-        textAlign = Paint.Align.LEFT
-        typeface = ResourcesCompat.getFont(context, R.font.inter_regular)
-        isSubpixelText = true
-    }
-
-    private fun drawReturnButton(canvas: Canvas) {
-        val fixedDistance = (paddingTop + EXPANDED_PADDED_HEIGHT.dp.px).toInt()
-
-        val chevronWidth = chevronDrawable.intrinsicWidth
-        val chevronHeight = (chevronWidth * (chevronDrawable.intrinsicHeight.toFloat() / chevronDrawable.intrinsicWidth.toFloat())).toInt()
-        val chevronLeft = EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px.toInt()
-        val chevronTop = fixedDistance + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px.toInt() - chevronHeight) / 2 - EXPANDED_PADDED_HEIGHT_RETURN_BOTTOM_PADDING.dp.px.toInt()
-
-        chevronDrawable.setBounds(
-            chevronLeft,
-            chevronTop,
-            chevronLeft + chevronWidth,
-            chevronTop + chevronHeight
-        )
-        chevronDrawable.setTint(chevronColor)
-        chevronDrawable.draw(canvas)
-
-        val fm = returnTextPaint.fontMetrics
-        val baseline = chevronTop + chevronHeight / 2f - (fm.ascent + fm.descent) / 2f
-        val textX = chevronLeft + chevronWidth + EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px
-        canvas.drawText(returnButtonText, textX, baseline, returnTextPaint)
-    }
-
     private var renderNodeWidth = 0
     private var renderNodeHeight = 0
 
@@ -397,7 +414,7 @@ class NavigationBar @JvmOverloads constructor(
                     val maxOffset = height - paddingTop - COLLAPSED_STATE_HEIGHT.dp.px - appendHeight
                     val dstTranslationY = (-offset.toFloat()).coerceAtLeast(-maxOffset)
 
-                    val secondStageOffsetEnd = EXPANDED_STATE_HEIGHT.dp.px + EXPANDED_PADDED_HEIGHT.dp.px + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt() -
+                    val secondStageOffsetEnd = EXPANDED_STATE_HEIGHT.dp.px + calculateExpandedHeightPadding() + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt() -
                             COLLAPSED_STATE_HEIGHT.dp.px + paddingTop + COLLAPSED_STATE_HEIGHT.dp.px + appendHeight * 2
                     val secondStageProgress = inverseLerp(-maxOffset, -secondStageOffsetEnd, -offset.toFloat()).coerceIn(0F, 1F)
 
@@ -419,6 +436,7 @@ class NavigationBar @JvmOverloads constructor(
                     }
                 }
             })
+
             if (view.computeVerticalScrollOffset() == height) {
                 view.scrollBy(0, -height)
             }
@@ -442,7 +460,7 @@ class NavigationBar @JvmOverloads constructor(
 
         val childLeft = paddingLeft + marginStart
         val childRight = width - paddingRight - marginEnd
-        val childTop = (paddingTop + EXPANDED_STATE_HEIGHT.dp.px + EXPANDED_PADDED_HEIGHT.dp.px + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()).toInt() + marginTop
+        val childTop = (paddingTop + EXPANDED_STATE_HEIGHT.dp.px + calculateExpandedHeightPadding() + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()).toInt() + marginTop
         val childBottom = childTop + child.measuredHeight
 
         child.layout(childLeft, childTop, childRight, childBottom)
@@ -480,10 +498,13 @@ class NavigationBar @JvmOverloads constructor(
         }
     }
 
+    private fun calculateExpandedHeightPadding() =
+        EXPANDED_PADDED_HEIGHT.dp.px + EXPANDED_PADDED_HEIGHT_APPEND_RETURN.dp.px
+
     companion object {
         const val EXPANDED_PADDED_HEIGHT = 22
-        const val EXPANDED_PADDED_HEIGHT_RETURN = 40
-        const val EXPANDED_PADDED_HEIGHT_RETURN_BOTTOM_PADDING = 10
+        const val EXPANDED_PADDED_HEIGHT_APPEND_RETURN = -10
+        const val EXPANDED_PADDED_HEIGHT_RETURN = 44
         const val EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING = 10
         const val EXPANDED_STATE_HEIGHT = 52
         const val EXPANDED_SIDE_PADDING = 22

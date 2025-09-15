@@ -4,7 +4,7 @@
     <dimen name="bottom_nav_height">100dp</dimen>
     <dimen name="bottom_nav_item_padding_bottom">8dp</dimen>
     <dimen name="bottom_nav_item_padding_top">52dp</dimen>
-    <dimen name="preview_player_height">56dp</dimen>
+    <dimen name="preview_player_height">58dp</dimen>
     <dimen name="splashscreen_icon_size">0dp</dimen>
     <dimen name="bottom_panel_radius">16dp</dimen>
     <dimen name="bottom_panel_shadow_radius">32dp</dimen>
