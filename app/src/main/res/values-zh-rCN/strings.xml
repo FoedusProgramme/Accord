@@ -43,4 +43,6 @@
     <string name="category_genres">主题</string>
     <string name="category_playlists">播放列表</string>
     <string name="waves_at_max">声波满格</string>
+    <string name="explore_more">探索更多</string>
+    <string name="browse_by_name">按名称浏览</string>
 </resources>

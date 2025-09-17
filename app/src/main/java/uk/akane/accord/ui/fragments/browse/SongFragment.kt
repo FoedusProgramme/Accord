@@ -9,12 +9,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SimpleItemAnimator
 import uk.akane.accord.R
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.adapters.browse.SongAdapter
 import uk.akane.accord.ui.components.NavigationBar
+import uk.akane.cupertino.widget.navigation.SwitcherPostponeFragment
 
-class SongFragment : Fragment() {
+class SongFragment : SwitcherPostponeFragment() {
 
     private val activity
         get() = requireActivity() as MainActivity
@@ -22,6 +24,10 @@ class SongFragment : Fragment() {
     private lateinit var songAdapter: SongAdapter
     private lateinit var layoutManager: LinearLayoutManager
     private lateinit var navigationBar: NavigationBar
+
+    init {
+        postponeSwitcherAnimation()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,7 +50,7 @@ class SongFragment : Fragment() {
         }
 
         recyclerView = rootView.findViewById(R.id.rv)
-        songAdapter = SongAdapter(this)
+        songAdapter = SongAdapter(recyclerView, this) { notifyContentLoaded() }
         layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = songAdapter
         recyclerView.layoutManager = layoutManager

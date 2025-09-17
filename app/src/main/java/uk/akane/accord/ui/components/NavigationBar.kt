@@ -27,6 +27,7 @@ import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.inverseLerp
 import uk.akane.accord.logic.isDarkMode
 import uk.akane.accord.logic.sp
+import uk.akane.accord.ui.MainActivity
 
 class NavigationBar @JvmOverloads constructor(
     context: Context,
@@ -35,6 +36,9 @@ class NavigationBar @JvmOverloads constructor(
     defStyleRes: Int = 0
 ) : ViewGroup(context, attrs, defStyleAttr, defStyleRes),
     DefaultLifecycleObserver {
+
+    private val activity: MainActivity
+        get() = context as MainActivity
 
     private val accentColor = resources.getColor(R.color.accentColor, null)
 
@@ -399,7 +403,7 @@ class NavigationBar @JvmOverloads constructor(
                 view.paddingLeft,
                 view.paddingTop + height,
                 view.paddingEnd,
-                view.paddingBottom
+                activity.bottomHeight
             )
 
             drawRenderNode()

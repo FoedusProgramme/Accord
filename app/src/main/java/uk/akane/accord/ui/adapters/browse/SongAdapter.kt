@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -22,7 +23,9 @@ import uk.akane.accord.logic.dp
 import uk.akane.accord.ui.MainActivity
 
 class SongAdapter(
-    fragment: Fragment
+    private val recyclerView: RecyclerView,
+    fragment: Fragment,
+    private val onContentLoaded: (() -> Unit)
 ) : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
 
     private val list = mutableListOf<SongListItem>()
@@ -92,24 +95,27 @@ class SongAdapter(
         val subtitle: TextView? = view.findViewById(R.id.subtitle)
     }
 
-    private suspend fun submitList(newList: List<MediaItem>) {
-        val grouped = newList
-            .groupBy { it.mediaMetadata.title?.firstOrNull()?.uppercaseChar() ?: '#' }
-            .toSortedMap()
+    private fun submitList(newList: List<MediaItem>) {
+        CoroutineScope(Dispatchers.Default).launch {
+            val grouped = newList
+                .groupBy { it.mediaMetadata.title?.firstOrNull()?.uppercaseChar() ?: '#' }
+                .toSortedMap()
 
-        val items = mutableListOf<SongListItem>()
-        items.add(SongListItem.Control)
-        for ((key, tracks) in grouped) {
-            items.add(SongListItem.Header(key.toString()))
-            items.addAll(tracks.map { SongListItem.Track(it) })
-        }
+            val items = mutableListOf<SongListItem>()
+            items.add(SongListItem.Control)
+            for ((key, tracks) in grouped) {
+                items.add(SongListItem.Header(key.toString()))
+                items.addAll(tracks.map { SongListItem.Track(it) })
+            }
 
-        val diffResult = DiffUtil.calculateDiff(GenreDiffCallback(list, items))
+            val diffResult = DiffUtil.calculateDiff(GenreDiffCallback(list, items))
 
-        withContext(Dispatchers.Main) {
-            list.clear()
-            list.addAll(items)
-            diffResult.dispatchUpdatesTo(this@SongAdapter)
+            withContext(Dispatchers.Main) {
+                list.clear()
+                list.addAll(items)
+                diffResult.dispatchUpdatesTo(this@SongAdapter)
+                recyclerView.post { onContentLoaded.invoke() }
+            }
         }
     }
 

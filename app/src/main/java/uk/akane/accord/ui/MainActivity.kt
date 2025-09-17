@@ -194,6 +194,11 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    val bottomHeight: Int
+        get() = bottomNavigationView.paddingBottom +
+                resources.getDimensionPixelSize(R.dimen.bottom_nav_height_raw) +
+                resources.getDimensionPixelSize(R.dimen.preview_player_height)
+
     private fun shrinkContainer(value: Float, ratio: Float) {
         shrinkContainerLayout.alpha = lerp(1f, 0.5f, value)
         shrinkContainerLayout.apply {

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/title"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    tools:text="专属精选推荐"
+    android:textColor="@color/onSurfaceColor"
+    android:fontFamily="@font/inter_bold"
+    android:textSize="24sp"
+    android:layout_marginTop="14dp"
+    android:layout_marginBottom="8dp"
+    android:layout_marginStart="22dp"
+    android:includeFontPadding="false" />

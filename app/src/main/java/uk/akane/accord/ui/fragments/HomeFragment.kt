@@ -18,7 +18,6 @@ import uk.akane.accord.ui.components.NavigationBar
 import uk.akane.accord.ui.viewmodels.AccordViewModel
 
 class HomeFragment: Fragment() {
-    private val accordViewModel: AccordViewModel by activityViewModels()
     private lateinit var navigationBar: NavigationBar
     override fun onCreateView(
         inflater: LayoutInflater,
