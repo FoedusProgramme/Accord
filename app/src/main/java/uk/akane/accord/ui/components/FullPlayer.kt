@@ -16,8 +16,11 @@ import androidx.core.view.marginLeft
 import androidx.core.view.marginRight
 import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
+import com.google.android.material.slider.Slider
 import uk.akane.accord.R
+import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.getUriToDrawable
+import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.ui.components.lyrics.LyricsViewModel
 import uk.akane.cupertino.widget.OverlayTextView
 import uk.akane.cupertino.widget.button.OverlayBackgroundButton
@@ -58,7 +61,8 @@ class FullPlayer @JvmOverloads constructor(
     private var starTransformButton: StarTransformButton
     private var ellipsisButton: OverlayBackgroundButton
 
-
+    private var fullPlayerToolbar: FullPlayerToolbar
+    private var testSlider: Slider
 
     private var lyricsViewModel: LyricsViewModel? = null
     private val floatingPanelLayout: FloatingPanelLayout
@@ -85,6 +89,8 @@ class FullPlayer @JvmOverloads constructor(
         captionOverlayButton = findViewById(R.id.caption)
         starTransformButton = findViewById(R.id.star)
         ellipsisButton = findViewById(R.id.ellipsis)
+        fullPlayerToolbar = findViewById(R.id.full_player_tool_bar)
+        testSlider = findViewById(R.id.test_slider)
 
         ellipsisButton.setOnCheckedChangeListener { v, checked ->
             callUpPlayerPopupMenu(v)
@@ -152,9 +158,48 @@ class FullPlayer @JvmOverloads constructor(
             )
         }
 
+        testSlider.addOnChangeListener { slider, progress, isUser ->
+            animateCoverChange(progress)
+        }
+
         doOnLayout {
             floatingPanelLayout.addOnSlideListener(this)
+
+            finalTranslationX = 32.dp.px - coverSimpleImageView.left
+            finalTranslationY = (20 - 18).dp.px
+            finalScale = 74.dp.px / coverSimpleImageView.height
         }
+    }
+
+    private var finalTranslationX = 0F
+    private var finalTranslationY = 0F
+    private var initialCoverRadius = resources.getDimensionPixelSize(R.dimen.full_cover_radius).toFloat()
+    private var endCoverRadius = 22.dp.px
+    private var initialElevation = 24.dp.px
+    private var finalScale = 0F
+
+    private fun animateCoverChange(fraction: Float) {
+        coverSimpleImageView.translationX = lerp(0f, finalTranslationX, fraction)
+        coverSimpleImageView.translationY = lerp(0f, finalTranslationY, fraction)
+        coverSimpleImageView.pivotX = 0F
+        coverSimpleImageView.pivotY = 0F
+        coverSimpleImageView.scaleX = lerp(1f, finalScale, fraction)
+        coverSimpleImageView.scaleY = lerp(1f, finalScale, fraction)
+        coverSimpleImageView.elevation = lerp(initialElevation, 0f, fraction)
+        coverSimpleImageView.updateCornerRadius(lerp(initialCoverRadius, endCoverRadius, fraction).toInt())
+
+        coverSimpleImageView.visibility = if (fraction == 1F) INVISIBLE else VISIBLE
+
+        titleTextView.translationY = coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
+        starTransformButton.translationY = coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
+        ellipsisButton.translationY = coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
+        subtitleTextView.translationY = coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
+
+        val quickFraction = (fraction * 1.2f).coerceIn(0F, 1F)
+        titleTextView.alpha = lerp(1F, 0F, quickFraction)
+        subtitleTextView.alpha = lerp(1F, 0F, quickFraction)
+        starTransformButton.alpha = lerp(1F, 0F, quickFraction)
+        ellipsisButton.alpha = lerp(1F, 0F, quickFraction)
     }
 
     private fun callUpPlayerPopupMenu(v: View) {
