@@ -20,6 +20,7 @@ import android.os.HandlerThread
 import android.os.Looper
 import android.os.Process
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.concurrent.futures.CallbackToFutureAdapter
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -36,14 +37,13 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED
 import androidx.media3.common.Rating
 import androidx.media3.common.Timeline
 import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.BitmapLoader
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.common.util.Util.isBitmapFactorySupportedMimeType
+import androidx.media3.common.util.Util
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -60,7 +60,6 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaConstants
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSession.MediaItemsWithStartPosition
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionError
@@ -81,14 +80,41 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import uk.akane.accord.R
+import uk.akane.accord.logic.accordApplication
+import uk.akane.accord.logic.getBitrate
+import uk.akane.accord.logic.getBooleanStrict
+import uk.akane.accord.logic.getFile
+import uk.akane.accord.logic.getStringStrict
+import uk.akane.accord.logic.hasNotificationPermission
+import uk.akane.accord.logic.mayThrowForegroundServiceStartNotAllowed
+import uk.akane.accord.logic.mayThrowForegroundServiceStartNotAllowedMiui
+import uk.akane.accord.logic.needsMissingOnDestroyCallWorkarounds
+import uk.akane.accord.logic.supportsNotificationPermission
+import uk.akane.accord.logic.ui.MeiZuLyricsMediaNotificationProvider
+import uk.akane.accord.logic.ui.isManualNotificationUpdate
+import uk.akane.accord.logic.utils.AfFormatInfo
+import uk.akane.accord.logic.utils.AfFormatTracker
+import uk.akane.accord.logic.utils.AudioTrackInfo
+import uk.akane.accord.logic.utils.BtCodecInfo
+import uk.akane.accord.logic.utils.CircularShuffleOrder
+import uk.akane.libphonograph.items.Flags
+import uk.akane.accord.logic.utils.LastPlayedManager
+import uk.akane.accord.logic.utils.LrcUtils
+import uk.akane.accord.logic.utils.SemanticLyrics
+import uk.akane.accord.logic.utils.exoplayer.EndedWorkaroundPlayer
+import uk.akane.accord.logic.utils.exoplayer.GramophoneExtractorsFactory
+import uk.akane.accord.logic.utils.exoplayer.GramophoneMediaSourceFactory
+import uk.akane.accord.logic.utils.exoplayer.GramophoneRenderFactory
+import uk.akane.accord.ui.MainActivity
+import kotlin.collections.get
 import kotlin.random.Random
-
 
 /**
  * [GramophonePlaybackService] is a server service.
  * It's using exoplayer2 as its player backend.
  */
-@androidx.annotation.OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class)
 class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Listener,
     MediaLibraryService.MediaLibrarySession.Callback, Player.Listener, AnalyticsListener {
 
@@ -311,11 +337,14 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                     .setEnableDecoderFallback(true)
                     .setEnableAudioTrackPlaybackParams(true)
                     .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER),
-                GramophoneMediaSourceFactory(DefaultDataSource.Factory(this), GramophoneExtractorsFactory().also {
-                    it.setConstantBitrateSeekingEnabled(true)
-                    if (prefs.getBooleanStrict("mp3_index_seeking", false))
-                        it.setMp3ExtractorFlags(Mp3Extractor.FLAG_ENABLE_INDEX_SEEKING)
-                }))
+                GramophoneMediaSourceFactory(
+                    DefaultDataSource.Factory(this),
+                    GramophoneExtractorsFactory().also {
+                        it.setConstantBitrateSeekingEnabled(true)
+                        if (prefs.getBooleanStrict("mp3_index_seeking", false))
+                            it.setMp3ExtractorFlags(Mp3Extractor.FLAG_ENABLE_INDEX_SEEKING)
+                    })
+            )
                 .setWakeMode(C.WAKE_MODE_LOCAL)
                 .setAudioAttributes(
                     AudioAttributes
@@ -326,7 +355,8 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                 )
                 .setHandleAudioBecomingNoisy(true)
                 .setTrackSelector(DefaultTrackSelector(this).apply {
-                    setParameters(buildUponParameters()
+                    setParameters(
+                        buildUponParameters()
                         .setAllowInvalidateSelectionsOnRendererCapabilitiesChange(true)
                         .setAudioOffloadPreferences(
                             TrackSelectionParameters.AudioOffloadPreferences.Builder()
@@ -351,7 +381,14 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                 this@GramophonePlaybackService.onAudioSessionIdChanged(audioSessionId)
             }
         })
-        player.exoPlayer.setShuffleOrder(CircularShuffleOrder(player, 0, 0, Random.nextLong()))
+        player.exoPlayer.setShuffleOrder(
+            CircularShuffleOrder(
+                player,
+                0,
+                0,
+                Random.Default.nextLong()
+            )
+        )
         lastPlayedManager = LastPlayedManager(this, player)
         lastPlayedManager.allowSavingState = false
 
@@ -404,7 +441,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                     }
 
                     override fun supportsMimeType(mimeType: String): Boolean {
-                        return isBitmapFactorySupportedMimeType(mimeType)
+                        return Util.isBitmapFactorySupportedMimeType(mimeType)
                     }
 
                     override fun loadBitmapFromMetadata(metadata: MediaMetadata): ListenableFuture<Bitmap>? {
@@ -475,7 +512,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         }
         if (Flags.FAVORITE_SONGS) {
             scope.launch {
-                gramophoneApplication.reader.songListFlow.collect { list ->
+                accordApplication.reader.songListFlow.collect { list ->
                     withContext(Dispatchers.Main + NonCancellable) {
                         val cmi = controller?.currentMediaItem?.mediaId
                         if (cmi == null) return@withContext
@@ -533,7 +570,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         proxy?.let {
             it.adapter.closeProfileProxy(BluetoothProfile.A2DP, it.a2dp)
         }
-        LyricWidgetProvider.update(this)
+        // LyricWidgetProvider.update(this)
         super.onDestroy()
     }
 
@@ -737,8 +774,8 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         mediaSession: MediaSession,
         controller: MediaSession.ControllerInfo,
         isForPlayback: Boolean
-    ): ListenableFuture<MediaItemsWithStartPosition> {
-        val settable = SettableFuture.create<MediaItemsWithStartPosition>()
+    ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+        val settable = SettableFuture.create<MediaSession.MediaItemsWithStartPosition>()
         val job = scope.launch {
             lastPlayedManager.restore { items, factory ->
                 if (items == null) {
@@ -786,9 +823,13 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                                             )
                                         }
                                     }).build()).build()
-	                    }
-                        settable.set(MediaItemsWithStartPosition(listOf(theItem),
-                            0, items.startPositionMs))
+                        }
+                        settable.set(
+                            MediaSession.MediaItemsWithStartPosition(
+                                listOf(theItem),
+                                0, items.startPositionMs
+                            )
+                        )
                     } else {
                         settable.set(items)
                     }
@@ -834,18 +875,18 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
             // round-trip to make sure the current callback is completed
             val trim = prefs.getBoolean("trim_lyrics", true)
             val multiLine = prefs.getBoolean("lyric_multiline", false)
-            val options = LrcParserOptions(
+            val options = LrcUtils.LrcParserOptions(
                 trim = trim, multiLine = multiLine,
                 errorText = getString(R.string.failed_to_parse_lyric)
             )
-            var lrc = loadAndParseLyricsFile(mediaItem?.getFile(), options)
+            var lrc = LrcUtils.loadAndParseLyricsFile(mediaItem?.getFile(), options)
             if (lrc == null) {
                 loop@ for (i in tracks.groups) {
                     for (j in 0 until i.length) {
                         if (!i.isTrackSelected(j)) continue
                         // note: wav files can have null metadata
                         val trackMetadata = i.getTrackFormat(j).metadata ?: continue
-                        lrc = extractAndParseLyrics(trackMetadata, options) ?: continue
+                        lrc = LrcUtils.extractAndParseLyrics(trackMetadata, options) ?: continue
                         break@loop
                     }
                 }
@@ -1008,7 +1049,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         super<Player.Listener>.onEvents(player, events)
         // if timeline changed, shuffle order is handled elsewhere instead (cloneAndInsert called by
         // ExoPlayer for common case and nextShuffleOrder for resumption case)
-        if (events.contains(EVENT_SHUFFLE_MODE_ENABLED_CHANGED)
+        if (events.contains(Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED)
             && !events.contains(Player.EVENT_TIMELINE_CHANGED)
         ) {
             // when enabling shuffle, re-shuffle lists so that the first index is up to date
@@ -1142,7 +1183,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         sendLyricNow(new || !updatedLyricAtLeastOnce)
         updatedLyricAtLeastOnce = true
         val isStatusBarLyricsEnabled = prefs.getBooleanStrict("status_bar_lyrics", false)
-        val hnw = !LyricWidgetProvider.hasWidget(this)
+        val hnw = false // !LyricWidgetProvider.hasWidget(this)
         if (controller?.isPlaying != true || (!isStatusBarLyricsEnabled && hnw)) return
         val cPos = (controller?.contentPosition ?: 0).toULong()
         val nextUpdate = syncedLyrics?.text?.flatMap {
@@ -1154,10 +1195,12 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
     }
 
     private fun sendLyricNow(new: Boolean) {
+        /*
         if (new)
             LyricWidgetProvider.update(this)
         else
             LyricWidgetProvider.adapterUpdate(this)
+         */
         val isStatusBarLyricsEnabled = prefs.getBooleanStrict("status_bar_lyrics", false)
         val highlightedLyric = if (isStatusBarLyricsEnabled && controller?.playWhenReady == true)
             getCurrentLyricIndex(false)?.let {

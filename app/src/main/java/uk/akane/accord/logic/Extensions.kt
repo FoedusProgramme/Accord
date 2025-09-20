@@ -1,10 +1,12 @@
 package uk.akane.accord.logic
 
+import android.Manifest
 import android.animation.Animator
 import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
 import android.content.ContentResolver
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
@@ -12,9 +14,12 @@ import android.graphics.Outline
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RenderNode
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
-import android.util.SparseIntArray
+import android.os.Looper
+import android.os.StrictMode
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -23,24 +28,29 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.AnyRes
 import androidx.annotation.FloatRange
+import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.Insets
+import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.core.text.TextUtilsCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.media3.common.MediaItem
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.google.android.material.appbar.MaterialToolbar
+import org.jetbrains.annotations.Contract
+import uk.akane.accord.Accord
+import uk.akane.accord.BuildConfig
 import uk.akane.accord.R
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.logic.utils.UiUtils
 import uk.akane.cupertino.widget.utils.AnimationUtils
+import java.io.File
 import java.util.Locale
 import kotlin.math.absoluteValue
 import kotlin.math.max
@@ -352,8 +362,72 @@ fun inverseLerp(a: Float, b: Float, v: Float, clamp: Boolean = false): Float {
     return t
 }
 
-fun Context.hasMediaPermissionSeparation() =
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+fun MediaItem.getUri(): Uri? {
+    return localConfiguration?.uri
+}
+
+fun MediaItem.getFile(): File? {
+    return getUri()?.toFile()
+}
+
+fun MediaItem.getBitrate(): Int? {
+    val retriever = MediaMetadataRetriever()
+    return try {
+        val filePath = getFile()?.path ?: return null
+        retriever.setDataSource(filePath)
+        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
+            ?.toIntOrNull()
+    } catch (e: Exception) {
+        Log.w("getBitrate", Log.getStackTraceString(e))
+        null
+    } finally {
+        retriever.release()
+    }
+}
+
+val Context.accordApplication
+    get() = this.applicationContext as Accord
+
+// the whole point of this function is to do literally nothing at all (but without impacting
+// performance) in release builds and ignore StrictMode violations in debug builds
+inline fun <reified T> allowDiskAccessInStrictMode(doIt: () -> T): T {
+    return if (BuildConfig.DEBUG) {
+        if (Looper.getMainLooper() != Looper.myLooper()) {
+            throw IllegalStateException("allowDiskAccessInStrictMode() on wrong thread")
+        } else {
+            val policy = StrictMode.allowThreadDiskReads()
+            try {
+                StrictMode.allowThreadDiskWrites()
+                doIt()
+            } finally {
+                StrictMode.setThreadPolicy(policy)
+            }
+        }
+    } else doIt()
+}
+
+inline fun <reified T> SharedPreferences.use(
+    doIt: SharedPreferences.() -> T
+): T {
+    return allowDiskAccessInStrictMode { doIt() }
+}
+
+// use below functions if accessing from UI thread only
+@Suppress("NOTHING_TO_INLINE")
+@Contract(value = "_,!null->!null")
+inline fun SharedPreferences.getStringStrict(key: String, defValue: String?): String? {
+    return use { getString(key, defValue) }
+}
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun SharedPreferences.getIntStrict(key: String, defValue: Int): Int {
+    return use { getInt(key, defValue) }
+}
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun SharedPreferences.getBooleanStrict(key: String, defValue: Boolean): Boolean {
+    return use { getBoolean(key, defValue) }
+}
 
 fun Context.isDarkMode(): Boolean =
     resources.configuration.uiMode and
@@ -364,9 +438,46 @@ fun Context.isAlbumPermissionGranted() =
             (!hasMediaPermissionSeparation() && isEssentialPermissionGranted())
 
 fun Context.isEssentialPermissionGranted() =
-    (!hasMediaPermissionSeparation() && (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) ||
-            (hasMediaPermissionSeparation() && (checkSelfPermission(android.Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED))
+    (!hasMediaPermissionSeparation() && (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) ||
+            (hasMediaPermissionSeparation() && (checkSelfPermission(Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED))
+
+fun Context.hasMediaPermissionSeparation() =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+fun Context.hasNotificationPermission() =
+    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun needsMissingOnDestroyCallWorkarounds(): Boolean =
+    Build.VERSION.SDK_INT == Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun supportsNotificationPermission(): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun hasScopedStorageWithMediaTypes(): Boolean =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun mayThrowForegroundServiceStartNotAllowed(): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun mayThrowForegroundServiceStartNotAllowedMiui(): Boolean =
+    Build.MANUFACTURER.lowercase() == "xiaomi" &&
+            Build.VERSION.SDK_INT == Build.VERSION_CODES.TIRAMISU
+
+inline fun <reified T> MutableList<T>.forEachSupport(skipFirst: Int = 0, operator: (T) -> Unit) {
+    val li = listIterator()
+    var skip = skipFirst
+    while (skip-- > 0) {
+        li.next()
+    }
+    while (li.hasNext()) {
+        operator(li.next())
+    }
+}

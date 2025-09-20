@@ -1,7 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
 pluginManagement {
     repositories {
         google {
@@ -15,6 +13,7 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
@@ -24,5 +23,23 @@ dependencyResolutionManagement {
     }
 }
 
+includeBuild(file("media3").toPath().toRealPath().toAbsolutePath().toString()) {
+    dependencySubstitution {
+        substitute(module("androidx.media3:media3-common")).using(project(":lib-common"))
+        substitute(module("androidx.media3:media3-common-ktx")).using(project(":lib-common-ktx"))
+        substitute(module("androidx.media3:media3-exoplayer")).using(project(":lib-exoplayer"))
+        substitute(module("androidx.media3:media3-exoplayer-midi")).using(project(":lib-decoder-midi"))
+        substitute(module("androidx.media3:media3-session")).using(project(":lib-session"))
+    }
+}
+
 rootProject.name = "Accord"
-include(":libPhonograph", ":app", ":Cupertino")
+include(
+    ":app",
+    ":Cupertino",
+    ":libPhonograph",
+    ":hificore",
+    ":misc:audiofxfwd",
+    ":misc:audiofxstub",
+    ":misc:alacdecoder"
+)

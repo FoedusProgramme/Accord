@@ -1,13 +1,14 @@
 package uk.akane.accord
 
 import android.app.Application
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import uk.akane.accord.logic.hasScopedStorageWithMediaTypes
 import uk.akane.libphonograph.reader.FlowReader
 
 class Accord : Application() {
-    var reader: FlowReader? = null
+
+    lateinit var reader: FlowReader
+        private set
 
     val minSongLengthSecondsFlow = MutableStateFlow<Long>(0)
     val blackListSetFlow = MutableStateFlow<Set<String>>(setOf())

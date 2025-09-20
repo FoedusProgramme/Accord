@@ -43,6 +43,10 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val DESIRED_BOTTOM_SHEET_OPEN_RATIO = 0.9f
         const val DESIRED_BOTTOM_SHEET_DISPLAY_RATIO = 0.85F
+
+        const val PLAYBACK_AUTO_START_FOR_FGS = "AutoStartFgs"
+        const val PLAYBACK_AUTO_PLAY_ID = "AutoStartId"
+        const val PLAYBACK_AUTO_PLAY_POSITION = "AutoStartPos"
     }
 
     private lateinit var bottomNavigationView: BottomNavigationView
@@ -79,7 +83,7 @@ class MainActivity : AppCompatActivity() {
             Log.d("TAG", "yes we have permission")
             updateLibrary()
             lifecycleScope.launch {
-                reader?.songListFlow?.collect { songs ->
+                reader.songListFlow.collect { songs ->
                     Log.d("TAG", "collected song list: ${songs.size}")
                 }
             }
@@ -302,7 +306,7 @@ class MainActivity : AppCompatActivity() {
 
     fun updateLibrary(then: (() -> Unit)? = null) {
         CoroutineScope(Dispatchers.Default).launch {
-            reader?.refresh()
+            reader.refresh()
             withContext(Dispatchers.Main) {
                 then?.let { it() }
             }

@@ -1,15 +1,10 @@
 package uk.akane.accord.logic.utils
 
 import android.content.Context
-import android.os.Bundle
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import uk.akane.accord.ui.viewmodels.AccordViewModel
-import uk.akane.libphonograph.reader.ReaderResult
 import uk.akane.libphonograph.reader.SimpleReader
 import uk.akane.libphonograph.reader.SimpleReaderResult
 
