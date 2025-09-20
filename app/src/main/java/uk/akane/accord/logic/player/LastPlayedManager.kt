@@ -15,7 +15,7 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package uk.akane.accord.logic.utils
+package uk.akane.accord.logic.player
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -37,7 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uk.akane.accord.BuildConfig
-import uk.akane.accord.logic.utils.exoplayer.EndedWorkaroundPlayer
+import uk.akane.accord.logic.player.exoplayer.EndedWorkaroundPlayer
 import uk.akane.libphonograph.items.EXTRA_ADD_DATE
 import uk.akane.libphonograph.items.EXTRA_ALBUM_ID
 import uk.akane.libphonograph.items.EXTRA_ALBUM_YEAR

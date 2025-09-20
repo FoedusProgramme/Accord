@@ -1,4 +1,4 @@
-package uk.akane.accord.logic.utils
+package uk.akane.accord.logic.player
 
 import android.util.Log
 import androidx.annotation.OptIn

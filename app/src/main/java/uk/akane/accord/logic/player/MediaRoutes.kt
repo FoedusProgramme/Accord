@@ -1,4 +1,4 @@
-package uk.akane.accord.logic.utils
+package uk.akane.accord.logic.player
 
 import android.annotation.SuppressLint
 import android.content.Context

@@ -1,4 +1,4 @@
-package uk.akane.accord.logic.utils.exoplayer
+package uk.akane.accord.logic.player.exoplayer
 
 import android.net.Uri
 import androidx.annotation.GuardedBy

@@ -1,11 +1,11 @@
-package uk.akane.accord.logic.utils
+package uk.akane.accord.logic.player
 
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.source.ShuffleOrder
-import uk.akane.accord.logic.utils.exoplayer.EndedWorkaroundPlayer
+import uk.akane.accord.logic.player.exoplayer.EndedWorkaroundPlayer
 import kotlin.random.Random
 
 /**

@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.FrameLayout
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -36,6 +37,7 @@ import uk.akane.accord.ui.fragments.BrowseFragment
 import uk.akane.accord.ui.fragments.HomeFragment
 import uk.akane.accord.ui.fragments.LibraryFragment
 import uk.akane.accord.ui.fragments.SearchFragment
+import uk.akane.accord.ui.viewmodels.MediaControllerViewModel
 import uk.akane.cupertino.widget.navigation.FragmentSwitcherView
 import uk.akane.cupertino.widget.utils.AnimationUtils
 
@@ -318,5 +320,7 @@ class MainActivity : AppCompatActivity() {
 
     inline val reader
         get() = accord.reader
+
+    val controllerViewModel: MediaControllerViewModel by viewModels()
 
 }

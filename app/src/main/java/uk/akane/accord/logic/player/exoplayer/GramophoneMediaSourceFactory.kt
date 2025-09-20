@@ -1,4 +1,4 @@
-package uk.akane.accord.logic.utils.exoplayer
+package uk.akane.accord.logic.player.exoplayer
 
 import androidx.annotation.OptIn
 import androidx.media3.common.Format

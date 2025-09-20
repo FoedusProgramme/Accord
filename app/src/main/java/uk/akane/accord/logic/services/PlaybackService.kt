@@ -93,29 +93,29 @@ import uk.akane.accord.logic.needsMissingOnDestroyCallWorkarounds
 import uk.akane.accord.logic.supportsNotificationPermission
 import uk.akane.accord.logic.ui.MeiZuLyricsMediaNotificationProvider
 import uk.akane.accord.logic.ui.isManualNotificationUpdate
-import uk.akane.accord.logic.utils.AfFormatInfo
-import uk.akane.accord.logic.utils.AfFormatTracker
-import uk.akane.accord.logic.utils.AudioTrackInfo
-import uk.akane.accord.logic.utils.BtCodecInfo
-import uk.akane.accord.logic.utils.CircularShuffleOrder
+import uk.akane.accord.logic.player.AfFormatInfo
+import uk.akane.accord.logic.player.AfFormatTracker
+import uk.akane.accord.logic.player.AudioTrackInfo
+import uk.akane.accord.logic.player.BtCodecInfo
+import uk.akane.accord.logic.player.CircularShuffleOrder
 import uk.akane.libphonograph.items.Flags
-import uk.akane.accord.logic.utils.LastPlayedManager
-import uk.akane.accord.logic.utils.LrcUtils
-import uk.akane.accord.logic.utils.SemanticLyrics
-import uk.akane.accord.logic.utils.exoplayer.EndedWorkaroundPlayer
-import uk.akane.accord.logic.utils.exoplayer.GramophoneExtractorsFactory
-import uk.akane.accord.logic.utils.exoplayer.GramophoneMediaSourceFactory
-import uk.akane.accord.logic.utils.exoplayer.GramophoneRenderFactory
+import uk.akane.accord.logic.player.LastPlayedManager
+import uk.akane.accord.logic.player.LrcUtils
+import uk.akane.accord.logic.player.SemanticLyrics
+import uk.akane.accord.logic.player.exoplayer.EndedWorkaroundPlayer
+import uk.akane.accord.logic.player.exoplayer.GramophoneExtractorsFactory
+import uk.akane.accord.logic.player.exoplayer.GramophoneMediaSourceFactory
+import uk.akane.accord.logic.player.exoplayer.GramophoneRenderFactory
 import uk.akane.accord.ui.MainActivity
 import kotlin.collections.get
 import kotlin.random.Random
 
 /**
- * [GramophonePlaybackService] is a server service.
+ * [PlaybackService] is a server service.
  * It's using exoplayer2 as its player backend.
  */
 @OptIn(UnstableApi::class)
-class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Listener,
+class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
     MediaLibraryService.MediaLibrarySession.Callback, Player.Listener, AnalyticsListener {
 
     companion object {
@@ -136,7 +136,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         const val SERVICE_GET_LYRICS = "get_lyrics"
         const val SERVICE_GET_SESSION = "get_session"
         const val SERVICE_TIMER_CHANGED = "changed_timer"
-        var instanceForWidgetAndLyricsOnly: GramophonePlaybackService? = null
+        var instanceForWidgetAndLyricsOnly: PlaybackService? = null
     }
 
     private var lastSessionId = 0
@@ -378,7 +378,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         player.exoPlayer.addListener(object : Player.Listener {
             override fun onAudioSessionIdChanged(audioSessionId: Int) {
                 // https://github.com/androidx/media/issues/2739
-                this@GramophonePlaybackService.onAudioSessionIdChanged(audioSessionId)
+                this@PlaybackService.onAudioSessionIdChanged(audioSessionId)
             }
         })
         player.exoPlayer.setShuffleOrder(
@@ -408,7 +408,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                     ): ListenableFuture<Bitmap> {
                         return CallbackToFutureAdapter.getFuture { completer ->
                             imageLoader.enqueue(
-                                ImageRequest.Builder(this@GramophonePlaybackService)
+                                ImageRequest.Builder(this@PlaybackService)
                                     .data(uri)
                                     .allowHardware(false)
                                     .target(
@@ -432,7 +432,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                                     completer.addCancellationListener(
                                         { it.dispose() },
                                         ContextCompat.getMainExecutor(
-                                            this@GramophonePlaybackService
+                                            this@PlaybackService
                                         )
                                     )
                                 }
@@ -1022,7 +1022,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         bitrate = null
         bitrateFetcher.launch {
             bitrate = mediaItem?.getBitrate() // TODO subtract cover size
-            this@GramophonePlaybackService.mediaSession?.broadcastCustomCommand(
+            this@PlaybackService.mediaSession?.broadcastCustomCommand(
                 SessionCommand(SERVICE_GET_AUDIO_FORMAT, Bundle.EMPTY),
                 Bundle.EMPTY
             )
@@ -1246,13 +1246,13 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                 setAutoCancel(true)
                 setCategory(NotificationCompat.CATEGORY_ERROR)
                 setSmallIcon(R.drawable.ic_error)
-                setContentTitle(this@GramophonePlaybackService.getString(R.string.fgs_failed_title))
-                setContentText(this@GramophonePlaybackService.getString(R.string.fgs_failed_text))
+                setContentTitle(this@PlaybackService.getString(R.string.fgs_failed_title))
+                setContentText(this@PlaybackService.getString(R.string.fgs_failed_text))
                 setContentIntent(
                     PendingIntent.getActivity(
-                        this@GramophonePlaybackService,
+                        this@PlaybackService,
                         PENDING_INTENT_NOTIFY_ID,
-                        Intent(this@GramophonePlaybackService, MainActivity::class.java)
+                        Intent(this@PlaybackService, MainActivity::class.java)
                             .putExtra(MainActivity.PLAYBACK_AUTO_START_FOR_FGS, true),
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                     )

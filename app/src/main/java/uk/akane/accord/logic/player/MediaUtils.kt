@@ -1,4 +1,4 @@
-package uk.akane.accord.logic.utils
+package uk.akane.accord.logic.player
 
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope

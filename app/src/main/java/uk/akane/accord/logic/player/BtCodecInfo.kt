@@ -1,4 +1,4 @@
-package uk.akane.accord.logic.utils
+package uk.akane.accord.logic.player
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -130,7 +130,8 @@ data class BtCodecInfo(val codec: String?, val sampleRateHz: Int?, val channelCo
         }
 
         class Proxy(val adapter: BluetoothAdapter, private val callback: (BtCodecInfo?) -> Unit,
-                    private val context: Context) : BluetoothProfile.ServiceListener {
+                    private val context: Context
+        ) : BluetoothProfile.ServiceListener {
             var a2dp: BluetoothA2dp? = null
             override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
                 a2dp = proxy as BluetoothA2dp

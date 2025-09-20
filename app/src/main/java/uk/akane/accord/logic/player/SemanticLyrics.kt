@@ -1,4 +1,4 @@
-package uk.akane.accord.logic.utils
+package uk.akane.accord.logic.player
 
 import android.os.Parcel
 import android.os.Parcelable
@@ -15,12 +15,9 @@ import kotlinx.parcelize.WriteWith
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import uk.akane.accord.logic.forEachSupport
-import uk.akane.accord.logic.utils.SemanticLyrics.LyricLine
-import uk.akane.accord.logic.utils.SemanticLyrics.SyncedLyrics
-import uk.akane.accord.logic.utils.SemanticLyrics.UnsyncedLyrics
-import uk.akane.accord.logic.utils.SemanticLyrics.Word
 import java.io.StringReader
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.collections.get
 import kotlin.math.min
 
 private const val TAG = "SemanticLyrics"
@@ -363,7 +360,7 @@ private sealed class SyntacticLrc {
     }
 }
 
-private fun splitBidirectionalWords(syncedLyrics: SyncedLyrics) {
+private fun splitBidirectionalWords(syncedLyrics: SemanticLyrics.SyncedLyrics) {
     syncedLyrics.text.forEach { line ->
         if (line.words.isNullOrEmpty()) return@forEach
         val bidirectionalBarriers = findBidirectionalBarriers(line.text)
@@ -391,11 +388,11 @@ private fun splitBidirectionalWords(syncedLyrics: SyncedLyrics) {
                 it.timeRange.count() / it.charRange.count().toFloat()
             }.average().let { if (it.isNaN()) 100.0 else it } * (barrier.first -
                     evilWord.charRange.first))).toULong(), evilWord.timeRange.last - 1uL)
-            val firstPart = Word(
+            val firstPart = SemanticLyrics.Word(
                 charRange = evilWord.charRange.first..<barrier.first,
                 timeRange = evilWord.timeRange.first..<barrierTime, isRtl = lastWasRtl
             )
-            val secondPart = Word(
+            val secondPart = SemanticLyrics.Word(
                 charRange = barrier.first..evilWord.charRange.last,
                 timeRange = barrierTime..evilWord.timeRange.last, isRtl = barrier.second
             )
@@ -537,14 +534,14 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
             out.removeAt(0)
         //while (out.lastOrNull()?.first?.isBlank() == true)
         //    out.removeAt(out.lastIndex) TODO this breaks unit tests, but blank lines are useless
-        return UnsyncedLyrics(out.map { lyric ->
+        return SemanticLyrics.UnsyncedLyrics(out.map { lyric ->
             if (defaultIsWalaokeM && lyric.second == null)
                 lyric.copy(second = SpeakerEntity.Male)
             else lyric
         })
     }
     // Synced lyrics processing state machine starts here
-    val out = mutableListOf<LyricLine>()
+    val out = mutableListOf<SemanticLyrics.LyricLine>()
     var offset = 0L
     var lastSyncPoint: ULong? = null
     var lastWordSyncPoint: ULong? = null
@@ -598,7 +595,7 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
 
             element is SyntacticLrc.NewLine -> {
                 val words = if (currentLine.size > 1 || hadWordSyncSinceNewLine) {
-                    val wout = mutableListOf<Word>()
+                    val wout = mutableListOf<SemanticLyrics.Word>()
                     var idx = 0
                     for (i in currentLine.indices) {
                         val current = currentLine[i]
@@ -648,7 +645,7 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
                         if (endInclusive > current.first)
                         // isRtl is filled in later in splitBidirectionalWords
                             wout.add(
-                                Word(
+                                SemanticLyrics.Word(
                                     current.first..endInclusive,
                                     startIndex..<endIndex,
                                     isRtl = false
@@ -678,7 +675,16 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
                     }
                     val start = if (currentLine.isNotEmpty()) currentLine.first().first
                     else lastWordSyncPoint ?: lastSyncPoint!!
-                    out.add(LyricLine(text, start, 0uL /* filled later */, words, speaker, false /* filled later */))
+                    out.add(
+                        SemanticLyrics.LyricLine(
+                            text,
+                            start,
+                            0uL /* filled later */,
+                            words,
+                            speaker,
+                            false /* filled later */
+                        )
+                    )
                     compressed.forEach {
                         val diff = it - start
                         out.add(out.last().copy(start = it, words = words?.map {
@@ -720,7 +726,7 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
         out.removeAt(0)
     //while (out.lastOrNull()?.text?.isBlank() == true)
     //    out.removeAt(out.lastIndex) TODO this breaks unit tests, but blank lines are useless
-    return SyncedLyrics(out).also { splitBidirectionalWords(it) }
+    return SemanticLyrics.SyncedLyrics(out).also { splitBidirectionalWords(it) }
 }
 
 private val tt = "http://www.w3.org/ns/ttml"
@@ -1009,7 +1015,7 @@ fun parseTtml(lyricText: String): SemanticLyrics? {
     parser.require(XmlPullParser.START_TAG, tt, "body")
     val state = TtmlParserState(parser, timer)
     state.parse()
-    return SyncedLyrics(state.paragraphs.flatMap {
+    return SemanticLyrics.SyncedLyrics(state.paragraphs.flatMap {
         /* x-bg can be anywhere in a line, let's split it out into
          * separate lines for now, that looks better */
         if (it.texts.isEmpty()) return@flatMap listOf(it)
@@ -1018,16 +1024,19 @@ fun parseTtml(lyricText: String): SemanticLyrics? {
         var cur = 0
         do {
             if (cur == 0 && idx == -1 && !(it.texts.firstOrNull()?.text?.startsWith('(') == true
-                && it.texts.lastOrNull()?.text?.endsWith(')') == true &&
-                        (it.texts.firstOrNull()?.role ?: it.role) == "x-bg"))
+                        && it.texts.lastOrNull()?.text?.endsWith(')') == true &&
+                        (it.texts.firstOrNull()?.role ?: it.role) == "x-bg")
+            )
                 out.add(it.copy(role = it.texts.firstOrNull()?.role ?: it.role))
             else {
                 val t = it.texts.subList(cur, idx.let { i -> if (i == -1) it.texts.size else i })
                     .toMutableList()
                 if (t.firstOrNull()?.text?.startsWith('(') == true
-                    && t.lastOrNull()?.text?.endsWith(')') == true) {
+                    && t.lastOrNull()?.text?.endsWith(')') == true
+                ) {
                     t[0] = t.first().copy(text = t.first().text.substring(1))
-                    t[t.size - 1] = t.last().copy(text = t.last().text.substring(0, t.last().text.length - 1))
+                    t[t.size - 1] =
+                        t.last().copy(text = t.last().text.substring(0, t.last().text.length - 1))
                 }
                 out.add(
                     it.copy(
@@ -1052,13 +1061,15 @@ fun parseTtml(lyricText: String): SemanticLyrics? {
         }
         val theWords = it.texts.mapIndexed { i, it -> it to words[i] }
             .filter { it.first.time != null }
-            .map { Word(it.first.time!!, it.second, false) }
+            .map { SemanticLyrics.Word(it.first.time!!, it.second, false) }
             .takeIf { it.isNotEmpty() }
             ?.toMutableList()
         val isBg = it.role == "x-bg"
         val isGroup = peopleToType[it.agent] == "group"
-        val isVoice2 = it.agent != null && (people[peopleToType[it.agent]] ?: throw NullPointerException(
-            "expected to find ${it.agent} (${peopleToType[it.agent]}) in $people")).indexOf(it.agent) % 2 == 1
+        val isVoice2 =
+            it.agent != null && (people[peopleToType[it.agent]] ?: throw NullPointerException(
+                "expected to find ${it.agent} (${peopleToType[it.agent]}) in $people"
+            )).indexOf(it.agent) % 2 == 1
         val speaker = when {
             isGroup && isBg -> SpeakerEntity.GroupBackground
             isGroup -> SpeakerEntity.Group
@@ -1068,7 +1079,14 @@ fun parseTtml(lyricText: String): SemanticLyrics? {
             else -> SpeakerEntity.Voice1
         }
         // TODO translations for ttml? does anyone actually do that? how could that work?
-        LyricLine(text.toString(), it.time.first, it.time.last, theWords, speaker, false)
+        SemanticLyrics.LyricLine(
+            text.toString(),
+            it.time.first,
+            it.time.last,
+            theWords,
+            speaker,
+            false
+        )
     }).also { splitBidirectionalWords(it) }
 }
 
@@ -1087,11 +1105,11 @@ fun parseSrt(lyricText: String, trimEnabled: Boolean): SemanticLyrics? {
         return null
     }
     var lastTs: ULong? = null
-    return SyncedLyrics(cues.map {
+    return SemanticLyrics.SyncedLyrics(cues.map {
         val ts = (it.startTimeUs / 1000).toULong()
         val l = lastTs == ts
         lastTs = ts
-        LyricLine(it.cues[0].text!!.toString().let {
+        SemanticLyrics.LyricLine(it.cues[0].text!!.toString().let {
             if (trimEnabled)
                 it.trim()
             else it

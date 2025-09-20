@@ -1,4 +1,4 @@
-package uk.akane.accord.logic.utils.exoplayer
+package uk.akane.accord.logic.player.exoplayer
 
 import android.content.Context
 import android.os.Handler
