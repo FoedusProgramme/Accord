@@ -57,7 +57,6 @@ android {
         checkReleaseBuilds = false
     }
 }
-
 dependencies {
     implementation(projects.libPhonograph)
     implementation(projects.cupertino)
@@ -69,6 +68,9 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.preference)
+    implementation(libs.androidx.concurrent.futures.ktx)
     implementation(libs.material)
     implementation(libs.coil)
     debugImplementation(libs.leakcanary.android)

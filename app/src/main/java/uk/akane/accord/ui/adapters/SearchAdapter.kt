@@ -21,7 +21,8 @@ import uk.akane.libphonograph.items.Genre
 
 class SearchAdapter(
     context: Context,
-    fragment: Fragment
+    fragment: Fragment,
+    callback: (() -> Unit)
 ) : RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
 
     private var list: List<Genre> = emptyList()
@@ -47,6 +48,9 @@ class SearchAdapter(
     init {
         fragment.lifecycleScope.launch {
             (fragment.activity as MainActivity).reader?.genreListFlow?.collectLatest { newList ->
+                if (newList.isNotEmpty()) {
+                    callback.invoke()
+                }
                 submitList(newList)
             }
         }

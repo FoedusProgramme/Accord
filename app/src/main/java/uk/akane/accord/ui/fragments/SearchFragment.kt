@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
@@ -15,11 +16,14 @@ import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.adapters.SearchAdapter
 import uk.akane.accord.ui.components.NavigationBar
 import uk.akane.accord.ui.viewmodels.AccordViewModel
+import uk.akane.cupertino.widget.fadOutAnimation
+import uk.akane.cupertino.widget.utils.AnimationUtils
 
 class SearchFragment: Fragment() {
-    private val accordViewModel: AccordViewModel by activityViewModels()
     private lateinit var navigationBar: NavigationBar
     private lateinit var recyclerView: RecyclerView
+    private lateinit var indicatorTitleTextView: TextView
+    private lateinit var indicatorSubtitleTextView: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,6 +33,8 @@ class SearchFragment: Fragment() {
         val rootView = inflater.inflate(R.layout.fragment_search, container, false)
         navigationBar = rootView.findViewById(R.id.navigation_bar)
         recyclerView = rootView.findViewById(R.id.rv)
+        indicatorTitleTextView = rootView.findViewById(R.id.no_track_title)
+        indicatorSubtitleTextView = rootView.findViewById(R.id.no_track_subtitle)
 
         ViewCompat.setOnApplyWindowInsetsListener(navigationBar) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -48,7 +54,10 @@ class SearchFragment: Fragment() {
         }
 
         recyclerView.layoutManager = GridLayoutManager(context, 2)
-        recyclerView.adapter = SearchAdapter(requireContext(), this)
+        recyclerView.adapter = SearchAdapter(requireContext(), this) {
+            indicatorSubtitleTextView.fadOutAnimation(interpolator = AnimationUtils.easingStandardInterpolator)
+            indicatorTitleTextView.fadOutAnimation(interpolator = AnimationUtils.easingStandardInterpolator)
+        }
         navigationBar.attach(recyclerView)
 
         return rootView

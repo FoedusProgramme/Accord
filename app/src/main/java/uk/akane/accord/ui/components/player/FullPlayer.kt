@@ -1,4 +1,4 @@
-package uk.akane.accord.ui.components
+package uk.akane.accord.ui.components.player
 
 import android.content.Context
 import android.util.AttributeSet
@@ -21,6 +21,8 @@ import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.getUriToDrawable
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
+import uk.akane.accord.ui.components.FadingVerticalEdgeLayout
+import uk.akane.accord.ui.components.PopupHelper
 import uk.akane.accord.ui.components.lyrics.LyricsViewModel
 import uk.akane.cupertino.widget.OverlayTextView
 import uk.akane.cupertino.widget.button.OverlayBackgroundButton
@@ -31,6 +33,8 @@ import uk.akane.cupertino.widget.image.OverlayHintView
 import uk.akane.cupertino.widget.image.SimpleImageView
 import uk.akane.cupertino.widget.slider.OverlaySlider
 import uk.akane.cupertino.widget.special.BlendView
+import uk.akane.cupertino.widget.utils.AnimationUtils
+import uk.akane.cupertino.widget.utils.AnimationUtils.MID_DURATION
 
 class FullPlayer @JvmOverloads constructor(
     context: Context,
@@ -162,6 +166,12 @@ class FullPlayer @JvmOverloads constructor(
             animateCoverChange(progress)
         }
 
+        listOverlayButton.setOnClickListener {
+            Log.d("TAG", "ContentType: ${if (listOverlayButton.isChecked) ContentType.NORMAL else ContentType.PLAYLIST}")
+            contentType = if (listOverlayButton.isChecked) ContentType.NORMAL else ContentType.PLAYLIST
+            listOverlayButton.toggle()
+        }
+
         doOnLayout {
             floatingPanelLayout.addOnSlideListener(this)
 
@@ -185,7 +195,7 @@ class FullPlayer @JvmOverloads constructor(
         coverSimpleImageView.pivotY = 0F
         coverSimpleImageView.scaleX = lerp(1f, finalScale, fraction)
         coverSimpleImageView.scaleY = lerp(1f, finalScale, fraction)
-        coverSimpleImageView.elevation = lerp(initialElevation, 0f, fraction)
+        coverSimpleImageView.elevation = lerp(initialElevation, 5f.dp.px, fraction)
         coverSimpleImageView.updateCornerRadius(lerp(initialCoverRadius, endCoverRadius, fraction).toInt())
 
         coverSimpleImageView.visibility = if (fraction == 1F) INVISIBLE else VISIBLE
@@ -200,6 +210,8 @@ class FullPlayer @JvmOverloads constructor(
         subtitleTextView.alpha = lerp(1F, 0F, quickFraction)
         starTransformButton.alpha = lerp(1F, 0F, quickFraction)
         ellipsisButton.alpha = lerp(1F, 0F, quickFraction)
+
+        fullPlayerToolbar.animateFade(fraction)
     }
 
     private fun callUpPlayerPopupMenu(v: View) {
@@ -280,6 +292,41 @@ class FullPlayer @JvmOverloads constructor(
 
     override fun onSlide(value: Float) {
         // PLACEHOLDER TODO
+    }
+
+    private var transformationFraction = 0F
+
+    private var contentType = ContentType.NORMAL
+        set(value) {
+            when (value) {
+                ContentType.LYRICS -> {
+                    // TODO
+                }
+                ContentType.NORMAL -> {
+                    AnimationUtils.createValAnimator(
+                        transformationFraction, 0F,
+                        duration = MID_DURATION
+                    ) {
+                        transformationFraction = it
+                        animateCoverChange(it)
+                    }
+                }
+                ContentType.PLAYLIST -> {
+                    captionOverlayButton.isChecked = false
+                    AnimationUtils.createValAnimator(
+                        transformationFraction, 1F,
+                        duration = MID_DURATION
+                    ) {
+                        transformationFraction = it
+                        animateCoverChange(it)
+                    }
+                }
+            }
+            field = value
+        }
+
+    enum class ContentType {
+        LYRICS, NORMAL, PLAYLIST
     }
 
     companion object {

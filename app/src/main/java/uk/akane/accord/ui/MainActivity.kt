@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.FrameLayout
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -30,15 +29,13 @@ import uk.akane.accord.logic.enableEdgeToEdgeProperly
 import uk.akane.accord.logic.isDarkMode
 import uk.akane.accord.logic.isEssentialPermissionGranted
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
-import uk.akane.accord.logic.utils.MediaUtils
 import uk.akane.accord.logic.utils.UiUtils
 import uk.akane.accord.setupwizard.fragments.SetupWizardFragment
-import uk.akane.accord.ui.components.FloatingPanelLayout
+import uk.akane.accord.ui.components.player.FloatingPanelLayout
 import uk.akane.accord.ui.fragments.BrowseFragment
 import uk.akane.accord.ui.fragments.HomeFragment
 import uk.akane.accord.ui.fragments.LibraryFragment
 import uk.akane.accord.ui.fragments.SearchFragment
-import uk.akane.accord.ui.viewmodels.AccordViewModel
 import uk.akane.cupertino.widget.navigation.FragmentSwitcherView
 import uk.akane.cupertino.widget.utils.AnimationUtils
 

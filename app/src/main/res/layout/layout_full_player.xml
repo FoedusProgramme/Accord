@@ -224,7 +224,7 @@
         android:id="@+id/main_control_btn"
         android:layout_height="100dp"
         android:layout_width="100dp"
-        app:iconSize="80dp"
+        app:iconSize="76dp"
         android:foreground="@drawable/rp_round"
         app:icon="@drawable/ic_play_anim"
         app:iconState="@drawable/ic_pause_anim"
@@ -242,7 +242,7 @@
         app:iconSize="64dp"
         app:icon="@drawable/ic_forward_anim"
         android:foreground="@drawable/rp_round"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="16dp"
         app:layout_constraintTop_toTopOf="@id/main_control_btn"
         app:layout_constraintBottom_toBottomOf="@id/main_control_btn"
         app:layout_constraintEnd_toEndOf="parent"
@@ -258,7 +258,7 @@
         app:iconSize="64dp"
         app:icon="@drawable/ic_forward_anim"
         android:foreground="@drawable/rp_round"
-        android:layout_marginEnd="12dp"
+        android:layout_marginEnd="16dp"
         app:layout_constraintTop_toTopOf="@id/main_control_btn"
         app:layout_constraintBottom_toBottomOf="@id/main_control_btn"
         app:layout_constraintEnd_toStartOf="@id/main_control_btn"
@@ -266,7 +266,7 @@
         app:layout_constraintHorizontal_chainStyle="packed"
         />
 
-    <uk.akane.accord.ui.components.FullPlayerToolbar
+    <uk.akane.accord.ui.components.player.FullPlayerToolbar
         android:id="@+id/full_player_tool_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -277,6 +277,7 @@
         android:id="@+id/test_slider"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:layout_marginHorizontal="24dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"

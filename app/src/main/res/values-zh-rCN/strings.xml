@@ -45,4 +45,6 @@
     <string name="waves_at_max">声波满格</string>
     <string name="explore_more">探索更多</string>
     <string name="browse_by_name">按名称浏览</string>
+    <string name="no_tracks_available">无可用歌曲</string>
+    <string name="no_tracks_available_subtitle">Accord 没有在库中发现歌曲。</string>
 </resources>

@@ -37,7 +37,7 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <uk.akane.accord.ui.components.FloatingPanelLayout
+    <uk.akane.accord.ui.components.player.FloatingPanelLayout
         android:id="@+id/floating"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

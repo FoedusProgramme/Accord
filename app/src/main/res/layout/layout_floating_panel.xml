@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
-    <uk.akane.accord.ui.components.FullPlayer
+    <uk.akane.accord.ui.components.player.FullPlayer
         android:id="@+id/full_player"
         android:alpha="0"
         android:layout_width="match_parent"
@@ -15,7 +15,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         />
 
-    <uk.akane.accord.ui.components.PreviewPlayer
+    <uk.akane.accord.ui.components.player.PreviewPlayer
         android:id="@+id/preview_player"
         android:layout_width="match_parent"
         android:layout_height="@dimen/preview_player_height"

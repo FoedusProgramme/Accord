@@ -1,4 +1,4 @@
-package uk.akane.accord.ui.components
+package uk.akane.accord.ui.components.player
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
@@ -33,6 +33,7 @@ import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.setOutline
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
+import uk.akane.accord.ui.components.PopupHelper
 import uk.akane.cupertino.widget.dpToPx
 import uk.akane.cupertino.widget.image.SimpleImageView
 import uk.akane.cupertino.widget.utils.AnimationUtils
@@ -497,7 +498,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
         locationY: Int,
         dismissAction: (() -> Unit)? = null,
 
-    ) {
+        ) {
         popupHelper.callUpPopup(
             false,
             entryList,
