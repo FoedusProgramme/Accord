@@ -5,6 +5,7 @@
     <string name="bottom_nav_browse">Browse</string>
     <string name="bottom_nav_home">Home</string>
     <string name="default_track">Not playing</string>
+    <string name="default_artist" translatable="false">---</string>
     <string name="top_picks">Top Picks</string>
     <string name="btn_continue">Continue</string>
     <string name="welcome_to">Welcome to</string>

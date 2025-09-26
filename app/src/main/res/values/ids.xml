@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="fade_out_animation" type="id" />
+    <item name="fade_in_animation" type="id" />
+</resources>

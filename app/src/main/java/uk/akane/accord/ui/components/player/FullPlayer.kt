@@ -16,11 +16,24 @@ import androidx.core.view.marginLeft
 import androidx.core.view.marginRight
 import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import coil3.asDrawable
+import coil3.imageLoader
+import coil3.request.Disposable
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.size.Scale
 import com.google.android.material.slider.Slider
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
+import uk.akane.accord.logic.getFile
 import uk.akane.accord.logic.getUriToDrawable
+import uk.akane.accord.logic.setTextAnimation
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
+import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.components.FadingVerticalEdgeLayout
 import uk.akane.accord.ui.components.PopupHelper
 import uk.akane.accord.ui.components.lyrics.LyricsViewModel
@@ -42,7 +55,12 @@ class FullPlayer @JvmOverloads constructor(
     defStyleAttr: Int = 0,
     defStyleRes: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr, defStyleRes),
-    FloatingPanelLayout.OnSlideListener {
+    FloatingPanelLayout.OnSlideListener, Player.Listener {
+
+    private val activity
+        get() = context as MainActivity
+    private val instance: MediaController?
+        get() = activity.getPlayer()
 
     private var initialMargin = IntArray(4)
 
@@ -71,6 +89,8 @@ class FullPlayer @JvmOverloads constructor(
     private var lyricsViewModel: LyricsViewModel? = null
     private val floatingPanelLayout: FloatingPanelLayout
         get() = parent as FloatingPanelLayout
+
+    private var firstTime = false
 
     init {
         inflate(context, R.layout.layout_full_player, this)
@@ -170,6 +190,20 @@ class FullPlayer @JvmOverloads constructor(
             Log.d("TAG", "ContentType: ${if (listOverlayButton.isChecked) ContentType.NORMAL else ContentType.PLAYLIST}")
             contentType = if (listOverlayButton.isChecked) ContentType.NORMAL else ContentType.PLAYLIST
             listOverlayButton.toggle()
+        }
+
+        activity.controllerViewModel.addControllerCallback(activity.lifecycle) { _, _ ->
+            firstTime = true
+            instance?.addListener(this@FullPlayer)
+            onRepeatModeChanged(instance?.repeatMode ?: Player.REPEAT_MODE_OFF)
+            onShuffleModeEnabledChanged(instance?.shuffleModeEnabled == true)
+            onPlaybackStateChanged(instance?.playbackState ?: Player.STATE_IDLE)
+            onMediaItemTransition(
+                instance?.currentMediaItem,
+                Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
+            )
+            onMediaMetadataChanged(instance?.mediaMetadata ?: MediaMetadata.EMPTY)
+            firstTime = false
         }
 
         doOnLayout {
@@ -324,6 +358,89 @@ class FullPlayer @JvmOverloads constructor(
             }
             field = value
         }
+
+    private var lastDisposable: Disposable? = null
+
+    override fun onMediaItemTransition(
+        mediaItem: MediaItem?,
+        reason: Int
+    ) {
+        if (instance?.mediaItemCount != 0) {
+            lastDisposable?.dispose()
+            lastDisposable = null
+            loadCoverForImageView()
+
+            titleTextView.setTextAnimation(
+                mediaItem?.mediaMetadata?.title,
+                skipAnimation = firstTime
+            )
+            subtitleTextView.setTextAnimation(
+                mediaItem?.mediaMetadata?.artist ?: context.getString(R.string.default_artist),
+                skipAnimation = firstTime
+            )
+        } else {
+            lastDisposable?.dispose()
+            lastDisposable = null
+        }
+    }
+
+    private fun loadCoverForImageView() {
+        if (lastDisposable != null) {
+            lastDisposable?.dispose()
+            lastDisposable = null
+            Log.e(TAG, "raced while loading cover in onMediaItemTransition?")
+        }
+        val mediaItem = instance?.currentMediaItem
+        Log.d(TAG, "load cover for " + mediaItem?.mediaMetadata?.title + " considered")
+        if (coverSimpleImageView.width != 0 && coverSimpleImageView.height != 0) {
+            Log.d(TAG, "load cover for " + mediaItem?.mediaMetadata?.title + " at " + coverSimpleImageView.width + " " + coverSimpleImageView.height)
+            mediaItem?.mediaMetadata?.artworkUri?.let { blendView.setImageUri(it) }
+            val file = mediaItem?.getFile()
+            lastDisposable = context.imageLoader.enqueue(
+                ImageRequest.Builder(context).apply {
+                    data(Pair(file, mediaItem?.mediaMetadata?.artworkUri))
+                    size(coverSimpleImageView.width, coverSimpleImageView.height)
+                    scale(Scale.FILL)
+                    target(onSuccess = {
+                        coverSimpleImageView.setImageDrawable(it.asDrawable(context.resources))
+                    }, onError = {
+                        coverSimpleImageView.setImageDrawable(it?.asDrawable(context.resources))
+                    }) // do not react to onStart() which sets placeholder
+                    allowHardware(coverSimpleImageView.isHardwareAccelerated)
+                }.build()
+            )
+        }
+    }
+
+    override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+        /*
+        val isHeart = (mediaMetadata.userRating as? HeartRating)?.isHeart == true
+        if (bottomSheetFavoriteButton.isChecked != isHeart) {
+            bottomSheetFavoriteButton.removeOnCheckedChangeListener(this)
+            bottomSheetFavoriteButton.isChecked =
+                (mediaMetadata.userRating as? HeartRating)?.isHeart == true
+            bottomSheetFavoriteButton.addOnCheckedChangeListener(this)
+        }
+        val duration = instance?.mediaMetadata?.durationMs
+        if ((duration?.toInt() ?: 0) != bottomSheetFullSeekBar.max) {
+            bottomSheetFullDuration.setTextAnimation(duration?.let {
+                CalculationUtils.convertDurationToTimeStamp(it)
+            })
+            val position =
+                CalculationUtils.convertDurationToTimeStamp(instance?.currentPosition ?: 0)
+            if (duration != null && !isUserTracking) {
+                bottomSheetFullSeekBar.max = duration.toInt()
+                bottomSheetFullSeekBar.progress = instance?.currentPosition?.toInt() ?: 0
+                bottomSheetFullSlider.valueTo = duration.toFloat().coerceAtLeast(1f)
+                bottomSheetFullSlider.value =
+                    min(instance?.currentPosition?.toFloat() ?: 0f, bottomSheetFullSlider.valueTo)
+                bottomSheetFullPosition.text = position
+            }
+            bottomSheetFullLyricView.updateLyricPositionFromPlaybackPos()
+        }
+
+         */
+    }
 
     enum class ContentType {
         LYRICS, NORMAL, PLAYLIST

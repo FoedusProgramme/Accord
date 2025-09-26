@@ -22,6 +22,7 @@ import android.os.StrictMode
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewPropertyAnimator
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -480,4 +481,69 @@ inline fun <reified T> MutableList<T>.forEachSupport(skipFirst: Int = 0, operato
     while (li.hasNext()) {
         operator(li.next())
     }
+}
+
+fun TextView.setTextAnimation(
+    text: CharSequence?,
+    duration: Long = 300,
+    completion: (() -> Unit)? = null,
+    skipAnimation: Boolean = false
+) {
+    (getTag(R.id.fade_out_animation) as ViewPropertyAnimator?)?.cancel()
+    (getTag(R.id.fade_in_animation) as ViewPropertyAnimator?)?.cancel()
+    val oldText = (getTag(androidx.core.R.id.text) as String?)
+    if (oldText != null)
+        this.text = oldText
+    if (oldText != null || text != null)
+        setTag(androidx.core.R.id.text, if (skipAnimation) null else text)
+    if (skipAnimation) {
+        this.text = text
+        completion?.let { it() }
+    } else if (this.text != text) {
+        fadOutAnimation(duration) {
+            this.text = text
+            setTag(androidx.core.R.id.text, null)
+            fadInAnimation(duration) {
+                completion?.let {
+                    it()
+                }
+            }
+        }
+    } else {
+        completion?.let { it() }
+    }
+}
+
+// ViewExtensions
+fun View.fadOutAnimation(
+    duration: Long = 300,
+    visibility: Int = View.INVISIBLE,
+    completion: (() -> Unit)? = null
+) {
+    (getTag(R.id.fade_out_animation) as ViewPropertyAnimator?)?.cancel()
+    setTag(R.id.fade_out_animation, animate()
+        .alpha(0f)
+        .setDuration(duration)
+        .withEndAction {
+            this.visibility = visibility
+            setTag(R.id.fade_out_animation, null)
+            completion?.let {
+                it()
+            }
+        })
+}
+
+fun View.fadInAnimation(duration: Long = 300, completion: (() -> Unit)? = null) {
+    (getTag(R.id.fade_in_animation) as ViewPropertyAnimator?)?.cancel()
+    alpha = 0f
+    visibility = View.VISIBLE
+    setTag(R.id.fade_in_animation, animate()
+        .alpha(1f)
+        .setDuration(duration)
+        .withEndAction {
+            setTag(R.id.fade_in_animation, null)
+            completion?.let {
+                it()
+            }
+        })
 }
