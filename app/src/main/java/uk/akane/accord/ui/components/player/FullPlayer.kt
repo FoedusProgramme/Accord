@@ -365,6 +365,7 @@ class FullPlayer @JvmOverloads constructor(
         mediaItem: MediaItem?,
         reason: Int
     ) {
+        fullPlayerToolbar.onMediaItemTransition(mediaItem, reason)
         if (instance?.mediaItemCount != 0) {
             lastDisposable?.dispose()
             lastDisposable = null

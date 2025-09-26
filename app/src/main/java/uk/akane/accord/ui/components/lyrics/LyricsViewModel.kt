@@ -26,14 +26,14 @@ class LyricsViewModel(private val context: Context) {
 
     private val sampleLyrics = Lyrics(
         listOf(
-            LyricsLine(0, null, "Standing for so long time", null),
-            LyricsLine(5_000, null, "With the wind from the mother earth", null),
-            LyricsLine(10_000, null, "Spring, summer, fall and winter", null),
-            LyricsLine(15_000, null, "Take me in the smell of the four season", null),
-            LyricsLine(20_000, null, "Listening to the sounds of lives", null),
-            LyricsLine(25_000, null, "With the rains from the father sky", null),
-            LyricsLine(30_000, null, "Green, yellow, red, and brown", null),
-            LyricsLine(35_000, null, "Paints me colors of the four season", null),
+            LyricsLine(0, null, "For the puppets on TV", null),
+            LyricsLine(5_000, null, "There is comfort in the strings", null),
+            LyricsLine(10_000, null, "If you're gonna control me", null),
+            LyricsLine(15_000, null, "At least make it interesting theatrically", null),
+            LyricsLine(20_000, null, "How does it feel to be free?", null),
+            LyricsLine(25_000, null, "Why don't you ask yourself?", null),
+            LyricsLine(30_000, null, "The gate opened for me", null),
+            LyricsLine(35_000, null, "So I leaped", null),
             LyricsLine(40_000, null, "Run and through this forest", null),
             LyricsLine(45_000, null, "With an arrow from the brother sun", null),
             LyricsLine(50_000, null, "Trees, weeds, leaves, and flowers", null),

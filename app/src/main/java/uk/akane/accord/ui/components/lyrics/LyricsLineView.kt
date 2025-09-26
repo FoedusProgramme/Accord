@@ -39,7 +39,7 @@ class LyricsLineView internal constructor(
     private val paint = TextPaint().apply {
         textSize = 34.sp.px
         color = Color.WHITE
-        typeface = ResourcesCompat.getFont(context, R.font.inter_semibold)
+        typeface = ResourcesCompat.getFont(context, R.font.inter_bold)
     }
     private val contentPaint = Paint().apply {
         xfermode = AnimationUtils.addXfermode
