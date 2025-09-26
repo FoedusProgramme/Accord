@@ -1,5 +1,6 @@
 package uk.akane.accord
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ContentUris
 import android.media.ThumbnailUtils
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import okio.Path.Companion.toOkioPath
 import okio.buffer
 import okio.source
+import org.lsposed.hiddenapibypass.LSPass
 import uk.akane.accord.logic.hasScopedStorageWithMediaTypes
 import uk.akane.libphonograph.Constants
 import uk.akane.libphonograph.reader.FlowReader
@@ -43,6 +45,13 @@ class Accord : Application(), SingletonImageLoader.Factory {
     val blackListSetFlow = MutableStateFlow<Set<String>>(setOf())
     val shouldUseEnhancedCoverReadingFlow = if (hasScopedStorageWithMediaTypes()) null else
         MutableStateFlow<Boolean?>(true)
+
+    init {
+        @SuppressLint("DefaultUncaughtExceptionDelegation")
+        LSPass.setHiddenApiExemptions("")
+        if (BuildConfig.DEBUG)
+            System.setProperty("kotlinx.coroutines.debug", "on")
+    }
 
     override fun onCreate() {
         super.onCreate()

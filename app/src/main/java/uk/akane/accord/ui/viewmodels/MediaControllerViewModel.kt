@@ -44,6 +44,7 @@ class MediaControllerViewModel(application: Application) : AndroidViewModel(appl
             SessionToken(context, ComponentName(context, PlaybackService::class.java))
         val lc = LifecycleHost()
         controllerLifecycle = lc
+        Log.d("TAG1", "We are creating session")
         controllerFuture =
             MediaBrowser
                 .Builder(context, sessionToken)
@@ -53,9 +54,11 @@ class MediaControllerViewModel(application: Application) : AndroidViewModel(appl
                     addListener(
                         {
                             if (isCancelled) return@addListener
+                            Log.d("TAG1", "We are creating session not cancelled")
                             val instance = try {
                                 get()
                             } catch (e: ExecutionException) {
+                                Log.d("TAG1", "We are creating session, e: $e")
                                 if (e.cause !is SecurityException)
                                     throw e
                                 if (e.cause!!.message != "Session rejected the connection request.")
@@ -66,15 +69,18 @@ class MediaControllerViewModel(application: Application) : AndroidViewModel(appl
                                 null
                             }
                             if (this == controllerFuture && instance == null) {
+                                Log.d("TAG1", "We are creating session 2")
                                 controllerFuture = null
                                 controllerLifecycle = null
                             }
                             if (this != controllerFuture || instance == null) {
+                                Log.d("TAG1", "We are creating session 3")
                                 // If there is a race condition that would cause this controller
                                 // to leak, which can happen, just make sure we don't leak.
                                 lc.destroy()
                                 instance?.release()
                             } else {
+                                Log.d("TAG1", "We are creating session 4")
                                 lc.lifecycleRegistry.currentState = Lifecycle.State.CREATED
                                 connectionListenersImpl.dispatch { it(instance, lc.lifecycle) }
                             }

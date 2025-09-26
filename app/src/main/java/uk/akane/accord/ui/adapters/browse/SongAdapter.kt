@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -24,16 +25,20 @@ import uk.akane.accord.ui.MainActivity
 
 class SongAdapter(
     private val recyclerView: RecyclerView,
-    fragment: Fragment,
+    private val fragment: Fragment,
     private val onContentLoaded: (() -> Unit)
 ) : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
 
     private val list = mutableListOf<SongListItem>()
+    private val songList = mutableListOf<MediaItem>()
+
+    private val mainActivity
+        get() = fragment.activity as MainActivity
 
     init {
         fragment.viewLifecycleOwner.lifecycleScope.launch {
             fragment.viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-                (fragment.activity as MainActivity).reader?.songListFlow?.collectLatest { newList ->
+                (fragment.activity as MainActivity).reader.songListFlow.collectLatest { newList ->
                     submitList(newList)
                 }
             }
@@ -83,6 +88,19 @@ class SongAdapter(
                 }
                 holder.title?.text = item.mediaItem.mediaMetadata.title
                 holder.subtitle?.text = item.mediaItem.mediaMetadata.artist
+
+                holder.itemView.setOnClickListener {
+                    val mediaController = mainActivity.getPlayer()
+                    mediaController?.apply {
+                        setMediaItems(
+                            songList,
+                            songList.indexOf(item.mediaItem),
+                            C.TIME_UNSET
+                        )
+                        prepare()
+                        play()
+                    }
+                }
             }
         }
     }
@@ -102,10 +120,15 @@ class SongAdapter(
                 .toSortedMap()
 
             val items = mutableListOf<SongListItem>()
+            val newSongList = mutableListOf<MediaItem>()
+
             items.add(SongListItem.Control)
             for ((key, tracks) in grouped) {
                 items.add(SongListItem.Header(key.toString()))
-                items.addAll(tracks.map { SongListItem.Track(it) })
+                items.addAll(tracks.map {
+                    newSongList.add(it)
+                    SongListItem.Track(it)
+                })
             }
 
             val diffResult = DiffUtil.calculateDiff(GenreDiffCallback(list, items))
@@ -113,6 +136,10 @@ class SongAdapter(
             withContext(Dispatchers.Main) {
                 list.clear()
                 list.addAll(items)
+
+                songList.clear()
+                songList.addAll(newSongList)
+
                 diffResult.dispatchUpdatesTo(this@SongAdapter)
                 recyclerView.post { onContentLoaded.invoke() }
             }

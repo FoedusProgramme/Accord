@@ -89,6 +89,7 @@ dependencies {
     implementation(libs.androidx.mediarouter)
     implementation(libs.androidx.preference)
     implementation(libs.androidx.concurrent.futures.ktx)
+    implementation(libs.hiddenapibypass)
     implementation(libs.material)
     implementation(libs.coil)
     debugImplementation(libs.leakcanary.android)

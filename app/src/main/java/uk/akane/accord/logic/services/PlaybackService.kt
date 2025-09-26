@@ -456,7 +456,7 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                     )
                 )
-                .setSystemUiPlaybackResumptionOptIn(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                .setSystemUiPlaybackResumptionOptIn(true)
                 .build()
         controller = MediaBrowser.Builder(this, mediaSession!!.token).buildAsync().get()
         controller!!.addListener(this)

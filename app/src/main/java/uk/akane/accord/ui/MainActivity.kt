@@ -64,6 +64,8 @@ class MainActivity : AppCompatActivity() {
 
     private var isWindowColorSet: Boolean = false
 
+    private var ready: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -72,8 +74,13 @@ class MainActivity : AppCompatActivity() {
         bottomDefaultRadius = resources.getDimensionPixelSize(R.dimen.bottom_panel_radius)
         bottomNavigationPanelColor = getColor(R.color.bottomNavigationPanelColor)
 
-        installSplashScreen()
+        installSplashScreen().setKeepOnScreenCondition { !ready }
         enableEdgeToEdgeProperly()
+
+        lifecycle.addObserver(controllerViewModel)
+        controllerViewModel.addControllerCallback(lifecycle) { controller, controllerLifecycle ->
+            ready = true
+        }
 
         setContentView(R.layout.activity_main)
 
@@ -320,6 +327,12 @@ class MainActivity : AppCompatActivity() {
 
     inline val reader
         get() = accord.reader
+
+    /**
+     * getPlayer:
+     *   Returns a media controller.
+     */
+    fun getPlayer() = controllerViewModel.get()
 
     val controllerViewModel: MediaControllerViewModel by viewModels()
 
