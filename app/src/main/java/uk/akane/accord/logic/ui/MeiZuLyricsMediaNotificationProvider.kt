@@ -62,7 +62,7 @@ class MeiZuLyricsMediaNotificationProvider(
         ) {
             onNotificationChangedCallback.onNotificationChanged(it.also {
                 if (ticker != null)
-                    it.applyNotificationFlags(true, false)
+                    it.applyNotificationFlags(alwaysShowTicker = true, onlyUpdateTicker = false)
             })
         }.also {
             if (ticker != null || isManualNotificationUpdate)

@@ -43,272 +43,285 @@ import java.util.UUID
 @Suppress("unused")
 @SuppressLint("PrivateApi")
 open class ReflectionAudioEffect(type: UUID, uuid: UUID, priority: Int, audioSession: Int) {
-	companion object {
-		val EFFECT_TYPE_NULL by lazy {
-			AudioEffect::class.java.getDeclaredField("EFFECT_TYPE_NULL").get(null) as UUID
-		}
-		fun isEffectTypeAvailable(type: UUID?): Boolean {
-			val desc = AudioEffect.queryEffects()
-			if (desc == null) {
-				return false
-			}
-			for (i in desc.indices) {
-				if (desc[i]!!.type == type) {
-					return true
-				}
-			}
-			return false
-		}
-	}
-	private val effect: AudioEffect = AudioEffect::class.java
-		.getDeclaredConstructor(
-			UUID::class.java, UUID::class.java,
-			Int::class.java, Int::class.java)
-		.newInstance(type, uuid, priority, audioSession)
-	private val nativeEffectField by lazy {
-		AudioEffect::class.java.getDeclaredField("mNativeAudioEffect").apply {
-			isAccessible = true
-		}
-	}
-	private val adapterClazz by lazy {
-		Class.forName("org.nift4.audiofxfwd.OnParameterChangeListenerAdapter") }
-	private val setParameterListenerFn by lazy {
-		adapterClazz.getDeclaredMethod("getGetter").invoke(null) as Method
-	}
-	private val setParameterFn by lazy { AudioEffect::class.java.getDeclaredMethod(
-		"setParameter", ByteArray::class.java, ByteArray::class.java) }
-	private val getParameterFn by lazy { AudioEffect::class.java.getDeclaredMethod(
-		"getParameter", ByteArray::class.java, ByteArray::class.java) }
-	private val commandFn by lazy { AudioEffect::class.java.getDeclaredMethod("command",
-		Int::class.java, ByteArray::class.java, ByteArray::class.java) }
+    companion object {
+        val EFFECT_TYPE_NULL by lazy {
+            AudioEffect::class.java.getDeclaredField("EFFECT_TYPE_NULL").get(null) as UUID
+        }
 
-	/**
-	 * The effect enabled state
-	 *
-	 * Creating an audio effect does not automatically apply this effect on the audio source. It
-	 * creates the resources necessary to process this effect but the audio signal is still bypassed
-	 * through the effect engine. Calling this method will make that the effect is actually applied
-	 * or not to the audio content being played in the corresponding audio session.
-	 *
-	 * @return true if the effect is enabled, false otherwise.
-	 * @throws IllegalStateException
-	 */
-	var enabled
-		get() = effect.enabled
-		set(value) {
-			val ret = effect.setEnabled(value)
-			if (ret != AudioEffect.SUCCESS) {
-				throw IllegalStateException("enable failed with code $ret")
-			}
-		}
+        fun isEffectTypeAvailable(type: UUID?): Boolean {
+            val desc = AudioEffect.queryEffects() ?: return false
+            for (i in desc.indices) {
+                if (desc[i]!!.type == type) {
+                    return true
+                }
+            }
+            return false
+        }
+    }
 
-	/**
-	 * Returns effect unique identifier. This system wide unique identifier can
-	 * be used to attach this effect to a MediaPlayer or an AudioTrack when the
-	 * effect is an auxiliary effect (Reverb)
-	 *
-	 * @return the effect identifier.
-	 * @throws IllegalStateException
-	 */
-	val id
-		get() = effect.id
+    private val effect: AudioEffect = AudioEffect::class.java
+        .getDeclaredConstructor(
+            UUID::class.java, UUID::class.java,
+            Int::class.java, Int::class.java
+        )
+        .newInstance(type, uuid, priority, audioSession)
+    private val nativeEffectField by lazy {
+        AudioEffect::class.java.getDeclaredField("mNativeAudioEffect").apply {
+            isAccessible = true
+        }
+    }
+    private val adapterClazz by lazy {
+        Class.forName("org.nift4.audiofxfwd.OnParameterChangeListenerAdapter")
+    }
+    private val setParameterListenerFn by lazy {
+        adapterClazz.getDeclaredMethod("getGetter").invoke(null) as Method
+    }
+    private val setParameterFn by lazy {
+        AudioEffect::class.java.getDeclaredMethod(
+            "setParameter", ByteArray::class.java, ByteArray::class.java
+        )
+    }
+    private val getParameterFn by lazy {
+        AudioEffect::class.java.getDeclaredMethod(
+            "getParameter", ByteArray::class.java, ByteArray::class.java
+        )
+    }
+    private val commandFn by lazy {
+        AudioEffect::class.java.getDeclaredMethod(
+            "command",
+            Int::class.java, ByteArray::class.java, ByteArray::class.java
+        )
+    }
 
-	/**
-	 * Get the effect descriptor.
-	 *
-	 * @see AudioEffect.Descriptor
-	 * @throws IllegalStateException
-	 */
-	val descriptor: AudioEffect.Descriptor
-		get() = effect.descriptor
+    /**
+     * The effect enabled state
+     *
+     * Creating an audio effect does not automatically apply this effect on the audio source. It
+     * creates the resources necessary to process this effect but the audio signal is still bypassed
+     * through the effect engine. Calling this method will make that the effect is actually applied
+     * or not to the audio content being played in the corresponding audio session.
+     *
+     * @return true if the effect is enabled, false otherwise.
+     * @throws IllegalStateException
+     */
+    var enabled
+        get() = effect.enabled
+        set(value) {
+            val ret = effect.setEnabled(value)
+            if (ret != AudioEffect.SUCCESS) {
+                throw IllegalStateException("enable failed with code $ret")
+            }
+        }
 
-	/**
-	 * Checks if this AudioEffect object is controlling the effect engine.
-	 *
-	 * @return true if this instance has control of effect engine, false
-	 *         otherwise.
-	 * @throws IllegalStateException
-	 */
-	val hasControl
-		get() = effect.hasControl()
+    /**
+     * Returns effect unique identifier. This system wide unique identifier can
+     * be used to attach this effect to a MediaPlayer or an AudioTrack when the
+     * effect is an auxiliary effect (Reverb)
+     *
+     * @return the effect identifier.
+     * @throws IllegalStateException
+     */
+    val id
+        get() = effect.id
 
-	/**
-	 * Releases the native AudioEffect resources. It is a good practice to
-	 * release the effect engine when not in use as control can be returned to
-	 * other applications or the native resources released.
-	 */
-	fun release() {
-		effect.release()
-	}
+    /**
+     * Get the effect descriptor.
+     *
+     * @see AudioEffect.Descriptor
+     * @throws IllegalStateException
+     */
+    val descriptor: AudioEffect.Descriptor
+        get() = effect.descriptor
 
-	/**
-	 * Sets the listener AudioEffect notifies when the effect engine is enabled
-	 * or disabled.
-	 *
-	 * @param listener
-	 */
-	fun setEnableStatusListener(listener: AudioEffect.OnEnableStatusChangeListener?) {
-		effect.setEnableStatusListener(listener)
-	}
+    /**
+     * Checks if this AudioEffect object is controlling the effect engine.
+     *
+     * @return true if this instance has control of effect engine, false
+     *         otherwise.
+     * @throws IllegalStateException
+     */
+    val hasControl
+        get() = effect.hasControl()
 
-	/**
-	 * Sets the listener AudioEffect notifies when the effect engine control is
-	 * taken or returned.
-	 *
-	 * @param listener
-	 */
-	fun setControlStatusListener(listener: AudioEffect.OnControlStatusChangeListener?) {
-		effect.setControlStatusListener(listener)
-	}
+    /**
+     * Releases the native AudioEffect resources. It is a good practice to
+     * release the effect engine when not in use as control can be returned to
+     * other applications or the native resources released.
+     */
+    fun release() {
+        effect.release()
+    }
 
-	/**
-	 * Sets the listener AudioEffect notifies when a parameter is changed.
-	 *
-	 * @param listener
-	 */
-	fun setBaseParameterListener(listener: OnParameterChangeListener?) {
-		val adapter = listener?.let { adapterClazz.getDeclaredConstructor(
-			org.nift4.audiofxfwd.OnParameterChangeListener::class.java)
-			.newInstance(org.nift4.audiofxfwd.OnParameterChangeListener { e, i, b, b1 ->
-				listener.onParameterChange(effect, i, b, b1)
-			}) }
-		setParameterListenerFn.invoke(effect, adapter)
-	}
+    /**
+     * Sets the listener AudioEffect notifies when the effect engine is enabled
+     * or disabled.
+     *
+     * @param listener
+     */
+    fun setEnableStatusListener(listener: AudioEffect.OnEnableStatusChangeListener?) {
+        effect.setEnableStatusListener(listener)
+    }
 
-	@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-	fun getConfigs(): Pair<AudioTrackHiddenApi.AudioConfigBase, AudioTrackHiddenApi.AudioConfigBase> {
-		try {
-			effect.getId()
-		} catch (_: IllegalStateException) {
-			throw IllegalStateException("getConfigs() called on released AudioEffect")
-		}
-		val ptr = nativeEffectField.getLong(effect)
-		return AudioTrackHiddenApi.getEffectConfigs(ptr)
-	}
+    /**
+     * Sets the listener AudioEffect notifies when the effect engine control is
+     * taken or returned.
+     *
+     * @param listener
+     */
+    fun setControlStatusListener(listener: AudioEffect.OnControlStatusChangeListener?) {
+        effect.setControlStatusListener(listener)
+    }
 
-	/**
-	 * Set effect parameter. The setParameter method is provided in several
-	 * forms addressing most common parameter formats. This form is the most
-	 * generic one where the parameter and its value are both specified as an
-	 * array of bytes. The parameter and value type and length are therefore
-	 * totally free. For standard effect defined by OpenSL ES, the parameter
-	 * format and values must match the definitions in the corresponding OpenSL
-	 * ES interface.
-	 *
-	 * @param param the identifier of the parameter to set
-	 * @param value the new value for the specified parameter
-	 * @throws IllegalStateException
-	 */
-	fun setParameter(param: ByteArray, value: ByteArray) {
-		val ret = setParameterFn.invoke(effect, param, value) as Int
-		if (ret != AudioEffect.SUCCESS) {
-			throw IllegalStateException("setParameter failed with code $ret")
-		}
-	}
+    /**
+     * Sets the listener AudioEffect notifies when a parameter is changed.
+     *
+     * @param listener
+     */
+    fun setBaseParameterListener(listener: OnParameterChangeListener?) {
+        val adapter = listener?.let {
+            adapterClazz.getDeclaredConstructor(
+                org.nift4.audiofxfwd.OnParameterChangeListener::class.java
+            )
+                .newInstance(org.nift4.audiofxfwd.OnParameterChangeListener { e, i, b, b1 ->
+                    listener.onParameterChange(effect, i, b, b1)
+                })
+        }
+        setParameterListenerFn.invoke(effect, adapter)
+    }
 
-	// could do setParameterDeferred and setParameterCommit if needed, so far not needed
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    fun getConfigs(): Pair<AudioTrackHiddenApi.AudioConfigBase, AudioTrackHiddenApi.AudioConfigBase> {
+        try {
+            effect.getId()
+        } catch (_: IllegalStateException) {
+            throw IllegalStateException("getConfigs() called on released AudioEffect")
+        }
+        val ptr = nativeEffectField.getLong(effect)
+        return AudioTrackHiddenApi.getEffectConfigs(ptr)
+    }
 
-	/**
-	 * Get effect parameter. The getParameter method is provided in several
-	 * forms addressing most common parameter formats. This form is the most
-	 * generic one where the parameter and its value are both specified as an
-	 * array of bytes. The parameter and value type and length are therefore
-	 * totally free.
-	 *
-	 * @param param the identifier of the parameter to set
-	 * @param value the new value for the specified parameter
-	 * @return the number of meaningful bytes in value array in case of success
-	 * @throws IllegalStateException
-	 */
-	fun getParameter(param: ByteArray, value: ByteArray): Int {
-		val ret = getParameterFn.invoke(effect, param, value) as Int
-		if (ret < 0) {
-			throw IllegalStateException("getParameter failed with code $ret")
-		}
-		return ret
-	}
+    /**
+     * Set effect parameter. The setParameter method is provided in several
+     * forms addressing most common parameter formats. This form is the most
+     * generic one where the parameter and its value are both specified as an
+     * array of bytes. The parameter and value type and length are therefore
+     * totally free. For standard effect defined by OpenSL ES, the parameter
+     * format and values must match the definitions in the corresponding OpenSL
+     * ES interface.
+     *
+     * @param param the identifier of the parameter to set
+     * @param value the new value for the specified parameter
+     * @throws IllegalStateException
+     */
+    fun setParameter(param: ByteArray, value: ByteArray) {
+        val ret = setParameterFn.invoke(effect, param, value) as Int
+        if (ret != AudioEffect.SUCCESS) {
+            throw IllegalStateException("setParameter failed with code $ret")
+        }
+    }
 
-	/**
-	 * Send a command to the effect engine. This method is intended to send
-	 * proprietary commands to a particular effect implementation.
-	 * In case of success, returns the number of meaningful bytes in reply array.
-	 * In case of failure, the returned value is negative and implementation specific.
-	 */
-	@Throws(java.lang.IllegalStateException::class)
-	fun command(cmdCode: Int, command: ByteArray, reply: ByteArray): Int {
-		return commandFn.invoke(effect, cmdCode, command, reply) as Int
-	}
+    // could do setParameterDeferred and setParameterCommit if needed, so far not needed
 
-	fun setParameter(param: Int, value: Int) = setParameter(
-		ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
-			.putInt(param).array(),
-		ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
-			.putInt(value).array()
-	)
+    /**
+     * Get effect parameter. The getParameter method is provided in several
+     * forms addressing most common parameter formats. This form is the most
+     * generic one where the parameter and its value are both specified as an
+     * array of bytes. The parameter and value type and length are therefore
+     * totally free.
+     *
+     * @param param the identifier of the parameter to set
+     * @param value the new value for the specified parameter
+     * @return the number of meaningful bytes in value array in case of success
+     * @throws IllegalStateException
+     */
+    fun getParameter(param: ByteArray, value: ByteArray): Int {
+        val ret = getParameterFn.invoke(effect, param, value) as Int
+        if (ret < 0) {
+            throw IllegalStateException("getParameter failed with code $ret")
+        }
+        return ret
+    }
 
-	fun setParameter(param: Int, value: Short) = setParameter(
-		ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
-			.putInt(param).array(),
-		ByteBuffer.allocate(Short.SIZE_BYTES).order(ByteOrder.nativeOrder())
-			.putShort(value).array()
-	)
+    /**
+     * Send a command to the effect engine. This method is intended to send
+     * proprietary commands to a particular effect implementation.
+     * In case of success, returns the number of meaningful bytes in reply array.
+     * In case of failure, the returned value is negative and implementation specific.
+     */
+    @Throws(java.lang.IllegalStateException::class)
+    fun command(cmdCode: Int, command: ByteArray, reply: ByteArray): Int {
+        return commandFn.invoke(effect, cmdCode, command, reply) as Int
+    }
 
-	fun setParameter(param: Int, value: Boolean) = setParameter(
-		param, if (value) 1 else 0
-	)
+    fun setParameter(param: Int, value: Int) = setParameter(
+        ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
+            .putInt(param).array(),
+        ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
+            .putInt(value).array()
+    )
 
-	fun getParameter(param: Int, value: ByteArray) = getParameter(
-		ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
-			.putInt(param).array(),
-		value
-	)
+    fun setParameter(param: Int, value: Short) = setParameter(
+        ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
+            .putInt(param).array(),
+        ByteBuffer.allocate(Short.SIZE_BYTES).order(ByteOrder.nativeOrder())
+            .putShort(value).array()
+    )
 
-	fun getShortParameter(param: Int): Short {
-		val value = ByteBuffer.allocate(Short.SIZE_BYTES).order(ByteOrder.nativeOrder())
-		val ret = getParameter(
-			ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
-				.putInt(param).array(),
-			value.array()
-		)
-		if (ret != value.limit()) {
-			throw IllegalStateException("getShortParameter() failed: $ret")
-		}
-		return value.short
-	}
+    fun setParameter(param: Int, value: Boolean) = setParameter(
+        param, if (value) 1 else 0
+    )
 
-	fun getIntParameter(param: Int): Int {
-		val value = ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
-		val ret = getParameter(
-			ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
-				.putInt(param).array(),
-			value.array()
-		)
-		if (ret != value.limit()) {
-			throw IllegalStateException("getIntParameter() failed: $ret")
-		}
-		return value.int
-	}
+    fun getParameter(param: Int, value: ByteArray) = getParameter(
+        ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
+            .putInt(param).array(),
+        value
+    )
 
-	fun getBoolParameter(param: Int): Boolean {
-		val ret = getIntParameter(param)
-		return when (ret) {
-			0 -> false
-			1 -> true
-			else -> throw IllegalStateException("getBoolParameter(): invalid bool $ret")
-		}
-	}
+    fun getShortParameter(param: Int): Short {
+        val value = ByteBuffer.allocate(Short.SIZE_BYTES).order(ByteOrder.nativeOrder())
+        val ret = getParameter(
+            ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
+                .putInt(param).array(),
+            value.array()
+        )
+        if (ret != value.limit()) {
+            throw IllegalStateException("getShortParameter() failed: $ret")
+        }
+        return value.short
+    }
 
-	fun interface OnParameterChangeListener {
-		/**
-		 * Called on the listener to notify it that a parameter value has changed.
-		 * @param effect the effect on which the interface is registered.
-		 * @param status status of the set parameter operation.
-		 * @param param ID of the modified parameter.
-		 * @param value the new parameter value.
-		 */
-		fun onParameterChange(
-			effect: AudioEffect, status: Int, param: ByteArray,
-			value: ByteArray
-		)
-	}
+    fun getIntParameter(param: Int): Int {
+        val value = ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
+        val ret = getParameter(
+            ByteBuffer.allocate(Int.SIZE_BYTES).order(ByteOrder.nativeOrder())
+                .putInt(param).array(),
+            value.array()
+        )
+        if (ret != value.limit()) {
+            throw IllegalStateException("getIntParameter() failed: $ret")
+        }
+        return value.int
+    }
+
+    fun getBoolParameter(param: Int): Boolean {
+        return when (val ret = getIntParameter(param)) {
+            0 -> false
+            1 -> true
+            else -> throw IllegalStateException("getBoolParameter(): invalid bool $ret")
+        }
+    }
+
+    fun interface OnParameterChangeListener {
+        /**
+         * Called on the listener to notify it that a parameter value has changed.
+         * @param effect the effect on which the interface is registered.
+         * @param status status of the set parameter operation.
+         * @param param ID of the modified parameter.
+         * @param value the new parameter value.
+         */
+        fun onParameterChange(
+            effect: AudioEffect, status: Int, param: ByteArray,
+            value: ByteArray
+        )
+    }
 }

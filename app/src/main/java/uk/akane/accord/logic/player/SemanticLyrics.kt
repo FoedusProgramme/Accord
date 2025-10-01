@@ -17,12 +17,11 @@ import org.xmlpull.v1.XmlPullParserException
 import uk.akane.accord.logic.forEachSupport
 import java.io.StringReader
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.get
 import kotlin.math.min
 
 private const val TAG = "SemanticLyrics"
 
-/*
+/**
  * Syntactic-semantic lyric parser.
  *   First parse lrc syntax into custom objects, then parse these into usable representation
  *   for playback. This should be more testable and stable than the old parser.
@@ -287,15 +286,15 @@ private sealed class SyntacticLrc {
                 out.add(InvalidText(""))
             if (out.isNotEmpty() && out.last() !is NewLine)
                 out.add(NewLine.SyntheticNewLine())
-            return out.let {
+            return out.let { lrcs ->
                 // If there isn't a single sync point with timestamp over zero, that is probably not
                 // a valid .lrc file.
-                if (it.find {
+                if (lrcs.find {
                         it is SyncPoint && it.timestamp > 0u
                                 || it is WordSyncPoint && it.timestamp > 0u
                     } == null)
                 // Recover only text information to make the most out of this damaged file.
-                    it.flatMap {
+                    lrcs.flatMap {
                         when (it) {
                             is InvalidText -> listOf(it)
                             is SpeakerTag -> listOf(it)
@@ -303,27 +302,27 @@ private sealed class SyntacticLrc {
                             else -> listOf()
                         }
                     }
-                else it
-            }.let {
+                else lrcs
+            }.let { lrcs ->
                 if (multiLineEnabled) {
                     val a = AtomicReference<String?>(null)
-                    it.flatMap {
+                    lrcs.flatMap { lrc ->
                         val aa = a.get()
                         when {
-                            it is LyricText -> {
+                            lrc is LyricText -> {
                                 if (aa == null)
-                                    a.set(it.text)
+                                    a.set(lrc.text)
                                 else
-                                    a.set(aa + it.text)
+                                    a.set(aa + lrc.text)
                                 listOf()
                             }
                             // make sure InvalidText that can't be lyric text isn't saved as lyric
-                            it is InvalidText && aa != null -> {
-                                a.set(aa + it.text)
+                            lrc is InvalidText && aa != null -> {
+                                a.set(aa + lrc.text)
                                 listOf()
                             }
 
-                            it is NewLine && aa != null -> {
+                            lrc is NewLine && aa != null -> {
                                 a.set(aa + "\n")
                                 listOf()
                             }
@@ -341,10 +340,10 @@ private sealed class SyntacticLrc {
                                     while (i-- > 0)
                                         aaaa = aaaa + listOf(NewLine())
                                     aaaa
-                                } + it
+                                } + lrc
                             }
 
-                            else -> listOf(it)
+                            else -> listOf(lrc)
                         }
                     }.let {
                         if (a.get() != null)
@@ -354,7 +353,7 @@ private sealed class SyntacticLrc {
                                 listOf(LyricText(a.get()!!))
                         else it
                     }
-                } else it
+                } else lrcs
             }
         }
     }
@@ -368,13 +367,13 @@ private fun splitBidirectionalWords(syncedLyrics: SemanticLyrics.SyncedLyrics) {
         bidirectionalBarriers.forEach { barrier ->
             val evilWordIndex =
                 if (barrier.first == -1) -1 else line.words.indexOfFirst {
-                    it.charRange.contains(barrier.first) && it.charRange.start != barrier.first
+                    it.charRange.contains(barrier.first) && it.charRange.first != barrier.first
                 }
             if (evilWordIndex == -1) {
                 // Propagate the new direction (if there is a barrier after that, direction will
                 // be corrected after it).
                 val wordIndex = if (barrier.first == -1) 0 else
-                    line.words.indexOfFirst { it.charRange.start == barrier.first }
+                    line.words.indexOfFirst { it.charRange.first == barrier.first }
                 line.words.forEachSupport(skipFirst = wordIndex) {
                     it.isRtl = barrier.second
                 }
@@ -438,7 +437,7 @@ fun findBidirectionalBarriers(text: CharSequence): List<Pair<Int, Boolean>> {
 }
 
 
-/*
+/**
  * Syntactic lyric parser. Parse custom objects into usable representation for playback.
  *
  * Formats we have to consider in this component are:
@@ -556,13 +555,13 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
             syncPointStreak++
         else
             syncPointStreak = 0
-        when {
-            element is SyntacticLrc.Metadata && element.name == "offset" -> {
+        when (element) {
+            is SyntacticLrc.Metadata if element.name == "offset" -> {
                 // positive offset means lyric played earlier in lrc, hence multiply with -1
                 offset = element.value.toLong() * -1
             }
 
-            element is SyntacticLrc.SyncPoint -> {
+            is SyntacticLrc.SyncPoint -> {
                 val ts = (element.timestamp.toLong() + offset).coerceAtLeast(0).toULong()
                 if (syncPointStreak > 1) {
                     compressed.add(ts)
@@ -573,11 +572,11 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
                 }
             }
 
-            element is SyntacticLrc.SpeakerTag -> {
+            is SyntacticLrc.SpeakerTag -> {
                 speaker = element.speaker
             }
 
-            element is SyntacticLrc.WordSyncPoint -> {
+            is SyntacticLrc.WordSyncPoint -> {
                 if (!hadLyricSinceWordSync && lastWordSyncPoint != null)
                 // add a dummy word for preserving end timing of previous word
                     currentLine.add(Pair(lastWordSyncPoint, null))
@@ -588,12 +587,12 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
                 hadWordSyncSinceNewLine = true
             }
 
-            element is SyntacticLrc.LyricText -> {
+            is SyntacticLrc.LyricText -> {
                 hadLyricSinceWordSync = true
                 currentLine.add(Pair(lastWordSyncPoint ?: lastSyncPoint!!, element.text))
             }
 
-            element is SyntacticLrc.NewLine -> {
+            is SyntacticLrc.NewLine -> {
                 val words = if (currentLine.size > 1 || hadWordSyncSinceNewLine) {
                     val wout = mutableListOf<SemanticLyrics.Word>()
                     var idx = 0
@@ -669,8 +668,8 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
                                 iter.remove()
                             else
                                 it.charRange = (it.charRange.first - startDiff)
-                                        .coerceAtLeast(0)..(it.charRange.last - startDiff)
-                                        .coerceAtMost(text.length - 1)
+                                    .coerceAtLeast(0)..(it.charRange.last - startDiff)
+                                    .coerceAtMost(text.length - 1)
                         }
                     }
                     val start = if (currentLine.isNotEmpty()) currentLine.first().first
@@ -685,11 +684,11 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
                             false /* filled later */
                         )
                     )
-                    compressed.forEach {
-                        val diff = it - start
-                        out.add(out.last().copy(start = it, words = words?.map {
+                    compressed.forEach { lng ->
+                        val diff = lng - start
+                        out.add(out.last().copy(start = lng, words = words?.map {
                             it.copy(
-                                it.timeRange.start + diff..it.timeRange.last + diff
+                                timeRange = it.timeRange.first + diff..it.timeRange.last + diff
                             )
                         }?.toMutableList()))
                     }
@@ -705,6 +704,8 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
                     speaker = null
                 hadLyricSinceWordSync = true
             }
+
+            else -> {}
         }
     }
     out.sortBy { it.start }
@@ -729,11 +730,11 @@ fun parseLrc(lyricText: String, trimEnabled: Boolean, multiLineEnabled: Boolean)
     return SemanticLyrics.SyncedLyrics(out).also { splitBidirectionalWords(it) }
 }
 
-private val tt = "http://www.w3.org/ns/ttml"
-private val ttm = "http://www.w3.org/ns/ttml#metadata"
-private val ttp = "http://www.w3.org/ns/ttml#parameter"
-private val itunes = "http://itunes.apple.com/lyric-ttml-extensions"
-private val itunesInternal = "http://music.apple.com/lyric-ttml-internal"
+private const val tt = "http://www.w3.org/ns/ttml"
+private const val ttm = "http://www.w3.org/ns/ttml#metadata"
+private const val ttp = "http://www.w3.org/ns/ttml#parameter"
+private const val itunes = "http://itunes.apple.com/lyric-ttml-extensions"
+private const val itunesInternal = "http://music.apple.com/lyric-ttml-internal"
 private fun XmlPullParser.skipToEndOfTag() {
     if (eventType != XmlPullParser.START_TAG)
         throw XmlPullParserException("expected start tag in skipToEndOfTag()")
@@ -984,26 +985,30 @@ fun parseTtml(lyricText: String): SemanticLyrics? {
                     }
                 } else if (parser.name == "iTunesMetadata") {
                     while (parser.nextTag() != XmlPullParser.END_TAG) {
-                        if (parser.name == "songwriters") {
-                            while (parser.nextTag() != XmlPullParser.END_TAG) {
-                                if (parser.name == "songwriter") {
-                                    parser.nextAndThrowIfNotText()
-                                    // val songwriter = parser.text
-                                    parser.nextAndThrowIfNotEnd()
-                                } else {
-                                    throw XmlPullParserException(
-                                        "expected <songwriter>, got " +
-                                                "<${(parser.prefix?.plus(":") ?: "") + parser.name}> " +
-                                                "in <songwriters> in <iTunesMetadata>"
-                                    )
+                        when (parser.name) {
+                            "songwriters" -> {
+                                while (parser.nextTag() != XmlPullParser.END_TAG) {
+                                    if (parser.name == "songwriter") {
+                                        parser.nextAndThrowIfNotText()
+                                        // val songwriter = parser.text
+                                        parser.nextAndThrowIfNotEnd()
+                                    } else {
+                                        throw XmlPullParserException(
+                                            "expected <songwriter>, got " +
+                                                    "<${(parser.prefix?.plus(":") ?: "") + parser.name}> " +
+                                                    "in <songwriters> in <iTunesMetadata>"
+                                        )
+                                    }
                                 }
                             }
-                        } else if (parser.name == "audio") {
-                            // There's a field named lyricOffset but lyrics are in sync without applying it.
-                            // timer.audioOffset = timer.parseTimestampMs(parser.getAttributeValue(null, "lyricOffset"), 0L, true)
-                            // val role = parser.getAttributeValue(null, "role")
-                            parser.nextAndThrowIfNotEnd()
-                        } else parser.skipToEndOfTag() // <translations> or other
+                            "audio" -> {
+                                // There's a field named lyricOffset but lyrics are in sync without applying it.
+                                // timer.audioOffset = timer.parseTimestampMs(parser.getAttributeValue(null, "lyricOffset"), 0L, true)
+                                // val role = parser.getAttributeValue(null, "role")
+                                parser.nextAndThrowIfNotEnd()
+                            }
+                            else -> parser.skipToEndOfTag()
+                        } // <translations> or other
                     }
                 } else parser.skipToEndOfTag()
             }
@@ -1040,7 +1045,7 @@ fun parseTtml(lyricText: String): SemanticLyrics? {
                 }
                 out.add(
                     it.copy(
-                        t,
+                        texts = t,
                         time = t.lastOrNull()?.time?.last?.let { other ->
                             t.firstOrNull()?.time?.first?.rangeTo(other)
                         } ?: it.time, role = t.firstOrNull()?.role ?: it.role))
@@ -1051,25 +1056,25 @@ fun parseTtml(lyricText: String): SemanticLyrics? {
                     .indexOfFirst { i -> i.role != it.texts[cur].role }
         } while (cur != -1)
         out
-    }.map {
+    }.map { p ->
         val text = StringBuilder()
         val words = mutableListOf<IntRange>()
-        for (i in it.texts) {
+        for (i in p.texts) {
             val start = text.length
             text.append(i.text)
             words += start..<text.length
         }
-        val theWords = it.texts.mapIndexed { i, it -> it to words[i] }
+        val theWords = p.texts.mapIndexed { i, it -> it to words[i] }
             .filter { it.first.time != null }
             .map { SemanticLyrics.Word(it.first.time!!, it.second, false) }
             .takeIf { it.isNotEmpty() }
             ?.toMutableList()
-        val isBg = it.role == "x-bg"
-        val isGroup = peopleToType[it.agent] == "group"
+        val isBg = p.role == "x-bg"
+        val isGroup = peopleToType[p.agent] == "group"
         val isVoice2 =
-            it.agent != null && (people[peopleToType[it.agent]] ?: throw NullPointerException(
-                "expected to find ${it.agent} (${peopleToType[it.agent]}) in $people"
-            )).indexOf(it.agent) % 2 == 1
+            p.agent != null && (people[peopleToType[p.agent]] ?: throw NullPointerException(
+                "expected to find ${p.agent} (${peopleToType[p.agent]}) in $people"
+            )).indexOf(p.agent) % 2 == 1
         val speaker = when {
             isGroup && isBg -> SpeakerEntity.GroupBackground
             isGroup -> SpeakerEntity.Group
@@ -1081,8 +1086,8 @@ fun parseTtml(lyricText: String): SemanticLyrics? {
         // TODO translations for ttml? does anyone actually do that? how could that work?
         SemanticLyrics.LyricLine(
             text.toString(),
-            it.time.first,
-            it.time.last,
+            p.time.first,
+            p.time.last,
             theWords,
             speaker,
             false
@@ -1105,14 +1110,14 @@ fun parseSrt(lyricText: String, trimEnabled: Boolean): SemanticLyrics? {
         return null
     }
     var lastTs: ULong? = null
-    return SemanticLyrics.SyncedLyrics(cues.map {
-        val ts = (it.startTimeUs / 1000).toULong()
+    return SemanticLyrics.SyncedLyrics(cues.map { cuesWithTiming ->
+        val ts = (cuesWithTiming.startTimeUs / 1000).toULong()
         val l = lastTs == ts
         lastTs = ts
-        SemanticLyrics.LyricLine(it.cues[0].text!!.toString().let {
+        SemanticLyrics.LyricLine(cuesWithTiming.cues[0].text!!.toString().let {
             if (trimEnabled)
                 it.trim()
             else it
-        }, ts, (it.endTimeUs / 1000).toULong(), null, null, l)
+        }, ts, (cuesWithTiming.endTimeUs / 1000).toULong(), null, null, l)
     })
 }

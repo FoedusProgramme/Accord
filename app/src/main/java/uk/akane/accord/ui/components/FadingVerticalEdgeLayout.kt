@@ -12,10 +12,10 @@ import android.graphics.Shader
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.widget.FrameLayout
+import androidx.core.content.withStyledAttributes
 import androidx.core.view.doOnLayout
 import uk.akane.accord.R
 import kotlin.math.min
-import androidx.core.content.withStyledAttributes
 
 open class FadingVerticalEdgeLayout : FrameLayout {
     private var fadeTop = false
@@ -77,9 +77,9 @@ open class FadingVerticalEdgeLayout : FrameLayout {
         }
         val mode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
         gradientPaintTop = Paint(Paint.ANTI_ALIAS_FLAG)
-        gradientPaintTop!!.setXfermode(mode)
+        gradientPaintTop!!.xfermode = mode
         gradientPaintBottom = Paint(Paint.ANTI_ALIAS_FLAG)
-        gradientPaintBottom!!.setXfermode(mode)
+        gradientPaintBottom!!.xfermode = mode
         gradientRectTop = Rect()
         gradientRectBottom = Rect()
     }

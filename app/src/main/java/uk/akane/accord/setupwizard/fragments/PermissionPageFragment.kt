@@ -41,7 +41,7 @@ class PermissionPageFragment : Fragment() {
                     releaseContinueButton()
                 }
             }
-            if (requireContext().hasMediaPermissionSeparation() &&
+            if (hasMediaPermissionSeparation() &&
                 requireContext().isEssentialPermissionGranted() && !musicPermissionButton.isChecked) {
                 AnimationUtils.createValAnimator(
                     if (musicPermissionButton.isChecked) allowedColor else allowColor,
@@ -62,7 +62,7 @@ class PermissionPageFragment : Fragment() {
                 musicPermissionButton.isChecked = !musicPermissionButton.isChecked
                 musicPermissionButton.text = if (musicPermissionButton.isChecked) allowedString else allowString
             } else if (
-                !requireContext().hasMediaPermissionSeparation() &&
+                !hasMediaPermissionSeparation() &&
                 requireContext().isEssentialPermissionGranted() && !storagePermissionButton.isChecked) {
                 AnimationUtils.createValAnimator(
                     if (storagePermissionButton.isChecked) allowedColor else allowColor,
@@ -83,7 +83,7 @@ class PermissionPageFragment : Fragment() {
                 storagePermissionButton.isChecked = !storagePermissionButton.isChecked
                 storagePermissionButton.text = if (storagePermissionButton.isChecked) allowedString else allowString
             } else if (
-                requireContext().hasMediaPermissionSeparation() &&
+                hasMediaPermissionSeparation() &&
                 requireContext().isAlbumPermissionGranted() && !albumPermissionButton.isChecked) {
                 AnimationUtils.createValAnimator(
                     if (albumPermissionButton.isChecked) allowedColor else allowColor,
@@ -136,7 +136,7 @@ class PermissionPageFragment : Fragment() {
         musicConstraintLayout = rootView.findViewById(R.id.music_card)
         albumConstraintLayout = rootView.findViewById(R.id.photo_card)
 
-        if (requireContext().hasMediaPermissionSeparation()) {
+        if (hasMediaPermissionSeparation()) {
             storageConstraintLayout.visibility = View.GONE
         } else {
             musicConstraintLayout.visibility = View.GONE
@@ -183,7 +183,7 @@ class PermissionPageFragment : Fragment() {
     }
 
     private fun updateStatusImmediately() {
-        if (requireContext().hasMediaPermissionSeparation()) {
+        if (hasMediaPermissionSeparation()) {
             storageConstraintLayout.visibility = View.GONE
             musicPermissionButton.isChecked = requireContext().isEssentialPermissionGranted()
             musicPermissionButton.text = if (musicPermissionButton.isChecked) allowedString else allowString

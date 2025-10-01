@@ -5,8 +5,8 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.forEach
-import uk.akane.accord.logic.dp
 import androidx.core.view.isNotEmpty
+import uk.akane.accord.logic.dp
 import kotlin.math.roundToInt
 
 class LyricsView @JvmOverloads constructor(

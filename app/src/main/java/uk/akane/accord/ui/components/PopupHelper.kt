@@ -16,8 +16,8 @@ import androidx.core.graphics.withSave
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.isDarkMode
-import uk.akane.accord.logic.sp
 import uk.akane.accord.logic.setOutline
+import uk.akane.accord.logic.sp
 import uk.akane.accord.logic.sumOf
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.cupertino.widget.utils.AnimationUtils

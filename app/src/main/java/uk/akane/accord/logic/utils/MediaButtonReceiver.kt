@@ -7,9 +7,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
-import androidx.media3.common.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaButtonReceiver
 import uk.akane.accord.R
@@ -39,7 +39,7 @@ class MediaButtonReceiver : MediaButtonReceiver() {
 		intent: Intent,
 		e: ForegroundServiceStartNotAllowedException
 	) {
-		Log.w(TAG, "Failed to resume playback :/")
+		Log.w(TAG, "Failed to resume playback :/", e)
 		if (mayThrowForegroundServiceStartNotAllowed()
 			|| mayThrowForegroundServiceStartNotAllowedMiui()
 		) {

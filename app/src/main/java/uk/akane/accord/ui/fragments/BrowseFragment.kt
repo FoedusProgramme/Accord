@@ -11,10 +11,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import uk.akane.accord.R
 import uk.akane.accord.ui.adapters.BrowseAdapter
-import uk.akane.accord.ui.adapters.LibraryHeadAdapter
 import uk.akane.accord.ui.components.NavigationBar
 
 class BrowseFragment: Fragment() {
+
     private lateinit var navigationBar: NavigationBar
     private lateinit var recyclerView: RecyclerView
 

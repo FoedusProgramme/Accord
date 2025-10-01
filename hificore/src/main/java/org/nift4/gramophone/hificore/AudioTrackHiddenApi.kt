@@ -31,7 +31,18 @@ object AudioTrackHiddenApi {
     var libLoaded = false
         private set
 
-    data class MixPort(val id: Int, val ioHandle: Int, val name: String?, val flags: Int?, val channelMask: Int?, val format: UInt?, val sampleRate: UInt?, val hwModule: Int?, val fast: Boolean?)
+    data class MixPort(
+        val id: Int,
+        val ioHandle: Int,
+        val name: String?,
+        val flags: Int?,
+        val channelMask: Int?,
+        val format: UInt?,
+        val sampleRate: UInt?,
+        val hwModule: Int?,
+        val fast: Boolean?
+    )
+
     init {
         if (canLoadLib()) {
             try {
@@ -55,8 +66,8 @@ object AudioTrackHiddenApi {
     fun canLoadLib(): Boolean {
         return !(Build.VERSION.SDK_INT == 33 && Build.BRAND == "TECNO" &&
                 Build.PRODUCT.startsWith("BG6-")) && // Tecno SPARK Go 2024
-            !(Build.VERSION.SDK_INT == 34 && Build.BRAND == "samsung" &&
-                    Build.DEVICE == "dm1q") // Samsung Galaxy S23
+                !(Build.VERSION.SDK_INT == 34 && Build.BRAND == "samsung" &&
+                        Build.DEVICE == "dm1q") // Samsung Galaxy S23
     }
 
     @SuppressLint("PrivateApi")
@@ -87,12 +98,8 @@ object AudioTrackHiddenApi {
                 return ret.toUInt()
             return null
         }
-        val output = getOutput(audioTrack)
-        if (output == null)
-            return null
-        val af = getAfService()
-        if (af == null)
-            return null
+        val output = getOutput(audioTrack) ?: return null
+        val af = getAfService() ?: return null
         val inParcel = obtainParcel(af)
         val outParcel = obtainParcel(af)
         try {
@@ -115,6 +122,7 @@ object AudioTrackHiddenApi {
             outParcel.recycle()
         }
     }
+
     private external fun getHalSampleRateInternal(@Suppress("unused") audioTrackPtr: Long): Int
 
     private fun obtainParcel(binder: IBinder) =
@@ -136,8 +144,14 @@ object AudioTrackHiddenApi {
             } catch (e: Throwable) {
                 Log.e(TAG, Log.getStackTraceString(e))
                 null
-            }.also { Log.d(TRACE_TAG, "native getHalChannelCountInternal/getAudioTrackPtr is done: $it") }
+            }.also {
+                Log.d(
+                    TRACE_TAG,
+                    "native getHalChannelCountInternal/getAudioTrackPtr is done: $it"
+                )
+            }
     }
+
     private external fun getHalChannelCountInternal(@Suppress("unused") audioTrackPtr: Long): Int
 
     fun getHalFormat(audioTrack: AudioTrack): UInt? {
@@ -154,17 +168,18 @@ object AudioTrackHiddenApi {
             } catch (e: Throwable) {
                 Log.e(TAG, Log.getStackTraceString(e))
                 null
-            }.also { Log.d(TRACE_TAG, "native getHalChannelCountInternal/getAudioTrackPtr is done: $it") }
+            }.also {
+                Log.d(
+                    TRACE_TAG,
+                    "native getHalChannelCountInternal/getAudioTrackPtr is done: $it"
+                )
+            }
             if (ret != null && ret != 0)
                 return ret.toUInt()
             return null
         }
-        val output = getOutput(audioTrack)
-        if (output == null)
-            return null
-        val af = getAfService()
-        if (af == null)
-            return null
+        val output = getOutput(audioTrack) ?: return null
+        val af = getAfService() ?: return null
         val inParcel = obtainParcel(af)
         val outParcel = obtainParcel(af)
         try {
@@ -199,6 +214,7 @@ object AudioTrackHiddenApi {
             outParcel.recycle()
         }
     }
+
     private external fun getHalFormatInternal(@Suppress("unused") audioTrackPtr: Long): Int
 
     @SuppressLint("PrivateApi") // sorry, not sorry...
@@ -250,10 +266,16 @@ object AudioTrackHiddenApi {
             null
         }
     }
+
     @Suppress("unused") // for parameters
     private external fun findAfFlagsForPortInternal(id: Int, sr: Int): IntArray?
 
-    fun findAfTrackFlags(dump: String?, latency: Int?, track: AudioTrack, grantedFlags: Int?): Int? {
+    fun findAfTrackFlags(
+        dump: String?,
+        latency: Int?,
+        track: AudioTrack,
+        grantedFlags: Int?
+    ): Int? {
         if (!libLoaded)
             return null
         // First exposure to client process was below commit, which first appeared in U QPR2.
@@ -262,13 +284,17 @@ object AudioTrackHiddenApi {
             return null
         try {
             val dump = dump ?: throw NullPointerException("af track dump is null, check prior logs")
-            val latency = latency ?: throw NullPointerException("af track latency is null, check prior logs")
+            val latency =
+                latency ?: throw NullPointerException("af track latency is null, check prior logs")
             val theLine = dump.split('\n').first { it.contains("AF SampleRate") }
             val theLine2 = dump.split('\n').first { it.contains("format(0x") }
-            val regex = Regex(".*AF latency \\(([0-9]+)\\) AF frame count\\(([0-9]+)\\) AF SampleRate\\(([0-9]+)\\).*")
+            val regex =
+                Regex(".*AF latency \\(([0-9]+)\\) AF frame count\\(([0-9]+)\\) AF SampleRate\\(([0-9]+)\\).*")
             val regex2 = Regex(".*format\\(0x([0-9a-f]+)\\), .*")
-            val match = regex.matchEntire(theLine) ?: throw NullPointerException("failed match of $theLine")
-            val match2 = regex2.matchEntire(theLine2) ?: throw NullPointerException("failed match2 of $theLine2")
+            val match =
+                regex.matchEntire(theLine) ?: throw NullPointerException("failed match of $theLine")
+            val match2 = regex2.matchEntire(theLine2)
+                ?: throw NullPointerException("failed match2 of $theLine2")
             val afLatency = match.groupValues.getOrNull(1)?.toIntOrNull()
                 ?: throw NullPointerException("failed parsing afLatency in: $theLine")
             val afFrameCount = match.groupValues.getOrNull(2)?.toLongOrNull()
@@ -279,12 +305,22 @@ object AudioTrackHiddenApi {
                 ?: throw NullPointerException("failed parsing format in: $theLine2")
             val ptr = getAudioTrackPtr(track)
             Log.d(TRACE_TAG, "calling native findAfTrackFlagsInternal")
-            return findAfTrackFlagsInternal(ptr, afLatency, afFrameCount, afSampleRate, latency, format).let {
+            return findAfTrackFlagsInternal(
+                ptr,
+                afLatency,
+                afFrameCount,
+                afSampleRate,
+                latency,
+                format
+            ).let {
                 if (it == Int.MAX_VALUE || it == Int.MIN_VALUE)
                     null // something went wrong, this was logged to logcat
                 else if (grantedFlags != null && (it or grantedFlags) != it) {
                     // should never happen
-                    Log.e(TAG, "af track flags($it) are nonsense, |$grantedFlags = ${it or grantedFlags}")
+                    Log.e(
+                        TAG,
+                        "af track flags($it) are nonsense, |$grantedFlags = ${it or grantedFlags}"
+                    )
                     null
                 } else it
             }.also { Log.d(TRACE_TAG, "native findAfTrackFlagsInternal is done: $it") }
@@ -293,9 +329,12 @@ object AudioTrackHiddenApi {
             return null
         }
     }
+
     @Suppress("unused") // for parameters
-    private external fun findAfTrackFlagsInternal(pointer: Long, afLatency: Int, afFrameCount: Long,
-                                                  afSampleRate: Int, latency: Int, format: Int): Int
+    private external fun findAfTrackFlagsInternal(
+        pointer: Long, afLatency: Int, afFrameCount: Long,
+        afSampleRate: Int, latency: Int, format: Int
+    ): Int
 
     fun getOutput(audioTrack: AudioTrack): Int? {
         if (!libLoaded)
@@ -310,6 +349,7 @@ object AudioTrackHiddenApi {
             null
         }.also { Log.d(TRACE_TAG, "native getOutputInternal/getAudioTrackPtr is done: $it") }
     }
+
     private external fun getOutputInternal(@Suppress("unused") audioTrackPtr: Long): Int
 
     fun getGrantedFlags(audioTrack: AudioTrack): Int? {
@@ -329,6 +369,7 @@ object AudioTrackHiddenApi {
             null
         }.also { Log.d(TRACE_TAG, "native getOutputInternal/getAudioTrackPtr is done: $it") }
     }
+
     @Suppress("unused") // for parameters
     /*private*/ external fun getFlagsInternal(audioTrack: AudioTrack?, audioTrackPtr: Long): Int
 
@@ -345,6 +386,7 @@ object AudioTrackHiddenApi {
             null
         }.also { Log.d(TRACE_TAG, "native dump/getAudioTrackPtr is done: $it") }
     }
+
     /*private*/ external fun dumpInternal(@Suppress("unused") audioTrackPtr: Long): String
 
     @SuppressLint("PrivateApi") // only used below U, stable private API
@@ -409,10 +451,18 @@ object AudioTrackHiddenApi {
         val mixPortData = getMixPortMetadata(id, ioHandle)
         // flags exposed to app process since below commit which first appeared in T release.
         // https://cs.android.com/android/_/android/platform/frameworks/av/+/99809024b36b243ad162c780c1191bb503a8df47
-        return MixPort(id, ioHandle, name, flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-            mixPortData?.get(3) else null, channelMask = mixPortData?.get(2),
-            format = mixPortData?.get(1)?.toUInt(), sampleRate = mixPortData?.get(0)?.toUInt(),
-            hwModule = mixPortData?.get(4), fast = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+        // https://cs.android.com/android/_/android/platform/frameworks/av/+/0805de160715e82fcf59f9367a43b96a352abd11
+        return MixPort(
+            id,
+            ioHandle,
+            name,
+            flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                mixPortData?.get(3) else null,
+            channelMask = mixPortData?.get(2),
+            format = mixPortData?.get(1)?.toUInt(),
+            sampleRate = mixPortData?.get(0)?.toUInt(),
+            hwModule = mixPortData?.get(4),
+            fast = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
                 mixPortData?.let { it[5] == 0 } else null)
     }
 
@@ -463,7 +513,9 @@ object AudioTrackHiddenApi {
         return null
     }
 
-    private val notificationRegex = Regex(".*notif. frame count\\((.*)\\), req\\. notif\\. frame .*")
+    private val notificationRegex =
+        Regex(".*notif. frame count\\((.*)\\), req\\. notif\\. frame .*")
+
     fun getNotificationFramesActFromDump(dump: String?): Int? {
         if (dump == null)
             return null
@@ -650,6 +702,7 @@ object AudioTrackHiddenApi {
         return AudioConfigBase(out[0], out[1], out[2]) to
                 AudioConfigBase(out[3], out[4], out[5])
     }
+
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private external fun getEffectConfigs(ptr: Long, out: IntArray): Int
 }

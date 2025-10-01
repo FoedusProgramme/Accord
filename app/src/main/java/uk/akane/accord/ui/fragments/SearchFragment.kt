@@ -8,14 +8,11 @@ import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import uk.akane.accord.R
-import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.adapters.SearchAdapter
 import uk.akane.accord.ui.components.NavigationBar
-import uk.akane.accord.ui.viewmodels.AccordViewModel
 import uk.akane.cupertino.widget.fadOutAnimation
 import uk.akane.cupertino.widget.utils.AnimationUtils
 

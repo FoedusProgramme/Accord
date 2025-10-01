@@ -144,7 +144,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
 
         addView(transitionImageView)
 
-        transitionImageView?.let { it ->
+        transitionImageView?.let {
             val constraintSet = ConstraintSet()
             constraintSet.clone(this)
             constraintSet.connect(it.id, ConstraintSet.START, previewView.id, ConstraintSet.START, 0)
@@ -370,7 +370,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
         flingValueAnimator = null
 
         val deltaY = - distanceY / (fullTop - previewTop)
-        if (fraction + deltaY < 0F || fraction + deltaY > 1F) { return true }
+        if (fraction + deltaY !in 0F..1F) { return true }
 
         updateTransform(fraction + deltaY)
 

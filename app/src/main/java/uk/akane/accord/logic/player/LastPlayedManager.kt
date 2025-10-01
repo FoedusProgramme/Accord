@@ -191,8 +191,8 @@ class LastPlayedManager(
                 )
                 val data = MediaItemsWithStartPosition(
                     PrefsListUtils.parse(lastPlayedLst, lastPlayedGrp)
-                        .map {
-                            val b = SafeDelimitedStringDecat(":", it)
+                        .map { str ->
+                            val b = SafeDelimitedStringDecat(":", str)
                             // add new entries at the bottom and remember they are null for upgrade path
                             val versionStr = b.readStringUnsafe()
                             val version = versionStr.let {

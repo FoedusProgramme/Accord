@@ -4,7 +4,6 @@ import androidx.annotation.OptIn
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaItem.SubtitleConfiguration
-import androidx.media3.common.util.Assertions
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.datasource.DataSource
@@ -28,6 +27,7 @@ import androidx.media3.extractor.ExtractorsFactory
 import androidx.media3.extractor.PositionHolder
 import androidx.media3.extractor.SeekMap.Unseekable
 import androidx.media3.extractor.text.SubtitleParser
+import com.google.common.base.Preconditions
 import com.google.common.base.Supplier
 import com.google.common.primitives.Ints
 import java.io.IOException
@@ -97,7 +97,7 @@ class GramophoneMediaSourceFactory(
     @UnstableApi
     override fun setCmcdConfigurationFactory(cmcdConfigurationFactory: CmcdConfiguration.Factory): GramophoneMediaSourceFactory {
         delegateFactoryLoader.setCmcdConfigurationFactory(
-            Assertions.checkNotNull(
+            Preconditions.checkNotNull(
                 cmcdConfigurationFactory
             )
         )
@@ -111,7 +111,7 @@ class GramophoneMediaSourceFactory(
     @UnstableApi
     override fun setLoadErrorHandlingPolicy(loadErrorHandlingPolicy: LoadErrorHandlingPolicy): GramophoneMediaSourceFactory {
         this.loadErrorHandlingPolicy =
-            Assertions.checkNotNull(
+            Preconditions.checkNotNull(
                 loadErrorHandlingPolicy,
                 "MediaSource.Factory#setLoadErrorHandlingPolicy no longer handles null by instantiating a new DefaultLoadErrorHandlingPolicy. Explicitly construct and pass an instance in order to retain the old behavior."
             )
@@ -127,16 +127,16 @@ class GramophoneMediaSourceFactory(
     @UnstableApi
     override fun createMediaSource(inMediaItem: MediaItem): MediaSource {
         var mediaItem = inMediaItem
-        Assertions.checkNotNull(mediaItem.localConfiguration)
+        Preconditions.checkNotNull(mediaItem.localConfiguration)
         val scheme = mediaItem.localConfiguration!!.uri.scheme
         if (scheme != null && (scheme == "ssai")) {
-            return Assertions.checkNotNull(this.serverSideAdInsertionMediaSourceFactory)
+            return Preconditions.checkNotNull(this.serverSideAdInsertionMediaSourceFactory)
                 .createMediaSource(mediaItem)
         } else if ((mediaItem.localConfiguration!!.mimeType == "application/x-image-uri")) {
             return (ExternallyLoadedMediaSource.Factory(
                 Util.msToUs(
                     mediaItem.localConfiguration!!.imageDurationMs
-                ), Assertions.checkNotNull(
+                ), Preconditions.checkNotNull(
                     this.externalImageLoader
                 )
             )).createMediaSource(mediaItem)
@@ -149,7 +149,7 @@ class GramophoneMediaSourceFactory(
             }
 
             val mediaSourceFactory = delegateFactoryLoader.getMediaSourceFactory(type)
-            Assertions.checkStateNotNull(
+            Preconditions.checkNotNull(
                 mediaSourceFactory,
                 "No suitable media source factory found for content type: $type"
             )
@@ -330,17 +330,14 @@ class GramophoneMediaSourceFactory(
                 return mediaSourceFactorySuppliers[contentType]
             } else {
                 var mediaSourceFactorySupplier: Supplier<MediaSource.Factory>? = null
-                val dataSourceFactory =
-                    Assertions.checkNotNull<DataSource.Factory?>(
-                        this.dataSourceFactory
-                    )
+                val dataSourceFactory = Preconditions.checkNotNull(this.dataSourceFactory)
 
                 try {
                     val clazz: Class<*>
                     when (contentType) {
                         0 -> {
                             clazz =
-                                Class.forName("androidx.media3.exoplayer.dash.DashMediaSource\$Factory")
+                                Class.forName($$"androidx.media3.exoplayer.dash.DashMediaSource$Factory")
                                     .asSubclass(
                                         MediaSource.Factory::class.java
                                     )
@@ -354,7 +351,7 @@ class GramophoneMediaSourceFactory(
 
                         1 -> {
                             clazz =
-                                Class.forName("androidx.media3.exoplayer.smoothstreaming.SsMediaSource\$Factory")
+                                Class.forName($$"androidx.media3.exoplayer.smoothstreaming.SsMediaSource$Factory")
                                     .asSubclass(
                                         MediaSource.Factory::class.java
                                     )
@@ -368,7 +365,7 @@ class GramophoneMediaSourceFactory(
 
                         2 -> {
                             clazz =
-                                Class.forName("androidx.media3.exoplayer.hls.HlsMediaSource\$Factory")
+                                Class.forName($$"androidx.media3.exoplayer.hls.HlsMediaSource$Factory")
                                     .asSubclass(
                                         MediaSource.Factory::class.java
                                     )
@@ -382,7 +379,7 @@ class GramophoneMediaSourceFactory(
 
                         3 -> {
                             clazz =
-                                Class.forName("androidx.media3.exoplayer.rtsp.RtspMediaSource\$Factory")
+                                Class.forName($$"androidx.media3.exoplayer.rtsp.RtspMediaSource$Factory")
                                     .asSubclass(
                                         MediaSource.Factory::class.java
                                     )
@@ -452,14 +449,16 @@ class GramophoneMediaSourceFactory(
             mediaItem: MediaItem,
             mediaSource: MediaSource
         ): MediaSource {
-            return (if ((mediaItem.clippingConfiguration.startPositionUs == 0L) && (mediaItem.clippingConfiguration.endPositionUs == Long.MIN_VALUE) && !mediaItem.clippingConfiguration.relativeToDefaultPosition) mediaSource else ClippingMediaSource(
-                mediaSource,
-                mediaItem.clippingConfiguration.startPositionUs,
-                mediaItem.clippingConfiguration.endPositionUs,
-                !mediaItem.clippingConfiguration.startsAtKeyFrame,
-                mediaItem.clippingConfiguration.relativeToLiveWindow,
-                mediaItem.clippingConfiguration.relativeToDefaultPosition
-            ))
+            return (
+                    if ((mediaItem.clippingConfiguration.startPositionUs == 0L) && (mediaItem.clippingConfiguration.endPositionUs == Long.MIN_VALUE) && !mediaItem.clippingConfiguration.relativeToDefaultPosition) mediaSource
+                    else ClippingMediaSource.Builder(mediaSource)
+                        .setStartPositionUs(mediaItem.clippingConfiguration.startPositionUs)
+                        .setEndPositionUs(mediaItem.clippingConfiguration.endPositionUs)
+                        .setEnableInitialDiscontinuity(!mediaItem.clippingConfiguration.startsAtKeyFrame)
+                        .setAllowDynamicClippingUpdates(mediaItem.clippingConfiguration.relativeToLiveWindow)
+                        .setRelativeToDefaultPosition(mediaItem.clippingConfiguration.relativeToDefaultPosition)
+                        .build()
+                    )
         }
 
         private fun newInstance(

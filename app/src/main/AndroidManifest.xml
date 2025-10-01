@@ -1,27 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="uk.akane.accord">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-feature android:name="android.hardware.audio.output" android:required="false"/>
-    <uses-feature android:name="android.hardware.audio.pro" android:required="false"/>
-    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false"/>
-    <uses-feature android:name="android.hardware.bluetooth" android:required="false"/>
-    <uses-feature android:name="android.hardware.faketouch" android:required="false"/>
-    <uses-feature android:name="android.hardware.type.pc" android:required="false"/>
-    <uses-feature android:name="android.software.app_widgets" android:required="false"/>
+    <uses-feature
+        android:name="android.hardware.audio.output"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.audio.pro"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.faketouch"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.type.pc"
+        android:required="false" />
+    <uses-feature
+        android:name="android.software.app_widgets"
+        android:required="false" />
 
     <!-- Notifications (for error handling on MIUI) -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS"
         android:minSdkVersion="33" />
     <!-- Read music files (Android 13 and later) (includes .lrc and thumbnails) -->
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_AUDIO"
         android:minSdkVersion="33" />
     <!-- Read cover files, this is never requested by UI but exists for users who want it -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_IMAGES"
         android:minSdkVersion="33"
         tools:ignore="PhotoAndVideoPolicy" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
         android:minSdkVersion="34" />
     <!-- Read music files, .lrc files and cover files (Android 12 and earlier) -->
     <uses-permission
@@ -33,9 +50,11 @@
         android:maxSdkVersion="29"
         tools:ignore="ScopedStorage" />
     <!-- Run music playback service -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE"
         tools:ignore="ForegroundServicesPolicy" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
         android:minSdkVersion="34" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Remove ExoPlayer permission as we don't network playback -->
@@ -43,7 +62,8 @@
         android:name="android.permission.ACCESS_NETWORK_STATE"
         tools:node="remove" />
     <!-- Bluetooth device information -->
-    <uses-permission android:name="android.permission.BLUETOOTH"
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
@@ -76,7 +96,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

@@ -57,20 +57,25 @@ object LrcUtils {
         parserOptions: LrcParserOptions
     ): SemanticLyrics? {
         for (i in 0..<metadata.length()) {
-            val meta = metadata.get(i)
             // TODO https://id3.org/id3v2.4.0-frames implement SYLT
             // if (meta is BinaryFrame && meta.id == "SYLT") {
             //    val syltData = SyltFrameDecoder.decode(ParsableByteArray(meta.data))
             //    if (syltData != null) return syltData
             // }
             val plainTextData =
-                if (meta is VorbisComment && meta.key == "LYRICS") // ogg / flac
-                    meta.value
-                else if (meta is BinaryFrame && (meta.id == "USLT" || meta.id == "SYLT")) // mp3 / other id3 based
-                    UsltFrameDecoder.decode(ParsableByteArray(meta.data)) // SYLT is also used to store lrc lyrics encoded in USLT format
-                else if (meta is TextInformationFrame && (meta.id == "USLT" || meta.id == "SYLT")) // m4a
-                    meta.values.joinToString("\n")
-                else null
+                when (val meta = metadata.get(i)) {
+                    is VorbisComment if meta.key == "LYRICS" // ogg / flac
+                        -> meta.value
+                    is BinaryFrame if (meta.id == "USLT" || meta.id == "SYLT") // mp3 / other id3 based
+                        -> UsltFrameDecoder.decode(
+                        ParsableByteArray(meta.data)
+                    ) // SYLT is also used to store lrc lyrics encoded in USLT format
+                    is TextInformationFrame if (meta.id == "USLT" || meta.id == "SYLT") // m4a
+                        -> meta.values.joinToString(
+                        "\n"
+                    )
+                    else -> null
+                }
             return plainTextData?.let { parseLyrics(it, parserOptions, null) } ?: continue
         }
         return null

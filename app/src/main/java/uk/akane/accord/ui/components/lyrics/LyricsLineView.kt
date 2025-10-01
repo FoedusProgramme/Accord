@@ -114,7 +114,7 @@ class LyricsLineView internal constructor(
         val layoutWidth = MeasureSpec.getSize(widthMeasureSpec)
         val textWidth = layoutWidth - hP * 2
 
-        Log.d("TAG", "tl: ${text.length}, ${textWidth}")
+        Log.d("TAG", "tl: ${text.length}, $textWidth")
 
         staticLayout = StaticLayout.Builder
             .obtain(text, 0, text.length, paint, textWidth)

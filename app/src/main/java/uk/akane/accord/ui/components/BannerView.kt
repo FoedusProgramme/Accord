@@ -1,7 +1,12 @@
 package uk.akane.accord.ui.components
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Shader
+import android.graphics.SurfaceTexture
 import android.graphics.drawable.Drawable
 import android.media.MediaPlayer
 import android.text.Layout

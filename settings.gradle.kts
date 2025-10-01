@@ -23,7 +23,7 @@ dependencyResolutionManagement {
     }
 }
 
-includeBuild(file("media3").toPath().toRealPath().toAbsolutePath().toString()) {
+includeBuild("media3") {
     dependencySubstitution {
         substitute(module("androidx.media3:media3-common")).using(project(":lib-common"))
         substitute(module("androidx.media3:media3-common-ktx")).using(project(":lib-common-ktx"))

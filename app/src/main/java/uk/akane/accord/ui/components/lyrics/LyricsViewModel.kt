@@ -6,8 +6,9 @@ import android.util.Log
 import android.view.View
 import androidx.core.view.doOnLayout
 import androidx.core.view.forEach
-import androidx.core.widget.NestedScrollView
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import uk.akane.accord.ui.components.FadingVerticalEdgeLayout
+import uk.akane.accord.ui.components.scroll.ListenableNestedScrollView
 import kotlin.math.roundToInt
 
 class LyricsViewModel(private val context: Context) {
@@ -45,21 +47,20 @@ class LyricsViewModel(private val context: Context) {
         val lifecycle = (context as? LifecycleOwner)?.lifecycle
 
         val fadingEdgeLayout = view as FadingVerticalEdgeLayout
-        val scrollView = fadingEdgeLayout.getChildAt(0) as NestedScrollView
+        val scrollView = fadingEdgeLayout.getChildAt(0) as ListenableNestedScrollView
         val lyricsView = scrollView.getChildAt(0) as LyricsView
 
         var isUserScrolling = false
 
-        /*
         scope.launch {
             lifecycle?.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 scrollView.collectUserAction(
                     onActionStart = {
                         scrollView.isVerticalScrollBarEnabled = true
-                        lyricsView.forEachChild { child ->
-                            child as LyricsLineView
-                            child.animations.cancelBlur()
-                            child.visibility = View.VISIBLE
+                        lyricsView.forEach { view ->
+                            view as LyricsLineView
+                            view.animations.cancelBlur()
+                            view.visibility = View.VISIBLE
                         }
                         isUserScrolling = true
                     },
@@ -69,8 +70,6 @@ class LyricsViewModel(private val context: Context) {
                 )
             }
         }
-
-         */
 
         fun updateCurrentIndex(index: Int) {
             Log.d("TAG", "ci: $index")

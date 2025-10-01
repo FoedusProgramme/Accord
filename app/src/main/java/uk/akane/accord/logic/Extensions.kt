@@ -268,6 +268,24 @@ fun floatAnimator(
     lerp = FloatLerp
 )
 
+fun springAnimator(
+    initialValue: Float,
+    stiffness: Float = 300f,
+    dampingRatio: Float = 1f,
+    valueThreshold: Float = 0.5f,
+    minValue: Float = -Float.MAX_VALUE,
+    maxValue: Float = Float.MAX_VALUE,
+    listener: AnimationUtils.Animator.ValueUpdateListener<Float>
+) = AnimationUtils.SpringAnimator(
+    initialValue = initialValue,
+    stiffness = stiffness,
+    dampingRatio = dampingRatio,
+    valueThreshold = valueThreshold,
+    minValue = minValue,
+    maxValue = maxValue,
+    listener = listener
+)
+
 private val FloatLerp = { from: Float, to: Float, fraction: Float -> lerp(from, to, fraction) }
 
 fun Rect.scale(
@@ -379,7 +397,7 @@ fun MediaItem.getBitrate(): Int? {
         retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
             ?.toIntOrNull()
     } catch (e: Exception) {
-        Log.w("getBitrate", Log.getStackTraceString(e))
+        Log.w("MediaItem", "getBitrate failed", e)
         null
     } finally {
         retriever.release()
@@ -435,20 +453,20 @@ fun Context.isDarkMode(): Boolean =
             Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
 fun Context.isAlbumPermissionGranted() =
-    (hasMediaPermissionSeparation() && (checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED)) ||
+    (hasMediaPermissionSeparation() && (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED)) ||
             (!hasMediaPermissionSeparation() && isEssentialPermissionGranted())
 
 fun Context.isEssentialPermissionGranted() =
     (!hasMediaPermissionSeparation() && (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) ||
             (hasMediaPermissionSeparation() && (checkSelfPermission(Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED))
 
-fun Context.hasMediaPermissionSeparation() =
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun Context.hasNotificationPermission() =
     checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
             PackageManager.PERMISSION_GRANTED
+
+fun hasMediaPermissionSeparation() =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun needsMissingOnDestroyCallWorkarounds(): Boolean =

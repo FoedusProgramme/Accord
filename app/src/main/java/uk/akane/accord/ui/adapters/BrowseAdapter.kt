@@ -62,7 +62,7 @@ class BrowseAdapter(
     override fun getItemCount(): Int =
         browseList.size
 
-    inner class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
         val title: TextView? = view.findViewById(R.id.title)
     }
 

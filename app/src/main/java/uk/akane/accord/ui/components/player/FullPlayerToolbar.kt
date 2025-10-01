@@ -100,7 +100,7 @@ class FullPlayerToolbar @JvmOverloads constructor(
         if (lastDisposable != null) {
             lastDisposable?.dispose()
             lastDisposable = null
-            Log.e(FullPlayer.Companion.TAG, "raced while loading cover in onMediaItemTransition?")
+            Log.e(FullPlayer.TAG, "raced while loading cover in onMediaItemTransition?")
         }
         val mediaItem = instance?.currentMediaItem
         if (coverSimpleImageView.width != 0 && coverSimpleImageView.height != 0) {

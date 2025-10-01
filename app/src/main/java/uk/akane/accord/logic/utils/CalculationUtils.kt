@@ -66,7 +66,7 @@ object CalculationUtils {
         @ColorInt color: Int,
         @IntRange(from = 0x0, to = 0xFF) alpha: Int
     ): Int {
-        require(!(alpha < 0 || alpha > 255)) { "alpha must be between 0 and 255." }
+        require(alpha in 0..255) { "alpha must be between 0 and 255." }
         return color and 0x00ffffff or (alpha shl 24)
     }
 
