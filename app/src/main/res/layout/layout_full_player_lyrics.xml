@@ -8,18 +8,17 @@
 
     <uk.akane.accord.ui.components.FadingVerticalEdgeLayout
         android:id="@+id/fading"
-        android:layout_height="0dp"
         android:layout_width="0dp"
+        android:layout_height="0dp"
         app:fel_edge="top|bottom"
         app:fel_size_bottom="200dp"
         app:fel_size_top="40dp"
-        app:layout_constraintTop_toBottomOf="@id/full_player_tool_bar"
         app:layout_constraintBottom_toTopOf="@id/progressBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        >
+        app:layout_constraintTop_toBottomOf="@id/full_player_tool_bar">
 
-        <androidx.core.widget.NestedScrollView
+        <uk.akane.accord.ui.components.scroll.FastScrollerNestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -28,7 +27,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
-        </androidx.core.widget.NestedScrollView>
+        </uk.akane.accord.ui.components.scroll.FastScrollerNestedScrollView>
 
     </uk.akane.accord.ui.components.FadingVerticalEdgeLayout>
 
@@ -37,10 +36,9 @@
         android:id="@+id/lyrics"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </merge>

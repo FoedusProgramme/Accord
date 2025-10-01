@@ -85,7 +85,7 @@ class FullPlayerToolbar @JvmOverloads constructor(
             loadCoverForImageView()
 
             titleTextView.setTextAnimation(
-                mediaItem?.mediaMetadata?.title
+                mediaItem?.mediaMetadata?.title ?: ""
             )
             subtitleTextView.setTextAnimation(
                 mediaItem?.mediaMetadata?.artist ?: context.getString(R.string.default_artist)

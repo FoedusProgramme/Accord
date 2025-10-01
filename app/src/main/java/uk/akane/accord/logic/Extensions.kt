@@ -72,7 +72,7 @@ fun View.enableEdgeToEdgePaddingListener(
             // The CollapsingToolbarLayout mustn't consume insets, we handle padding here anyway
             ViewCompat.setOnApplyWindowInsetsListener(it) { _, insets -> insets }
         }
-        collapsingToolbarLayout?.let{
+        collapsingToolbarLayout?.let {
             it.setCollapsedTitleTypeface(ResourcesCompat.getFont(context, R.font.inter_semibold))
             it.setExpandedTitleTypeface(ResourcesCompat.getFont(context, R.font.inter_bold))
         }
@@ -177,7 +177,8 @@ fun TextView.enableEdgeToEdgeListener(
 // enableEdgeToEdge() without enforcing contrast, magic based on androidx EdgeToEdge.kt
 fun ComponentActivity.enableEdgeToEdgeProperly() {
     if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-        Configuration.UI_MODE_NIGHT_YES) {
+        Configuration.UI_MODE_NIGHT_YES
+    ) {
         enableEdgeToEdge(navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
     } else {
         val darkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
@@ -197,15 +198,26 @@ fun ViewPager2.setCurrentItemInterpolated(
     animator.addUpdateListener { valueAnimator ->
         val currentValue = valueAnimator.animatedValue as Int
         val currentPxToDrag = (currentValue - previousValue).toFloat()
-        fakeDragBy(-currentPxToDrag *
-                if (TextUtilsCompat.getLayoutDirectionFromLocale(Locale.getDefault()) == View.LAYOUT_DIRECTION_LTR) 1 else -1)
+        fakeDragBy(
+            -currentPxToDrag *
+                    if (TextUtilsCompat.getLayoutDirectionFromLocale(Locale.getDefault()) == View.LAYOUT_DIRECTION_LTR) 1 else -1
+        )
         previousValue = currentValue
     }
     animator.addListener(object : Animator.AnimatorListener {
-        override fun onAnimationStart(animation: Animator) { beginFakeDrag() }
-        override fun onAnimationEnd(animation: Animator) { endFakeDrag() }
-        override fun onAnimationCancel(animation: Animator) { /* Ignored */ }
-        override fun onAnimationRepeat(animation: Animator) { /* Ignored */ }
+        override fun onAnimationStart(animation: Animator) {
+            beginFakeDrag()
+        }
+
+        override fun onAnimationEnd(animation: Animator) {
+            endFakeDrag()
+        }
+
+        override fun onAnimationCancel(animation: Animator) { /* Ignored */
+        }
+
+        override fun onAnimationRepeat(animation: Animator) { /* Ignored */
+        }
     })
     animator.interpolator = interpolator
     animator.duration = duration
@@ -297,28 +309,40 @@ fun Rect.scale(
     val deltaX = (width() - newWidth) / 2
     val deltaY = (height() - newHeight) / 2
 
-    set((left + deltaX).toInt(), (top + deltaY).toInt(), (right - deltaX).toInt(), (bottom - deltaY).toInt())
+    set(
+        (left + deltaX).toInt(),
+        (top + deltaY).toInt(),
+        (right - deltaX).toInt(),
+        (bottom - deltaY).toInt()
+    )
 }
 
 fun AppBarLayout.applyOffsetListener() =
     this.addOnOffsetChangedListener(object : AppBarLayout.OnOffsetChangedListener {
-        private val collapsingToolbarLayout: CollapsingToolbarLayout = children.find { it is CollapsingToolbarLayout } as CollapsingToolbarLayout
-        private val materialToolbar: MaterialToolbar = collapsingToolbarLayout.children.find { it is MaterialToolbar } as MaterialToolbar
+        private val collapsingToolbarLayout: CollapsingToolbarLayout =
+            children.find { it is CollapsingToolbarLayout } as CollapsingToolbarLayout
+        private val materialToolbar: MaterialToolbar =
+            collapsingToolbarLayout.children.find { it is MaterialToolbar } as MaterialToolbar
         private var defaultTitleMarginBottom = 0
+
         init {
             defaultTitleMarginBottom = materialToolbar.titleMarginBottom
             materialToolbar.isTitleCentered = true
         }
 
         override fun onOffsetChanged(appBarLayout: AppBarLayout, verticalOffset: Int) {
-            val progress = verticalOffset.absoluteValue / (appBarLayout.height - materialToolbar.height - appBarLayout.paddingTop).toFloat()
+            val progress =
+                verticalOffset.absoluteValue / (appBarLayout.height - materialToolbar.height - appBarLayout.paddingTop).toFloat()
             val progressTitle = 1f - max(0f, (progress - 0.5f) / 0.5f)
 
-            materialToolbar.background = AppCompatResources.getDrawable(appBarLayout.context, R.drawable.top_app_bar_divider)?.apply {
-                alpha = (progress * 255).toInt()
-            }
+            materialToolbar.background =
+                AppCompatResources.getDrawable(appBarLayout.context, R.drawable.top_app_bar_divider)
+                    ?.apply {
+                        alpha = (progress * 255).toInt()
+                    }
 
-            val destinationOffset = (-resources.getDimensionPixelSize(R.dimen.toolbar_margin_bottom_offset) * progressTitle + defaultTitleMarginBottom).toInt()
+            val destinationOffset =
+                (-resources.getDimensionPixelSize(R.dimen.toolbar_margin_bottom_offset) * progressTitle + defaultTitleMarginBottom).toInt()
             // Use a flag or condition to ensure this does not repeatedly cause layout changes
             if (materialToolbar.titleMarginBottom != destinationOffset) {
                 materialToolbar.titleMarginBottom = destinationOffset
@@ -502,24 +526,26 @@ inline fun <reified T> MutableList<T>.forEachSupport(skipFirst: Int = 0, operato
 }
 
 fun TextView.setTextAnimation(
-    text: CharSequence?,
+    text: CharSequence,
     duration: Long = 300,
     completion: (() -> Unit)? = null,
     skipAnimation: Boolean = false
 ) {
-    (getTag(R.id.fade_out_animation) as ViewPropertyAnimator?)?.cancel()
-    (getTag(R.id.fade_in_animation) as ViewPropertyAnimator?)?.cancel()
-    val oldText = (getTag(androidx.core.R.id.text) as String?)
-    if (oldText != null)
-        this.text = oldText
-    if (oldText != null || text != null)
-        setTag(androidx.core.R.id.text, if (skipAnimation) null else text)
+    val oldTargetText = (getTag(androidx.core.R.id.text) as String?)
+    if (oldTargetText == text)
+        return // effectively, correct text is/will be set soon.
+    // if still fading out, just replace target text. otherwise set target for new anim.
+    setTag(androidx.core.R.id.text, if (skipAnimation) null else text)
     if (skipAnimation) {
+        (getTag(R.id.fade_in_animation) as ViewPropertyAnimator?)?.cancel()
+        (getTag(R.id.fade_out_animation) as ViewPropertyAnimator?)?.cancel()
         this.text = text
+        this.alpha = 1f
+        this.visibility = View.VISIBLE
         completion?.let { it() }
     } else if (this.text != text) {
         fadOutAnimation(duration) {
-            this.text = text
+            this.text = (getTag(androidx.core.R.id.text) as String?)
             setTag(androidx.core.R.id.text, null)
             fadInAnimation(duration) {
                 completion?.let {
@@ -538,30 +564,42 @@ fun View.fadOutAnimation(
     visibility: Int = View.INVISIBLE,
     completion: (() -> Unit)? = null
 ) {
+    if (this.visibility != View.VISIBLE) {
+        this.visibility = visibility
+        completion?.let {
+            it()
+        }
+        return
+    }
+    (getTag(R.id.fade_in_animation) as ViewPropertyAnimator?)?.cancel()
     (getTag(R.id.fade_out_animation) as ViewPropertyAnimator?)?.cancel()
-    setTag(R.id.fade_out_animation, animate()
-        .alpha(0f)
-        .setDuration(duration)
-        .withEndAction {
-            this.visibility = visibility
-            setTag(R.id.fade_out_animation, null)
-            completion?.let {
-                it()
-            }
-        })
+    setTag(
+        R.id.fade_out_animation, animate()
+            .alpha(0f)
+            .setDuration(lerp(0f, duration.toFloat(), this.alpha).toLong())
+            .withEndAction {
+                this.visibility = visibility
+                setTag(R.id.fade_out_animation, null)
+                completion?.let {
+                    it()
+                }
+            })
 }
 
 fun View.fadInAnimation(duration: Long = 300, completion: (() -> Unit)? = null) {
     (getTag(R.id.fade_in_animation) as ViewPropertyAnimator?)?.cancel()
+    (getTag(R.id.fade_out_animation) as ViewPropertyAnimator?)?.cancel()
     alpha = 0f
     visibility = View.VISIBLE
-    setTag(R.id.fade_in_animation, animate()
-        .alpha(1f)
-        .setDuration(duration)
-        .withEndAction {
-            setTag(R.id.fade_in_animation, null)
-            completion?.let {
-                it()
+    setTag(
+        R.id.fade_in_animation, animate()
+            .alpha(1f)
+            .setDuration(lerp(duration.toFloat(), 0f, this.alpha).toLong())
+            .withEndAction {
+                setTag(R.id.fade_in_animation, null)
+                completion?.let {
+                    it()
+                }
             }
-        })
+    )
 }

@@ -29,7 +29,6 @@ import coil3.size.Scale
 import com.google.android.material.slider.Slider
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
-import uk.akane.accord.logic.getFile
 import uk.akane.accord.logic.getUriToDrawable
 import uk.akane.accord.logic.setTextAnimation
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
@@ -165,14 +164,14 @@ class FullPlayer @JvmOverloads constructor(
         progressOverlaySlider.addEmphasizeListener(object : OverlaySlider.EmphasizeListener {
             override fun onEmphasizeVertical(translationX: Float, translationY: Float) {
                 currentTimestampTextView.translationY = translationY
-                currentTimestampTextView.translationX = - translationX
+                currentTimestampTextView.translationX = -translationX
                 leftTimestampTextView.translationY = translationY
                 leftTimestampTextView.translationX = translationX
             }
         })
 
         coverSimpleImageView.doOnLayout {
-            Log.d("TAG", "csi: ${coverSimpleImageView.left}, ${coverSimpleImageView.top}")
+            Log.d(TAG, "csi: ${coverSimpleImageView.left}, ${coverSimpleImageView.top}")
             floatingPanelLayout.setupTransitionImageView(
                 coverSimpleImageView.width,
                 coverSimpleImageView.height,
@@ -187,8 +186,12 @@ class FullPlayer @JvmOverloads constructor(
         }
 
         listOverlayButton.setOnClickListener {
-            Log.d("TAG", "ContentType: ${if (listOverlayButton.isChecked) ContentType.NORMAL else ContentType.PLAYLIST}")
-            contentType = if (listOverlayButton.isChecked) ContentType.NORMAL else ContentType.PLAYLIST
+            Log.d(
+                TAG,
+                "ContentType: ${if (listOverlayButton.isChecked) ContentType.NORMAL else ContentType.PLAYLIST}"
+            )
+            contentType =
+                if (listOverlayButton.isChecked) ContentType.NORMAL else ContentType.PLAYLIST
             listOverlayButton.toggle()
         }
 
@@ -198,6 +201,9 @@ class FullPlayer @JvmOverloads constructor(
             onRepeatModeChanged(instance?.repeatMode ?: Player.REPEAT_MODE_OFF)
             onShuffleModeEnabledChanged(instance?.shuffleModeEnabled == true)
             onPlaybackStateChanged(instance?.playbackState ?: Player.STATE_IDLE)
+            instance?.currentTimeline?.let {
+                onTimelineChanged(it, Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED)
+            }
             onMediaItemTransition(
                 instance?.currentMediaItem,
                 Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
@@ -217,7 +223,8 @@ class FullPlayer @JvmOverloads constructor(
 
     private var finalTranslationX = 0F
     private var finalTranslationY = 0F
-    private var initialCoverRadius = resources.getDimensionPixelSize(R.dimen.full_cover_radius).toFloat()
+    private var initialCoverRadius =
+        resources.getDimensionPixelSize(R.dimen.full_cover_radius).toFloat()
     private var endCoverRadius = 22.dp.px
     private var initialElevation = 24.dp.px
     private var finalScale = 0F
@@ -230,14 +237,24 @@ class FullPlayer @JvmOverloads constructor(
         coverSimpleImageView.scaleX = lerp(1f, finalScale, fraction)
         coverSimpleImageView.scaleY = lerp(1f, finalScale, fraction)
         coverSimpleImageView.elevation = lerp(initialElevation, 5f.dp.px, fraction)
-        coverSimpleImageView.updateCornerRadius(lerp(initialCoverRadius, endCoverRadius, fraction).toInt())
+        coverSimpleImageView.updateCornerRadius(
+            lerp(
+                initialCoverRadius,
+                endCoverRadius,
+                fraction
+            ).toInt()
+        )
 
         coverSimpleImageView.visibility = if (fraction == 1F) INVISIBLE else VISIBLE
 
-        titleTextView.translationY = coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
-        starTransformButton.translationY = coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
-        ellipsisButton.translationY = coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
-        subtitleTextView.translationY = coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
+        titleTextView.translationY =
+            coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
+        starTransformButton.translationY =
+            coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
+        ellipsisButton.translationY =
+            coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
+        subtitleTextView.translationY =
+            coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
 
         val quickFraction = (fraction * 1.2f).coerceIn(0F, 1F)
         titleTextView.alpha = lerp(1F, 0F, quickFraction)
@@ -253,7 +270,11 @@ class FullPlayer @JvmOverloads constructor(
             PopupHelper.PopupMenuBuilder()
                 .addMenuEntry(resources, R.drawable.ic_info, R.string.popup_view_credits)
                 .addSpacer()
-                .addDestructiveMenuEntry(resources, R.drawable.ic_trash, R.string.popup_delete_from_library)
+                .addDestructiveMenuEntry(
+                    resources,
+                    R.drawable.ic_trash,
+                    R.string.popup_delete_from_library
+                )
                 .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_add_to_a_playlist)
                 .addSpacer()
                 .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_song)
@@ -289,7 +310,10 @@ class FullPlayer @JvmOverloads constructor(
                 topMargin = initialMargin[1] + overlayDivider.marginTop
             }
         }
-        Log.d(TAG, "marginBottom: ${marginBottom}, InsetsBottom: ${floatingInsets.bottom}, marginTop: ${floatingInsets.top}")
+        Log.d(
+            TAG,
+            "marginBottom: ${marginBottom}, InsetsBottom: ${floatingInsets.bottom}, marginTop: ${floatingInsets.top}"
+        )
         return super.dispatchApplyWindowInsets(platformInsets)
     }
 
@@ -298,6 +322,7 @@ class FullPlayer @JvmOverloads constructor(
             FloatingPanelLayout.SlideStatus.EXPANDED -> {
                 coverSimpleImageView.alpha = 1F
             }
+
             else -> {
                 coverSimpleImageView.alpha = 0F
             }
@@ -321,7 +346,7 @@ class FullPlayer @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        Log.d("TAG", "onMeasured")
+        Log.d(TAG, "onMeasured")
     }
 
     override fun onSlide(value: Float) {
@@ -336,6 +361,7 @@ class FullPlayer @JvmOverloads constructor(
                 ContentType.LYRICS -> {
                     // TODO
                 }
+
                 ContentType.NORMAL -> {
                     AnimationUtils.createValAnimator(
                         transformationFraction, 0F,
@@ -345,6 +371,7 @@ class FullPlayer @JvmOverloads constructor(
                         animateCoverChange(it)
                     }
                 }
+
                 ContentType.PLAYLIST -> {
                     captionOverlayButton.isChecked = false
                     AnimationUtils.createValAnimator(
@@ -372,7 +399,7 @@ class FullPlayer @JvmOverloads constructor(
             loadCoverForImageView()
 
             titleTextView.setTextAnimation(
-                mediaItem?.mediaMetadata?.title,
+                mediaItem?.mediaMetadata?.title ?: "",
                 skipAnimation = firstTime
             )
             subtitleTextView.setTextAnimation(
@@ -392,14 +419,16 @@ class FullPlayer @JvmOverloads constructor(
             Log.e(TAG, "raced while loading cover in onMediaItemTransition?")
         }
         val mediaItem = instance?.currentMediaItem
-        Log.d(TAG, "load cover for " + mediaItem?.mediaMetadata?.title + " considered")
+        Log.d(TAG, "load cover for ${mediaItem?.mediaMetadata?.title} considered")
         if (coverSimpleImageView.width != 0 && coverSimpleImageView.height != 0) {
-            Log.d(TAG, "load cover for " + mediaItem?.mediaMetadata?.title + " at " + coverSimpleImageView.width + " " + coverSimpleImageView.height)
+            Log.d(
+                TAG,
+                "load cover for ${mediaItem?.mediaMetadata?.title} at ${coverSimpleImageView.width} ${coverSimpleImageView.height}"
+            )
             mediaItem?.mediaMetadata?.artworkUri?.let { blendView.setImageUri(it) }
-            val file = mediaItem?.getFile()
             lastDisposable = context.imageLoader.enqueue(
                 ImageRequest.Builder(context).apply {
-                    data(Pair(file, mediaItem?.mediaMetadata?.artworkUri))
+                    data(mediaItem?.mediaMetadata?.artworkUri)
                     size(coverSimpleImageView.width, coverSimpleImageView.height)
                     scale(Scale.FILL)
                     target(onSuccess = {
@@ -413,8 +442,8 @@ class FullPlayer @JvmOverloads constructor(
         }
     }
 
+    /*
     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-        /*
         val isHeart = (mediaMetadata.userRating as? HeartRating)?.isHeart == true
         if (bottomSheetFavoriteButton.isChecked != isHeart) {
             bottomSheetFavoriteButton.removeOnCheckedChangeListener(this)
@@ -422,14 +451,24 @@ class FullPlayer @JvmOverloads constructor(
                 (mediaMetadata.userRating as? HeartRating)?.isHeart == true
             bottomSheetFavoriteButton.addOnCheckedChangeListener(this)
         }
-        val duration = instance?.mediaMetadata?.durationMs
-        if ((duration?.toInt() ?: 0) != bottomSheetFullSeekBar.max) {
-            bottomSheetFullDuration.setTextAnimation(duration?.let {
-                CalculationUtils.convertDurationToTimeStamp(it)
-            })
+    }
+
+    override fun onTimelineChanged(timeline: Timeline, reason: @Player.TimelineChangeReason Int) {
+        if (reason == Player.TIMELINE_CHANGE_REASON_SOURCE_UPDATE) {
+            updateDuration()
+        }
+    }
+
+    private fun updateDuration() {
+        val duration = instance?.contentDuration?.let { if (it == C.TIME_UNSET) null else it }
+            ?: instance?.currentMediaItem?.mediaMetadata?.durationMs
+        if (duration != null && duration.toInt() != bottomSheetFullSeekBar.max) {
+            bottomSheetFullDuration.setTextAnimation(
+                CalculationUtils.convertDurationToTimeStamp(duration)
+            )
             val position =
                 CalculationUtils.convertDurationToTimeStamp(instance?.currentPosition ?: 0)
-            if (duration != null && !isUserTracking) {
+            if (!isUserTracking) {
                 bottomSheetFullSeekBar.max = duration.toInt()
                 bottomSheetFullSeekBar.progress = instance?.currentPosition?.toInt() ?: 0
                 bottomSheetFullSlider.valueTo = duration.toFloat().coerceAtLeast(1f)
@@ -439,9 +478,8 @@ class FullPlayer @JvmOverloads constructor(
             }
             bottomSheetFullLyricView.updateLyricPositionFromPlaybackPos()
         }
-
-         */
     }
+     */
 
     enum class ContentType {
         LYRICS, NORMAL, PLAYLIST
