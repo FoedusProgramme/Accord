@@ -154,7 +154,7 @@ object MediaRoutes {
         // TODO: can we get type from hidden API instead and use above code path?
         try {
             if (TextUtils.equals(Resources.getSystem().getText(Resources.getSystem()
-                    .getIdentifier("bluetooth_a2dp_route_name", "string", "android")), description))
+                    .getIdentifier("bluetooth_a2dp_audio_route_name", "string", "android")), description))
                 return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                     audioManager.firstOutputDeviceByType(AudioDeviceInfo.TYPE_HEARING_AID,
                         AudioDeviceInfo.TYPE_BLE_HEADSET, AudioDeviceInfo.TYPE_BLE_SPEAKER,
@@ -167,7 +167,7 @@ object MediaRoutes {
                     audioManager.firstOutputDeviceByType(AudioDeviceInfo.TYPE_HEARING_AID,
                         AudioDeviceInfo.TYPE_BLUETOOTH_A2DP)
         } catch (t: Resources.NotFoundException) {
-            Log.w(TAG, "Failed to check if $this is hdmi", t)
+            Log.w(TAG, "Failed to check if $this is bluetooth", t)
         }
         try {
             if (TextUtils.equals(Resources.getSystem().getText(Resources.getSystem()

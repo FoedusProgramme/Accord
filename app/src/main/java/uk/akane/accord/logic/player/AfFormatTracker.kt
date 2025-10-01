@@ -51,22 +51,23 @@ class AfFormatTracker(
         private const val LOG_EVENTS = true
         private const val TAG = "AfFormatTracker"
     }
+
     // only access sink or track on PlaybackThread
     private var lastAudioTrack: AudioTrack? = null
     private var lastPeriodUid: Any? = null
     private var audioSink: DefaultAudioSink? = null
     var format: AfFormatInfo? = null
         private set
-    var formatChangedCallback: ((AfFormatInfo?, Any) -> Unit)? = null
+    var formatChangedCallback: ((AfFormatInfo?, Any?) -> Unit)? = null
 
     private val routingChangedListener = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        AudioRouting.OnRoutingChangedListener {
-            router -> this@AfFormatTracker.onRoutingChanged(router as AudioTrack)
+        AudioRouting.OnRoutingChangedListener { router ->
+            this@AfFormatTracker.onRoutingChanged(router as AudioTrack)
         } as Any
     } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         @Suppress("deprecation")
-        AudioTrack.OnRoutingChangedListener {
-            router -> this@AfFormatTracker.onRoutingChanged(router)
+        AudioTrack.OnRoutingChangedListener { router ->
+            this@AfFormatTracker.onRoutingChanged(router)
         } as Any
     } else null
 
@@ -76,9 +77,7 @@ class AfFormatTracker(
         )).getAudioTrack()
         if (router !== audioTrack) return // stale callback
         // reaching here implies router == lastAudioTrack
-        if (lastPeriodUid == null)
-            throw NullPointerException("expected to have last period uid")
-        buildFormat(audioTrack, lastPeriodUid!!)
+        buildFormat(audioTrack, lastPeriodUid)
     }
 
     // TODO why do we have to reflect on app code, there must be a better solution
@@ -115,7 +114,7 @@ class AfFormatTracker(
                 }
                 lastPeriodUid?.let { formatChangedCallback?.invoke(null, it) }
                 this.lastAudioTrack = audioTrack
-                this.lastPeriodUid = eventTime.mediaPeriodId!!.periodUid
+                this.lastPeriodUid = eventTime.mediaPeriodId?.periodUid
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     audioTrack?.addOnRoutingChangedListener(
                         routingChangedListener as AudioRouting.OnRoutingChangedListener,
@@ -129,7 +128,7 @@ class AfFormatTracker(
                     )
                 }
             }
-            buildFormat(audioTrack, eventTime.mediaPeriodId!!.periodUid)
+            buildFormat(audioTrack, eventTime.mediaPeriodId?.periodUid)
         }
     }
 
@@ -150,14 +149,14 @@ class AfFormatTracker(
                     )
                 }
                 lastAudioTrack = null
-                formatChangedCallback?.invoke(null, lastPeriodUid!!)
+                formatChangedCallback?.invoke(null, lastPeriodUid)
                 lastPeriodUid = null
                 format = null
             }
         }
     }
 
-    private fun buildFormat(audioTrack: AudioTrack?, periodUid: Any) {
+    private fun buildFormat(audioTrack: AudioTrack?, periodUid: Any?) {
         audioTrack?.let {
             if (audioTrack.state == AudioTrack.STATE_UNINITIALIZED) return@let null
             val rd = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
@@ -166,8 +165,11 @@ class AfFormatTracker(
                 handler.post {
                     val sd = MediaRoutes.getSelectedAudioDevice(context)
                     if (rd != sd)
-                        Log.w(TAG, "routedDevice ${rd?.productName}(${rd?.id}) is not the same as MediaRoute " +
-                                "selected device ${sd?.productName}(${sd?.id})")
+                        Log.w(
+                            TAG,
+                            "routedDevice ${rd?.productName}(${rd?.id}) is not the same as MediaRoute " +
+                                    "selected device ${sd?.productName}(${sd?.id})"
+                        )
                 }
             }
             val deviceProductName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
@@ -191,18 +193,31 @@ class AfFormatTracker(
             val dump = AudioTrackHiddenApi.dump(audioTrack)
             val isBluetoothOffload = if (deviceType == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
                 || deviceType == AudioDeviceInfo.TYPE_BLE_SPEAKER
-                || deviceType == AudioDeviceInfo.TYPE_BLE_BROADCAST) {
+                || deviceType == AudioDeviceInfo.TYPE_BLE_BROADCAST
+            ) {
                 mixPort?.hwModule?.let { it == primaryHw }
             } else null
             AfFormatInfo(
-                deviceProductName, deviceId, deviceType,
+                deviceProductName,
+                deviceId,
+                deviceType,
                 audioTrack.audioSessionId,
-                mixPort?.id, mixPort?.name, mixPort?.flags, mixPort?.hwModule, mixPort?.fast,
-                ioHandle, halSampleRate ?: mixPort?.sampleRate,
-                audioFormatToString(AudioTrackHiddenApi.getHalFormat(audioTrack) ?: mixPort?.format),
+                mixPort?.id,
+                mixPort?.name,
+                mixPort?.flags,
+                mixPort?.hwModule,
+                mixPort?.fast,
+                ioHandle,
+                halSampleRate ?: mixPort?.sampleRate,
+                audioFormatToString(
+                    AudioTrackHiddenApi.getHalFormat(audioTrack) ?: mixPort?.format
+                ),
                 AudioTrackHiddenApi.getHalChannelCount(audioTrack),
-                mixPort?.channelMask, grantedFlags, AudioTrackHiddenApi.getPortIdFromDump(dump),
-                AudioTrackHiddenApi.findAfTrackFlags(dump, latency, audioTrack, grantedFlags), isBluetoothOffload
+                mixPort?.channelMask,
+                grantedFlags,
+                AudioTrackHiddenApi.getPortIdFromDump(dump),
+                AudioTrackHiddenApi.findAfTrackFlags(dump, latency, audioTrack, grantedFlags),
+                isBluetoothOffload
             )
         }.let {
             if (LOG_EVENTS)

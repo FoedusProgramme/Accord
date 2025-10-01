@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <dimen name="bottom_nav_height_raw">67dp</dimen>
     <dimen name="bottom_nav_height">100dp</dimen>
     <dimen name="bottom_nav_item_padding_bottom">8dp</dimen>

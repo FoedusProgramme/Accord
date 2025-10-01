@@ -22,11 +22,11 @@ class HomeFragment: Fragment() {
 
         ViewCompat.setOnApplyWindowInsetsListener(navigationBar) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            navigationBar.setPadding(
-                navigationBar.paddingLeft,
+            v.setPadding(
+                v.paddingLeft,
                 systemBars.top,
-                navigationBar.paddingRight,
-                navigationBar.paddingBottom
+                v.paddingRight,
+                v.paddingBottom
             )
             insets
         }

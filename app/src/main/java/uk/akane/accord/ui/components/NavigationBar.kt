@@ -201,7 +201,7 @@ class NavigationBar @JvmOverloads constructor(
             )
 
             canvas.withTranslation(0F, -translationY) {
-                renderNode?.let { it ->
+                renderNode?.let {
                     canvas.drawRenderNode(it)
                 }
             }

@@ -59,11 +59,11 @@ class FastScrollerNestedScrollView @JvmOverloads constructor(
         fastScroller.draw(canvas)
     }
 
-    override fun onInterceptTouchEvent(e: MotionEvent): Boolean {
-        return if (fastScroller.onInterceptTouchEvent(e)) {
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        return if (fastScroller.onInterceptTouchEvent(ev)) {
             true
         } else {
-            super.onInterceptTouchEvent(e)
+            super.onInterceptTouchEvent(ev)
         }
     }
 

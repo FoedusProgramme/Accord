@@ -62,7 +62,7 @@ class LibraryHeadAdapter(private val context: Context) : RecyclerView.Adapter<Li
 
     override fun getItemCount(): Int = currentHeaderArrangeList.size
 
-    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.title)
         val icon: ImageView = view.findViewById(R.id.icon)
     }

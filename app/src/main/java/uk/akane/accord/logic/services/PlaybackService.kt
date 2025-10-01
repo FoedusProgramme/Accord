@@ -81,6 +81,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uk.akane.accord.R
+import uk.akane.accord.logic.Flags
 import uk.akane.accord.logic.accordApplication
 import uk.akane.accord.logic.getBitrate
 import uk.akane.accord.logic.getBooleanStrict
@@ -90,15 +91,11 @@ import uk.akane.accord.logic.hasNotificationPermission
 import uk.akane.accord.logic.mayThrowForegroundServiceStartNotAllowed
 import uk.akane.accord.logic.mayThrowForegroundServiceStartNotAllowedMiui
 import uk.akane.accord.logic.needsMissingOnDestroyCallWorkarounds
-import uk.akane.accord.logic.supportsNotificationPermission
-import uk.akane.accord.logic.ui.MeiZuLyricsMediaNotificationProvider
-import uk.akane.accord.logic.ui.isManualNotificationUpdate
 import uk.akane.accord.logic.player.AfFormatInfo
 import uk.akane.accord.logic.player.AfFormatTracker
 import uk.akane.accord.logic.player.AudioTrackInfo
 import uk.akane.accord.logic.player.BtCodecInfo
 import uk.akane.accord.logic.player.CircularShuffleOrder
-import uk.akane.libphonograph.items.Flags
 import uk.akane.accord.logic.player.LastPlayedManager
 import uk.akane.accord.logic.player.LrcUtils
 import uk.akane.accord.logic.player.SemanticLyrics
@@ -106,8 +103,10 @@ import uk.akane.accord.logic.player.exoplayer.EndedWorkaroundPlayer
 import uk.akane.accord.logic.player.exoplayer.GramophoneExtractorsFactory
 import uk.akane.accord.logic.player.exoplayer.GramophoneMediaSourceFactory
 import uk.akane.accord.logic.player.exoplayer.GramophoneRenderFactory
+import uk.akane.accord.logic.supportsNotificationPermission
+import uk.akane.accord.logic.ui.MeiZuLyricsMediaNotificationProvider
+import uk.akane.accord.logic.ui.isManualNotificationUpdate
 import uk.akane.accord.ui.MainActivity
-import kotlin.collections.get
 import kotlin.random.Random
 
 /**
@@ -305,23 +304,29 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
             )
         afFormatTracker = AfFormatTracker(this, playbackHandler, handler)
         afFormatTracker.formatChangedCallback = { format, period ->
-            handler.post {
-                val currentPeriod = controller?.currentPeriodIndex?.takeIf { it != C.INDEX_UNSET &&
-                        (controller?.currentTimeline?.periodCount ?: 0) > it }
-                    ?.let { controller!!.currentTimeline.getUidOfPeriod(it) }
-                if (currentPeriod != period) {
-                    if (format != null) {
-                        pendingAfTrackFormats[period] = format
-                    } else {
-                        pendingAfTrackFormats.remove(period)
+            if (period != null) {
+                handler.post {
+                    val currentPeriod = controller?.currentPeriodIndex?.takeIf {
+                        it != C.INDEX_UNSET &&
+                                (controller?.currentTimeline?.periodCount ?: 0) > it
                     }
-                } else {
-                    afTrackFormat = format?.let { period to it }
-                    mediaSession?.broadcastCustomCommand(
-                        SessionCommand(SERVICE_GET_AUDIO_FORMAT, Bundle.EMPTY),
-                        Bundle.EMPTY
-                    )
+                        ?.let { controller!!.currentTimeline.getUidOfPeriod(it) }
+                    if (currentPeriod != period) {
+                        if (format != null) {
+                            pendingAfTrackFormats[period] = format
+                        } else {
+                            pendingAfTrackFormats.remove(period)
+                        }
+                    } else {
+                        afTrackFormat = format?.let { period to it }
+                        mediaSession?.broadcastCustomCommand(
+                            SessionCommand(SERVICE_GET_AUDIO_FORMAT, Bundle.EMPTY),
+                            Bundle.EMPTY
+                        )
+                    }
                 }
+            } else {
+                Log.e(TAG, "mediaPeriodId is NULL in formatChangedCallback!!")
             }
         }
         val player = EndedWorkaroundPlayer(
@@ -375,18 +380,12 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
         player.exoPlayer.addAnalyticsListener(EventLogger())
         player.exoPlayer.addAnalyticsListener(afFormatTracker)
         player.exoPlayer.addAnalyticsListener(this)
-        player.exoPlayer.addListener(object : Player.Listener {
-            override fun onAudioSessionIdChanged(audioSessionId: Int) {
-                // https://github.com/androidx/media/issues/2739
-                this@PlaybackService.onAudioSessionIdChanged(audioSessionId)
-            }
-        })
         player.exoPlayer.setShuffleOrder(
             CircularShuffleOrder(
                 player,
                 0,
                 0,
-                Random.Default.nextLong()
+                Random.nextLong()
             )
         )
         lastPlayedManager = LastPlayedManager(this, player)
@@ -400,8 +399,43 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
                     // Coil-based bitmap loader to reuse Coil's caching and to make sure we use
                     // the same cover art as the rest of the app, ie MediaStore's cover
 
-                    override fun decodeBitmap(data: ByteArray) =
-                        throw UnsupportedOperationException("decodeBitmap() not supported")
+                    private val limit by lazy { MediaSession.getBitmapDimensionLimit(this@PlaybackService) }
+
+                    override fun decodeBitmap(data: ByteArray): ListenableFuture<Bitmap> {
+                        return CallbackToFutureAdapter.getFuture { completer ->
+                            imageLoader.enqueue(
+                                ImageRequest.Builder(this@PlaybackService)
+                                    .data(data)
+                                    .memoryCacheKey(data.hashCode().toString())
+                                    .size(limit, limit)
+                                    .allowHardware(false)
+                                    .target(
+                                        onStart = { _ ->
+                                            // We don't need or want a placeholder.
+                                        },
+                                        onSuccess = { result ->
+                                            completer.set((result as BitmapImage).bitmap)
+                                        },
+                                        onError = { _ ->
+                                            completer.setException(
+                                                Exception(
+                                                    "coil onError called for byte array"
+                                                )
+                                            )
+                                        }
+                                    )
+                                    .build())
+                                .also {
+                                    completer.addCancellationListener(
+                                        { it.dispose() },
+                                        ContextCompat.getMainExecutor(
+                                            this@PlaybackService
+                                        )
+                                    )
+                                }
+                            "coil load for ${data.hashCode()}"
+                        }
+                    }
 
                     override fun loadBitmap(
                         uri: Uri
@@ -410,6 +444,7 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
                             imageLoader.enqueue(
                                 ImageRequest.Builder(this@PlaybackService)
                                     .data(uri)
+                                    .size(limit, limit)
                                     .allowHardware(false)
                                     .target(
                                         onStart = { _ ->
@@ -445,6 +480,11 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
                     }
 
                     override fun loadBitmapFromMetadata(metadata: MediaMetadata): ListenableFuture<Bitmap>? {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                            // allow using exoplayer's copy extracted here on P- for now
+                            // refer to the TO DO in GramophoneApplication
+                            return super.loadBitmapFromMetadata(metadata)
+                        }
                         return metadata.artworkUri?.let { loadBitmap(it) }
                     }
                 }))
@@ -514,8 +554,7 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
             scope.launch {
                 accordApplication.reader.songListFlow.collect { list ->
                     withContext(Dispatchers.Main + NonCancellable) {
-                        val cmi = controller?.currentMediaItem?.mediaId
-                        if (cmi == null) return@withContext
+                        val cmi = controller?.currentMediaItem?.mediaId ?: return@withContext
                         list.find { it.mediaId == cmi }?.let {
                             // TODO need to update non current item too
                             controller!!.replaceMediaItem(controller!!.currentMediaItemIndex, it)
@@ -526,14 +565,30 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
         }
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        var extras = intent?.extras
+        // Deserialize all extras to be able to log them.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            extras = extras?.deepCopy()
+        } else {
+            if (extras != null) {
+                for (i in extras.keySet()) {
+                    @Suppress("deprecation") extras.get(i)
+                }
+            }
+        }
+        Log.i(TAG, "onStartCommand(): $intent, ${extras?.toString()}")
+        return super.onStartCommand(intent, flags, startId)
+    }
+
     override fun onSetRating(
         session: MediaSession,
         controller: MediaSession.ControllerInfo,
         mediaId: String,
         rating: Rating
     ): ListenableFuture<SessionResult> {
-        // TODO: implement setting rating.
-        return super.onSetRating(session, controller, mediaId, rating)
+        // TODO: implement this...
+        return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
     }
 
     override fun onSetRating(
@@ -541,9 +596,10 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
         controller: MediaSession.ControllerInfo,
         rating: Rating
     ): ListenableFuture<SessionResult> {
-        val mediaItemId = this.controller?.currentMediaItem?.mediaId
-        if (mediaItemId == null)
-            return Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_INVALID_STATE))
+        val mediaItemId =
+            this.controller?.currentMediaItem?.mediaId ?: return Futures.immediateFuture(
+                SessionResult(SessionError.ERROR_INVALID_STATE)
+            )
         return onSetRating(session, controller, mediaItemId, rating)
     }
 
@@ -558,19 +614,19 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
         lastPlayedManager.save()
         scope.cancel()
         mediaSession!!.player.stop()
-        broadcastAudioSessionClose()
         handler.removeCallbacks(timer)
         mediaSession!!.setOptOutOfMediaButtonPlaybackResumption(controller!!.currentTimeline.isEmpty)
+        proxy?.let {
+            it.adapter.closeProfileProxy(BluetoothProfile.A2DP, it.a2dp)
+        }
         controller!!.release()
         controller = null
         mediaSession!!.release()
         mediaSession!!.player.release()
         mediaSession = null
-        internalPlaybackThread.quitSafely()
-        proxy?.let {
-            it.adapter.closeProfileProxy(BluetoothProfile.A2DP, it.a2dp)
-        }
+        broadcastAudioSessionClose()
         // LyricWidgetProvider.update(this)
+        internalPlaybackThread.quitSafely()
         super.onDestroy()
     }
 
@@ -610,18 +666,20 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
         availableSessionCommands.add(SessionCommand(SERVICE_GET_LYRICS, Bundle.EMPTY))
         availableSessionCommands.add(SessionCommand(SERVICE_GET_AUDIO_FORMAT, Bundle.EMPTY))
 
-        handler.post {
-            session.sendCustomCommand(
-                controller,
-                SessionCommand(SERVICE_GET_LYRICS, Bundle.EMPTY),
-                Bundle.EMPTY
-            )
-            mediaSession?.broadcastCustomCommand(
-                SessionCommand(SERVICE_GET_AUDIO_FORMAT, Bundle.EMPTY),
-                Bundle.EMPTY
-            )
-        }
         return builder.setAvailableSessionCommands(availableSessionCommands.build()).build()
+    }
+
+    override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
+        session.sendCustomCommand(
+            controller,
+            SessionCommand(SERVICE_GET_LYRICS, Bundle.EMPTY),
+            Bundle.EMPTY
+        )
+        session.sendCustomCommand(
+            controller,
+            SessionCommand(SERVICE_GET_AUDIO_FORMAT, Bundle.EMPTY),
+            Bundle.EMPTY
+        )
     }
 
     override fun onAudioSessionIdChanged(audioSessionId: Int) {
@@ -697,9 +755,9 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
                 }
 
                 SERVICE_GET_AUDIO_FORMAT -> {
-                    SessionResult(SessionResult.RESULT_SUCCESS).also {
+                    SessionResult(SessionResult.RESULT_SUCCESS).also { result ->
                         if (downstreamFormat.isNotEmpty()) {
-                            it.extras.putParcelableArrayList(
+                            result.extras.putParcelableArrayList(
                                 "file_format",
                                 ArrayList(downstreamFormat.map { Bundle().apply {
                                     putInt("type", it.second.first)
@@ -714,16 +772,16 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
                                 } })
                             )
                         }
-                        it.extras.putBundle("sink_format", audioSinkInputFormat?.toBundle())
+                        result.extras.putBundle("sink_format", audioSinkInputFormat?.toBundle())
                         if (audioTrackInfo.isNotEmpty()) {
-                            it.extras.putParcelableArrayList(
+                            result.extras.putParcelableArrayList(
                                 "track_format",
                                 ArrayList(audioTrackInfo.map { it.second })
                             )
                         }
-                        it.extras.putParcelable("hal_format", afTrackFormat?.second)
+                        result.extras.putParcelable("hal_format", afTrackFormat?.second)
                         if (afFormatTracker.format?.routedDeviceType == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) {
-                            it.extras.putParcelable("bt", btInfo)
+                            result.extras.putParcelable("bt", btInfo)
                         }
                     }
                 }
@@ -908,6 +966,10 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
         eventTime: AnalyticsListener.EventTime,
         audioTrackConfig: AudioSink.AudioTrackConfig
     ) {
+        if (eventTime.mediaPeriodId == null) { // https://github.com/androidx/media/issues/2812
+            Log.e(TAG, "mediaPeriodId is NULL in onAudioTrackInitialized()!!")
+            return
+        }
         val currentPeriod = eventTime.currentMediaPeriodId?.periodUid
         val item = eventTime.mediaPeriodId!!.periodUid to
                 AudioTrackInfo.fromMedia3AudioTrackConfig(audioTrackConfig)
@@ -941,6 +1003,10 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
         eventTime: AnalyticsListener.EventTime,
         mediaLoadData: MediaLoadData
     ) {
+        if (eventTime.mediaPeriodId == null) { // https://github.com/androidx/media/issues/2812
+            Log.e(TAG, "mediaPeriodId is NULL in onDownstreamFormatChanged()!!")
+            return
+        }
         val currentPeriod = controller?.currentPeriodIndex?.takeIf { it != C.INDEX_UNSET &&
                 (controller?.currentTimeline?.periodCount ?: 0) > it }
             ?.let { controller!!.currentTimeline.getUidOfPeriod(it) }
@@ -1058,8 +1124,8 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
                 it.exoPlayer.setShuffleOrder(
                     CircularShuffleOrder(
                         it,
-                        controller!!.currentMediaItemIndex,
-                        controller!!.mediaItemCount,
+                        it.exoPlayer.currentMediaItemIndex,
+                        it.exoPlayer.mediaItemCount,
                         Random.nextLong()
                     )
                 )
@@ -1186,10 +1252,10 @@ class PlaybackService : MediaLibraryService(), MediaSessionService.Listener,
         val hnw = false // !LyricWidgetProvider.hasWidget(this)
         if (controller?.isPlaying != true || (!isStatusBarLyricsEnabled && hnw)) return
         val cPos = (controller?.contentPosition ?: 0).toULong()
-        val nextUpdate = syncedLyrics?.text?.flatMap {
-            if (hnw && it.start <= cPos) listOf() else if (hnw) listOf(it.start) else
-                (it.words?.map { it.timeRange.start }?.filter { it > cPos } ?: listOf())
-                    .let { i -> if (it.start > cPos) i + it.start else i }
+        val nextUpdate = syncedLyrics?.text?.flatMap { line ->
+            if (hnw && line.start <= cPos) listOf() else if (hnw) listOf(line.start) else
+                (line.words?.map { it.timeRange.first }?.filter { it > cPos } ?: listOf())
+                    .let { i -> if (line.start > cPos) i + line.start else i }
         }?.minOrNull()
         nextUpdate?.let { handler.postDelayed(sendLyrics, (it - cPos).toLong()) }
     }

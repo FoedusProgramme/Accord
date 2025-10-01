@@ -135,6 +135,16 @@ class CircularShuffleOrder private constructor(
         return CircularShuffleOrder(listener, newShuffled, Random(random.nextLong()))
     }
 
+    override fun cloneAndSet(insertionCount: Int, startIndex: Int): ShuffleOrder {
+        if (listener.nextShuffleOrder == null && startIndex != C.INDEX_UNSET) {
+            return CircularShuffleOrder(listener, startIndex, insertionCount,
+                random.nextLong())
+        }
+        // fall back to super which calls cloneAndInsert() which will process next shuffle order
+        // or just randomly shuffles as appropriate
+        return super.cloneAndSet(insertionCount, startIndex)
+    }
+
     override fun cloneAndRemove(indexFrom: Int, indexToExclusive: Int): ShuffleOrder {
         val numberOfElementsToRemove = indexToExclusive - indexFrom
         // short-circuit for performance and because this is allowed if nextShuffleOrder is set

@@ -4,13 +4,14 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ContentUris
 import android.media.ThumbnailUtils
-import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
 import android.util.Size
 import android.webkit.MimeTypeMap
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import coil3.Uri
 import coil3.annotation.InternalCoilApi
 import coil3.asImage
 import coil3.decode.ContentMetadata
@@ -19,7 +20,6 @@ import coil3.decode.ImageSource
 import coil3.fetch.Fetcher
 import coil3.fetch.ImageFetchResult
 import coil3.fetch.SourceFetchResult
-import coil3.key.Keyer
 import coil3.request.NullRequestDataException
 import coil3.size.pxOrElse
 import coil3.toCoilUri
@@ -53,6 +53,12 @@ class Accord : Application(), SingletonImageLoader.Factory {
             System.setProperty("kotlinx.coroutines.debug", "on")
     }
 
+    companion object {
+        // not actually defined in API, but CTS tested
+        // https://cs.android.com/android/platform/superproject/main/+/main:packages/providers/MediaProvider/src/com/android/providers/media/LocalUriMatcher.java;drc=ddf0d00b2b84b205a2ab3581df8184e756462e8d;l=182
+        private const val MEDIA_ALBUM_ART = "albumart"
+    }
+
     override fun onCreate() {
         super.onCreate()
         reader = FlowReader(
@@ -73,28 +79,21 @@ class Accord : Application(), SingletonImageLoader.Factory {
         return ImageLoader.Builder(context)
             .diskCache(null)
             .components {
-                add(Keyer<Pair<*, *>> { data, options ->
-                    val uri = data.second
-                    if (uri !is Uri?) return@Keyer null
-                    val file = data.first
-                    if (file !is File?) return@Keyer null
-                    return@Keyer uri?.toString() ?: file?.toString()
-                })
                 add(Fetcher.Factory { data, options, _ ->
-                    if (data !is Pair<*, *>) return@Factory null
-                    val uri = data.second
-                    if (uri !is Uri?) return@Factory null
-                    val file = data.first
-                    if (file !is File?) return@Factory null
+                    if (data !is Uri) return@Factory null
+                    if (data.scheme != "gramophoneSongCover") return@Factory null
                     return@Factory Fetcher {
-                        val bmp = try {
-                            if (file != null) {
-                                ThumbnailUtils.createAudioThumbnail(file, options.size.let {
-                                    Size(
-                                        it.width.pxOrElse { throw IllegalArgumentException("missing required size") },
-                                        it.height.pxOrElse { throw IllegalArgumentException("missing required size") })
-                                }, null)
-                            } else null
+                        val file = File(data.path!!)
+                        val uri = ContentUris.appendId(
+                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.buildUpon(), data.authority!!.toLong()
+                        ).appendPath(MEDIA_ALBUM_ART).build()
+                        val bmp = if (options.size.width.pxOrElse { 0 } > 300
+                            && options.size.height.pxOrElse { 0 } > 300) try {
+                            ThumbnailUtils.createAudioThumbnail(file, options.size.let {
+                                Size(
+                                    it.width.pxOrElse { throw IllegalArgumentException("missing required size") },
+                                    it.height.pxOrElse { throw IllegalArgumentException("missing required size") })
+                            }, null)
                         } catch (e: IOException) {
                             if (e.message != "No embedded album art found" &&
                                 e.message != "No thumbnails in Downloads directories" &&
@@ -102,7 +101,7 @@ class Accord : Application(), SingletonImageLoader.Factory {
                                 e.message != "No album art found")
                                 throw e
                             null
-                        }
+                        } else null
                         if (bmp != null) {
                             ImageFetchResult(
                                 bmp.asImage(), true, DataSource.DISK
@@ -138,7 +137,7 @@ class Accord : Application(), SingletonImageLoader.Factory {
                                 source = ImageSource(
                                     source = afd.createInputStream().source().buffer(),
                                     fileSystem = options.fileSystem,
-                                    metadata = ContentMetadata(data.toCoilUri(), afd),
+                                    metadata = ContentMetadata(data, afd),
                                 ),
                                 mimeType = contentResolver.getType(uri),
                                 dataSource = DataSource.DISK,

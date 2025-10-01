@@ -74,7 +74,7 @@ class SearchAdapter(
 
     override fun getItemCount(): Int = list.size
 
-    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val imageView: ImageView = view.findViewById(R.id.imageView)
     }
 
