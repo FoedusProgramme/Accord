@@ -238,4 +238,5 @@
     <string name="spk_encoding_dts_lbr">DTS Express</string>
     <string name="spk_encoding_pcm_20bit">20-bit PCM</string>
     <string name="spk_encoding_pcm_20bit_big_endian">20-bit PCM (big endian)</string>
+    <string name="media_control_text_error">Failed to open media control</string>
 </resources>

@@ -1,11 +1,17 @@
 package uk.akane.accord.ui.components.player
 
 import android.content.Context
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.ResolveInfo
+import android.media.MediaRouter2
+import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.view.WindowInsets
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.drawable.toBitmap
@@ -29,7 +35,6 @@ import coil3.size.Scale
 import com.google.android.material.slider.Slider
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
-import uk.akane.accord.logic.getUriToDrawable
 import uk.akane.accord.logic.setTextAnimation
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.ui.MainActivity
@@ -193,6 +198,10 @@ class FullPlayer @JvmOverloads constructor(
             listOverlayButton.toggle()
         }
 
+        airplayOverlayButton.setOnClickListener {
+            startSystemMediaControl()
+        }
+
         activity.controllerViewModel.addControllerCallback(activity.lifecycle) { _, _ ->
             firstTime = true
             instance?.addListener(this@FullPlayer)
@@ -217,6 +226,42 @@ class FullPlayer @JvmOverloads constructor(
             finalTranslationY = (20 - 18).dp.px
             finalScale = 74.dp.px / coverSimpleImageView.height
         }
+    }
+
+    private fun startSystemMediaControl() {
+        if (Build.VERSION.SDK_INT >= 34) {
+            val mediaRouter2 = MediaRouter2.getInstance(context)
+            val tag = mediaRouter2.showSystemOutputSwitcher()
+            if (!tag) {
+                Toast.makeText(context, R.string.media_control_text_error, Toast.LENGTH_SHORT)
+                    .show()
+            }
+        } else {
+            val intent = Intent().apply {
+                action = "com.android.systemui.action.LAUNCH_MEDIA_OUTPUT_DIALOG"
+                setPackage("com.android.systemui")
+                putExtra("package_name", context.packageName)
+            }
+            val tag = startNativeMediaDialog(intent)
+            if (!tag) {
+                Toast.makeText(context, R.string.media_control_text_error, Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+    }
+
+    private fun startNativeMediaDialog(intent: Intent): Boolean {
+        val resolveInfoList: List<ResolveInfo> =
+            context.packageManager.queryIntentActivities(intent, 0)
+        for (resolveInfo in resolveInfoList) {
+            val activityInfo = resolveInfo.activityInfo
+            val applicationInfo: ApplicationInfo? = activityInfo?.applicationInfo
+            if (applicationInfo != null && (applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0) {
+                context.startActivity(intent)
+                return true
+            }
+        }
+        return false
     }
 
     private var finalTranslationX = 0F
