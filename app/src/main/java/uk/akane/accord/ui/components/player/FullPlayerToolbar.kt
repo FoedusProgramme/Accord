@@ -54,6 +54,7 @@ class FullPlayerToolbar @JvmOverloads constructor(
 
         doOnLayout {
             maxTranslation = (height - subtitleTextView.bottom).toFloat()
+            animateFade(0F)
         }
     }
 
@@ -61,6 +62,7 @@ class FullPlayerToolbar @JvmOverloads constructor(
 
     fun animateFade(fraction: Float) {
         val validFraction = inverseLerp(0.85F, 1F, fraction.coerceIn(0.85F, 1F))
+        Log.d("TAG2333", "validFraction: $validFraction, fraction: $fraction")
         coverSimpleImageView.alpha = if (fraction == 1F) 1F else 0F
 
         titleTextView.translationY = lerp(maxTranslation, 0F, validFraction)

@@ -533,7 +533,10 @@ fun TextView.setTextAnimation(
     completion: (() -> Unit)? = null,
     skipAnimation: Boolean = false
 ) {
-    if (this.isGone || this.isInvisible) return
+    if (this.isGone || this.isInvisible || this.alpha == 0F) {
+        this.text = text
+        return
+    }
     val oldTargetText = (getTag(androidx.core.R.id.text) as String?)
     if (oldTargetText == text)
         return // effectively, correct text is/will be set soon.
