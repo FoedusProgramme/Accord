@@ -180,7 +180,7 @@ class FullPlayer @JvmOverloads constructor(
                 coverSimpleImageView.height,
                 coverSimpleImageView.left,
                 coverSimpleImageView.top,
-                AppCompatResources.getDrawable(context, R.drawable.eg)!!.toBitmap()
+                AppCompatResources.getDrawable(context, R.drawable.default_cover)!!.toBitmap()
             )
         }
 

@@ -56,4 +56,8 @@
     <color name="systemPurple">#BF5AF2</color>
     <color name="systemPink">#FF375F</color>
     <color name="systemBrown">#AC8E68</color>
+
+    <!-- Default cover -->
+    <color name="defaultCoverBackground">#4D4E51</color>
+    <color name="defaultCoverForeground">#636366</color>
 </resources>

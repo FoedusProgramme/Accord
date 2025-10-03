@@ -71,4 +71,8 @@
     <!-- Banner -->
     <color name="breezeGradientStart">#629FFF</color>
     <color name="breezeGradientEnd">#2E76FF</color>
+
+    <!-- Default cover -->
+    <color name="defaultCoverBackground">#606060</color>
+    <color name="defaultCoverForeground">#737373</color>
 </resources>

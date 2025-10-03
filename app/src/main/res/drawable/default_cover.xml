@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="500dp"
+        android:height="500dp">
+        <color android:color="@color/defaultCoverBackground"/>
+    </item>
+    <item
+        android:drawable="@drawable/ic_note_custom"
+        android:gravity="center"
+        android:height="380dp"
+        android:width="380dp"
+        />
+</layer-list>
