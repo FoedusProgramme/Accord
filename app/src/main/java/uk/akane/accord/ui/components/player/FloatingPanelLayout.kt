@@ -84,7 +84,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
 
     private var isDragging = false
 
-    private var transitionImageView: SimpleImageView? = null
+    var transitionImageView: SimpleImageView? = null
 
     var panelCornerRadius = 0F
 
@@ -232,8 +232,8 @@ class FloatingPanelLayout @JvmOverloads constructor(
             panelCornerRadius
         )
 
-        previewView.alpha = lerp(1f, 0f, fraction)
-        fullScreenView.alpha = lerp(0f, 1f, fraction)
+        previewView.alpha = lerp(1f, 0f, fraction * 2f)
+        fullScreenView.alpha = lerp(0f, 1f, fraction * 2f)
 
         invalidate()
         triggerSlide(fraction)

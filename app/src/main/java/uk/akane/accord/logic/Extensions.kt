@@ -55,6 +55,8 @@ import java.io.File
 import java.util.Locale
 import kotlin.math.absoluteValue
 import kotlin.math.max
+import androidx.core.view.isInvisible
+import androidx.core.view.isGone
 
 fun View.enableEdgeToEdgePaddingListener(
     ime: Boolean = false, top: Boolean = false,
@@ -531,6 +533,7 @@ fun TextView.setTextAnimation(
     completion: (() -> Unit)? = null,
     skipAnimation: Boolean = false
 ) {
+    if (this.isGone || this.isInvisible) return
     val oldTargetText = (getTag(androidx.core.R.id.text) as String?)
     if (oldTargetText == text)
         return // effectively, correct text is/will be set soon.

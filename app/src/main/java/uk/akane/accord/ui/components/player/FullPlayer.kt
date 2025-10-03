@@ -125,8 +125,6 @@ class FullPlayer @JvmOverloads constructor(
             true
         }
 
-        blendView.setImageUri(context.getUriToDrawable(R.drawable.eg))
-        blendView.startRotationAnimation()
         clipToOutline = true
 
         fadingEdgeLayout.visibility = GONE
@@ -433,8 +431,16 @@ class FullPlayer @JvmOverloads constructor(
                     scale(Scale.FILL)
                     target(onSuccess = {
                         coverSimpleImageView.setImageDrawable(it.asDrawable(context.resources))
+                        fullPlayerToolbar.setImageViewCover(it.asDrawable(context.resources))
+                        (parent as FloatingPanelLayout).transitionImageView!!.setImageDrawable(
+                            it.asDrawable(context.resources)
+                        )
                     }, onError = {
                         coverSimpleImageView.setImageDrawable(it?.asDrawable(context.resources))
+                        fullPlayerToolbar.setImageViewCover(it?.asDrawable(context.resources))
+                        (parent as FloatingPanelLayout).transitionImageView!!.setImageDrawable(
+                            it?.asDrawable(context.resources)
+                        )
                     }) // do not react to onStart() which sets placeholder
                     allowHardware(coverSimpleImageView.isHardwareAccelerated)
                 }.build()

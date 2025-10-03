@@ -1,6 +1,7 @@
 package uk.akane.accord.ui.components.player
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.Log
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -82,7 +83,6 @@ class FullPlayerToolbar @JvmOverloads constructor(
         if (instance?.mediaItemCount != 0) {
             lastDisposable?.dispose()
             lastDisposable = null
-            loadCoverForImageView()
 
             titleTextView.setTextAnimation(
                 mediaItem?.mediaMetadata?.title ?: ""
@@ -96,29 +96,7 @@ class FullPlayerToolbar @JvmOverloads constructor(
         }
     }
 
-    private fun loadCoverForImageView() {
-        if (lastDisposable != null) {
-            lastDisposable?.dispose()
-            lastDisposable = null
-            Log.e(FullPlayer.TAG, "raced while loading cover in onMediaItemTransition?")
-        }
-        val mediaItem = instance?.currentMediaItem
-        if (coverSimpleImageView.width != 0 && coverSimpleImageView.height != 0) {
-            val file = mediaItem?.getFile()
-            lastDisposable = context.imageLoader.enqueue(
-                ImageRequest.Builder(context).apply {
-                    data(Pair(file, mediaItem?.mediaMetadata?.artworkUri))
-                    size(coverSimpleImageView.width, coverSimpleImageView.height)
-                    scale(Scale.FILL)
-                    target(onSuccess = {
-                        coverSimpleImageView.setImageDrawable(it.asDrawable(context.resources))
-                    }, onError = {
-                        coverSimpleImageView.setImageDrawable(it?.asDrawable(context.resources))
-                    }) // do not react to onStart() which sets placeholder
-                    allowHardware(coverSimpleImageView.isHardwareAccelerated)
-                }.build()
-            )
-        }
-    }
+    fun setImageViewCover(drawable: Drawable?) =
+        coverSimpleImageView.setImageDrawable(drawable)
 
 }
