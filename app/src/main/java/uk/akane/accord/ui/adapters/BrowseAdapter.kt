@@ -19,7 +19,10 @@ class BrowseAdapter(
 
     private val browseList: List<BrowseListItem> = listOf(
         BrowseListItem.Header(context.getString(R.string.explore_more)),
-        BrowseListItem.SideAction(context.getString(R.string.browse_by_name), FragmentType.Song)
+        BrowseListItem.SideAction(context.getString(R.string.browse_by_name), FragmentType.Song),
+        BrowseListItem.SideAction(context.getString(R.string.browse_by_album), FragmentType.Album),
+        BrowseListItem.SideAction(context.getString(R.string.browse_by_artist), FragmentType.Artist),
+        BrowseListItem.SideAction(context.getString(R.string.browse_by_genre), FragmentType.Genre),
     )
 
     override fun onCreateViewHolder(
@@ -56,6 +59,9 @@ class BrowseAdapter(
                     }
                 )
             }
+            if (position == browseList.size - 1) {
+                holder.divider?.visibility = View.GONE
+            }
         }
     }
 
@@ -64,6 +70,7 @@ class BrowseAdapter(
 
     class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
         val title: TextView? = view.findViewById(R.id.title)
+        val divider: View? = view.findViewById(R.id.divider)
     }
 
     companion object {

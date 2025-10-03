@@ -17,7 +17,8 @@
         android:textSize="22sp"
         android:fontFamily="@font/inter_regular"
         android:includeFontPadding="false"
-        app:layout_constraintStart_toStartOf="@id/divider"
+        android:layout_marginStart="22dp"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/divider_guideline"
         />
