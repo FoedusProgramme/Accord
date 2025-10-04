@@ -32,6 +32,7 @@ import coil3.request.Disposable
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.size.Scale
+import coil3.toBitmap
 import com.google.android.material.slider.Slider
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
@@ -475,12 +476,14 @@ class FullPlayer @JvmOverloads constructor(
                     size(coverSimpleImageView.width, coverSimpleImageView.height)
                     scale(Scale.FILL)
                     target(onSuccess = {
+                        blendView.setImageBitmap(it.toBitmap())
                         coverSimpleImageView.setImageDrawable(it.asDrawable(context.resources))
                         fullPlayerToolbar.setImageViewCover(it.asDrawable(context.resources))
                         (parent as FloatingPanelLayout).transitionImageView!!.setImageDrawable(
                             it.asDrawable(context.resources)
                         )
                     }, onError = {
+                        blendView.setImageBitmap(it?.toBitmap())
                         coverSimpleImageView.setImageDrawable(it?.asDrawable(context.resources))
                         fullPlayerToolbar.setImageViewCover(it?.asDrawable(context.resources))
                         (parent as FloatingPanelLayout).transitionImageView!!.setImageDrawable(
