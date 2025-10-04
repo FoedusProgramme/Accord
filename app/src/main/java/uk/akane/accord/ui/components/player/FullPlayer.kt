@@ -44,6 +44,7 @@ import uk.akane.accord.ui.components.FadingVerticalEdgeLayout
 import uk.akane.accord.ui.components.PopupHelper
 import uk.akane.accord.ui.components.lyrics.LyricsViewModel
 import uk.akane.cupertino.widget.OverlayTextView
+import uk.akane.cupertino.widget.button.AnimatedVectorButton
 import uk.akane.cupertino.widget.button.OverlayBackgroundButton
 import uk.akane.cupertino.widget.button.OverlayButton
 import uk.akane.cupertino.widget.button.StarTransformButton
@@ -89,6 +90,8 @@ class FullPlayer @JvmOverloads constructor(
     private var captionOverlayButton: OverlayButton
     private var starTransformButton: StarTransformButton
     private var controllerButton: StateAnimatedVectorButton
+    private var previousButton: AnimatedVectorButton
+    private var nextButton: AnimatedVectorButton
     private var ellipsisButton: OverlayBackgroundButton
 
     private var fullPlayerToolbar: FullPlayerToolbar
@@ -122,6 +125,8 @@ class FullPlayer @JvmOverloads constructor(
         starTransformButton = findViewById(R.id.star)
         ellipsisButton = findViewById(R.id.ellipsis)
         controllerButton = findViewById(R.id.main_control_btn)
+        previousButton = findViewById(R.id.backward_btn)
+        nextButton = findViewById(R.id.forward_btn)
         fullPlayerToolbar = findViewById(R.id.full_player_tool_bar)
         testSlider = findViewById(R.id.test_slider)
 
@@ -226,6 +231,13 @@ class FullPlayer @JvmOverloads constructor(
 
         controllerButton.setOnClickListener {
             instance?.playOrPause()
+        }
+
+        previousButton.setOnClickListener {
+            instance?.seekToPrevious()
+        }
+        nextButton.setOnClickListener {
+            instance?.seekToNext()
         }
 
         doOnLayout {
