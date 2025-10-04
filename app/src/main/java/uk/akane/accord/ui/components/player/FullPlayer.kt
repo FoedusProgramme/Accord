@@ -489,7 +489,6 @@ class FullPlayer @JvmOverloads constructor(
                 TAG,
                 "load cover for ${mediaItem?.mediaMetadata?.title} at ${coverSimpleImageView.width} ${coverSimpleImageView.height}"
             )
-            mediaItem?.mediaMetadata?.artworkUri?.let { blendView.setImageUri(it) }
             lastDisposable = context.imageLoader.enqueue(
                 ImageRequest.Builder(context).apply {
                     data(mediaItem?.mediaMetadata?.artworkUri)

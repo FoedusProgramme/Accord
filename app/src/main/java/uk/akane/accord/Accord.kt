@@ -1,6 +1,5 @@
 package uk.akane.accord
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ContentUris
 import android.media.ThumbnailUtils
@@ -12,7 +11,6 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.Uri
-import coil3.annotation.InternalCoilApi
 import coil3.asImage
 import coil3.decode.ContentMetadata
 import coil3.decode.DataSource
@@ -47,7 +45,6 @@ class Accord : Application(), SingletonImageLoader.Factory {
         MutableStateFlow<Boolean?>(true)
 
     init {
-        @SuppressLint("DefaultUncaughtExceptionDelegation")
         LSPass.setHiddenApiExemptions("")
         if (BuildConfig.DEBUG)
             System.setProperty("kotlinx.coroutines.debug", "on")
@@ -74,7 +71,6 @@ class Accord : Application(), SingletonImageLoader.Factory {
         )
     }
 
-    @OptIn(InternalCoilApi::class)
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         return ImageLoader.Builder(context)
             .diskCache(null)
