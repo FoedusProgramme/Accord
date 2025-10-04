@@ -57,6 +57,7 @@ import kotlin.math.absoluteValue
 import kotlin.math.max
 import androidx.core.view.isInvisible
 import androidx.core.view.isGone
+import androidx.media3.common.Player
 
 fun View.enableEdgeToEdgePaddingListener(
     ime: Boolean = false, top: Boolean = false,
@@ -608,4 +609,12 @@ fun View.fadInAnimation(duration: Long = 300, completion: (() -> Unit)? = null) 
                 }
             }
     )
+}
+
+fun Player.playOrPause() {
+    if (playWhenReady) {
+        pause()
+    } else {
+        play()
+    }
 }

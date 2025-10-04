@@ -36,6 +36,7 @@ import coil3.toBitmap
 import com.google.android.material.slider.Slider
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
+import uk.akane.accord.logic.playOrPause
 import uk.akane.accord.logic.setTextAnimation
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.ui.MainActivity
@@ -46,6 +47,7 @@ import uk.akane.cupertino.widget.OverlayTextView
 import uk.akane.cupertino.widget.button.OverlayBackgroundButton
 import uk.akane.cupertino.widget.button.OverlayButton
 import uk.akane.cupertino.widget.button.StarTransformButton
+import uk.akane.cupertino.widget.button.StateAnimatedVectorButton
 import uk.akane.cupertino.widget.divider.OverlayDivider
 import uk.akane.cupertino.widget.image.OverlayHintView
 import uk.akane.cupertino.widget.image.SimpleImageView
@@ -86,6 +88,7 @@ class FullPlayer @JvmOverloads constructor(
     private var airplayOverlayButton: OverlayButton
     private var captionOverlayButton: OverlayButton
     private var starTransformButton: StarTransformButton
+    private var controllerButton: StateAnimatedVectorButton
     private var ellipsisButton: OverlayBackgroundButton
 
     private var fullPlayerToolbar: FullPlayerToolbar
@@ -118,6 +121,7 @@ class FullPlayer @JvmOverloads constructor(
         captionOverlayButton = findViewById(R.id.caption)
         starTransformButton = findViewById(R.id.star)
         ellipsisButton = findViewById(R.id.ellipsis)
+        controllerButton = findViewById(R.id.main_control_btn)
         fullPlayerToolbar = findViewById(R.id.full_player_tool_bar)
         testSlider = findViewById(R.id.test_slider)
 
@@ -218,6 +222,10 @@ class FullPlayer @JvmOverloads constructor(
             )
             onMediaMetadataChanged(instance?.mediaMetadata ?: MediaMetadata.EMPTY)
             firstTime = false
+        }
+
+        controllerButton.setOnClickListener {
+            instance?.playOrPause()
         }
 
         doOnLayout {
@@ -494,6 +502,61 @@ class FullPlayer @JvmOverloads constructor(
                 }.build()
             )
         }
+    }
+
+    override fun onIsPlayingChanged(isPlaying: Boolean) {
+        onPlaybackStateChanged(instance?.playbackState ?: Player.STATE_IDLE)
+    }
+
+    override fun onPlaybackStateChanged(playbackState: @Player.State Int) {
+        Log.d("FullPlayer", "onPlaybackStateChanged: $playbackState")
+        if (instance?.isPlaying == true) {
+            controllerButton.playAnimation(false)
+        } else if (playbackState != Player.STATE_BUFFERING) {
+            controllerButton.playAnimation(true)
+        }
+        /*
+        if (instance?.isPlaying == true) {
+            if (bottomSheetFullControllerButton.getTag(R.id.play_next) as Int? != 1) {
+                bottomSheetFullControllerButton.icon =
+                    AppCompatResources.getDrawable(
+                        wrappedContext ?: context,
+                        R.drawable.play_anim
+                    )
+                bottomSheetFullControllerButton.background =
+                    AppCompatResources.getDrawable(context, R.drawable.bg_play_anim)
+                bottomSheetFullControllerButton.icon.startAnimation()
+                bottomSheetFullControllerButton.background.startAnimation()
+                bottomSheetFullControllerButton.setTag(R.id.play_next, 1)
+            }
+            if (!isUserTracking) {
+                progressDrawable.animate = true
+            }
+            if (!runnableRunning) {
+                runnableRunning = true
+                handler.postDelayed(positionRunnable, SLIDER_UPDATE_INTERVAL)
+            }
+            bottomSheetFullCover.startRotation()
+        } else if (playbackState != Player.STATE_BUFFERING) {
+            if (bottomSheetFullControllerButton.getTag(R.id.play_next) as Int? != 2) {
+                bottomSheetFullControllerButton.icon =
+                    AppCompatResources.getDrawable(
+                        wrappedContext ?: context,
+                        R.drawable.pause_anim
+                    )
+                bottomSheetFullControllerButton.background =
+                    AppCompatResources.getDrawable(context, R.drawable.bg_pause_anim)
+                bottomSheetFullControllerButton.icon.startAnimation()
+                bottomSheetFullControllerButton.background.startAnimation()
+                bottomSheetFullControllerButton.setTag(R.id.play_next, 2)
+                bottomSheetFullCover.stopRotation()
+            }
+            if (!isUserTracking) {
+                progressDrawable.animate = false
+            }
+        }
+
+         */
     }
 
     /*
