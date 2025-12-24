@@ -95,6 +95,8 @@ class FloatingPanelLayout @JvmOverloads constructor(
 
     private var fullCoverX: Int = 0
     private var fullCoverY: Int = 0
+    private var fullCoverScale = 1F
+    private var lockTransitionCornerRadius = false
 
     private var state: SlideStatus = SlideStatus.COLLAPSED
 
@@ -161,10 +163,55 @@ class FloatingPanelLayout @JvmOverloads constructor(
         }
     }
 
+    fun updateTransitionTarget(targetView: View, targetRadius: Float, lockCornerRadius: Boolean,
+                               targetElevation: Float? = null) {
+        val imageView = transitionImageView ?: return
+        if (imageView.width == 0) {
+            imageView.doOnLayout {
+                updateTransitionTarget(targetView, targetRadius, lockCornerRadius, targetElevation)
+            }
+            return
+        }
+        if (targetView.width == 0 || targetView.height == 0) {
+            targetView.doOnLayout {
+                updateTransitionTarget(targetView, targetRadius, lockCornerRadius, targetElevation)
+            }
+            return
+        }
+
+        var x = 0
+        var y = 0
+        var current: View = targetView
+        while (current !== fullScreenView && current.parent is View) {
+            x += current.left
+            y += current.top
+            current = current.parent as View
+        }
+
+        fullCoverX = x
+        fullCoverY = y
+        fullCoverScale = targetView.width.toFloat() / imageView.width.toFloat()
+
+        lockTransitionCornerRadius = lockCornerRadius
+        if (lockCornerRadius) {
+            transitionStartRadius = targetRadius
+            transitionEndRadius = targetRadius
+        } else {
+            transitionStartRadius = startRadius
+            transitionEndRadius = endRadius
+        }
+
+        transitionEndElevation = targetElevation ?: targetView.elevation
+        updateTransitionFraction(fraction)
+    }
+
     private val startPadding = 5F.dp.px
     private val endElevation = 24F.dp.px
     private val startRadius = 36F.dp.px
     private val endRadius = 10F.dp.px
+    private var transitionStartRadius = startRadius
+    private var transitionEndRadius = endRadius
+    private var transitionEndElevation = endElevation
 
     private fun updateTransitionFraction(fraction: Float) {
         transitionImageView?.let {
@@ -172,15 +219,24 @@ class FloatingPanelLayout @JvmOverloads constructor(
                 val rawDelta = fullScreenView.height - previewView.height - previewView.marginBottom
                 val initialScale = previewCoverBoxMetrics / it.width.toFloat() * previewView.scaleX
                 val initialTranslationX = + previewCoverMargin.toFloat() * previewView.scaleX - previewCoverHorizontalMargin * fraction
+                val scale = lerp(initialScale, fullCoverScale, fraction)
 
-                it.scaleX = lerp(initialScale, 1f, fraction)
-                it.scaleY = lerp(initialScale, 1f, fraction)
+                it.scaleX = scale
+                it.scaleY = scale
                 it.translationX = lerp(initialTranslationX, fullCoverX - previewCoverHorizontalMargin.toFloat(), fraction)
                 it.translationY = lerp(previewCoverMargin.toFloat(), -rawDelta.toFloat() + fullCoverY, fraction)
 
-                it.setPadding(lerp(startPadding, 0F, fraction).toInt())
-                it.elevation = lerp(0F, endElevation, fraction)
-                it.updateCornerRadius(lerp(startRadius, endRadius, fraction).toInt())
+                val targetVisualPadding = 0.5F.dp.px
+                val dynamicStartPadding = if (initialScale > 0) targetVisualPadding / initialScale else 0F
+                it.setPadding(lerp(dynamicStartPadding, 0F, fraction).toInt())
+
+                it.elevation = lerp(0F, transitionEndElevation, fraction)
+                val cornerRadius = if (lockTransitionCornerRadius && scale != 0F) {
+                    transitionStartRadius / scale
+                } else {
+                    lerp(transitionStartRadius, transitionEndRadius, fraction)
+                }
+                it.updateCornerRadius(cornerRadius.toInt())
             }
         }
     }

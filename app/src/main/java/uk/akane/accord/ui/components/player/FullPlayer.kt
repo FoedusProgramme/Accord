@@ -192,6 +192,8 @@ class FullPlayer @JvmOverloads constructor(
                 coverSimpleImageView.top,
                 AppCompatResources.getDrawable(context, R.drawable.default_cover)!!.toBitmap()
             )
+
+            updateTransitionTargetForContentType(contentType)
         }
 
         testSlider.addOnChangeListener { slider, progress, isUser ->
@@ -292,6 +294,27 @@ class FullPlayer @JvmOverloads constructor(
     private var endCoverRadius = 22.dp.px
     private var initialElevation = 24.dp.px
     private var finalScale = 0F
+    private val queueCoverRadius = 5.dp.px
+
+    private fun updateTransitionTargetForContentType(value: ContentType) {
+        val targetView = if (value == ContentType.PLAYLIST) {
+            fullPlayerToolbar.getCoverView()
+        } else {
+            coverSimpleImageView
+        }
+        val lockCornerRadius = value == ContentType.PLAYLIST
+        val targetRadius = if (lockCornerRadius) queueCoverRadius else 0F
+        val targetElevation = if (value == ContentType.PLAYLIST) null else initialElevation
+
+        targetView.doOnLayout {
+            floatingPanelLayout.updateTransitionTarget(
+                targetView,
+                targetRadius,
+                lockCornerRadius,
+                targetElevation
+            )
+        }
+    }
 
     private fun animateCoverChange(fraction: Float) {
         coverSimpleImageView.translationX = lerp(0f, finalTranslationX, fraction)
@@ -414,7 +437,9 @@ class FullPlayer @JvmOverloads constructor(
     }
 
     override fun onSlide(value: Float) {
-        // PLACEHOLDER TODO
+        if (contentType == ContentType.PLAYLIST) {
+            fullPlayerToolbar.getCoverView().alpha = if (value >= 1F) 1F else 0F
+        }
     }
 
     private var transformationFraction = 0F
@@ -448,6 +473,7 @@ class FullPlayer @JvmOverloads constructor(
                 }
             }
             field = value
+            updateTransitionTargetForContentType(value)
         }
 
     private var lastDisposable: Disposable? = null

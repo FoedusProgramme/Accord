@@ -8,14 +8,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.doOnLayout
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
-import coil3.asDrawable
-import coil3.imageLoader
 import coil3.request.Disposable
-import coil3.request.ImageRequest
-import coil3.request.allowHardware
-import coil3.size.Scale
 import uk.akane.accord.R
-import uk.akane.accord.logic.getFile
 import uk.akane.accord.logic.inverseLerp
 import uk.akane.accord.logic.setTextAnimation
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
@@ -100,5 +94,7 @@ class FullPlayerToolbar @JvmOverloads constructor(
 
     fun setImageViewCover(drawable: Drawable?) =
         coverSimpleImageView.setImageDrawable(drawable)
+
+    fun getCoverView(): SimpleImageView = coverSimpleImageView
 
 }
