@@ -1,6 +1,7 @@
 package uk.akane.accord.ui.components.player
 
 import android.content.Context
+import android.animation.ValueAnimator
 import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
@@ -62,6 +63,7 @@ import uk.akane.cupertino.widget.image.SimpleImageView
 import uk.akane.cupertino.widget.slider.OverlaySlider
 import uk.akane.cupertino.widget.special.BlendView
 import uk.akane.cupertino.widget.utils.AnimationUtils
+import uk.akane.cupertino.widget.utils.AnimationUtils.LONG_DURATION
 import uk.akane.cupertino.widget.utils.AnimationUtils.MID_DURATION
 
 class FullPlayer @JvmOverloads constructor(
@@ -113,6 +115,7 @@ class FullPlayer @JvmOverloads constructor(
     private var isUserScrubbing = false
     private var isUserVolumeScrubbing = false
     private var maxDeviceVolume = 0
+    private var volumeUpdateAnimator: ValueAnimator? = null
     private val audioManager by lazy {
         ContextCompat.getSystemService(context, AudioManager::class.java)
     }
@@ -209,6 +212,7 @@ class FullPlayer @JvmOverloads constructor(
         volumeOverlaySlider.addValueChangeListener(object : OverlaySlider.ValueChangeListener {
             override fun onStartTracking(slider: OverlaySlider) {
                 isUserVolumeScrubbing = true
+                volumeUpdateAnimator?.cancel()
             }
 
             override fun onValueChanged(slider: OverlaySlider, value: Float, fromUser: Boolean) {
@@ -426,9 +430,8 @@ class FullPlayer @JvmOverloads constructor(
 
         volumeOverlaySlider.valueFrom = 0f
         volumeOverlaySlider.valueTo = maxVolume.toFloat()
-        val currentVolume = (volume ?: resolveDeviceVolume()).coerceIn(0, maxVolume)
-        volumeOverlaySlider.value = currentVolume.toFloat()
-        volumeOverlaySlider.invalidate()
+        val currentVolume = (volume ?: resolveDeviceVolume()).coerceIn(0, maxVolume).toFloat()
+        animateVolumeSliderTo(currentVolume)
     }
 
     private fun setDeviceVolume(volume: Int) {
@@ -440,6 +443,21 @@ class FullPlayer @JvmOverloads constructor(
             controller.setDeviceVolume(boundedVolume, 0)
         } else {
             audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, boundedVolume, 0)
+        }
+    }
+
+    private fun animateVolumeSliderTo(targetValue: Float) {
+        val startValue = volumeOverlaySlider.value
+        if (startValue == targetValue) return
+        volumeUpdateAnimator?.cancel()
+        volumeUpdateAnimator = ValueAnimator.ofFloat(startValue, targetValue).apply {
+            duration = LONG_DURATION
+            interpolator = AnimationUtils.easingStandardInterpolator
+            addUpdateListener {
+                volumeOverlaySlider.value = it.animatedValue as Float
+                volumeOverlaySlider.invalidate()
+            }
+            start()
         }
     }
 
