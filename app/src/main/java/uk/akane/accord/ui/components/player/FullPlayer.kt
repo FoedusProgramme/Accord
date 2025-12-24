@@ -22,9 +22,11 @@ import androidx.core.view.marginLeft
 import androidx.core.view.marginRight
 import androidx.core.view.marginTop
 import androidx.core.view.updateLayoutParams
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import coil3.asDrawable
 import coil3.imageLoader
@@ -38,6 +40,7 @@ import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.playOrPause
 import uk.akane.accord.logic.setTextAnimation
+import uk.akane.accord.logic.utils.CalculationUtils.convertDurationToTimeStamp
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.components.FadingVerticalEdgeLayout
@@ -102,6 +105,15 @@ class FullPlayer @JvmOverloads constructor(
         get() = parent as FloatingPanelLayout
 
     private var firstTime = false
+    private var positionUpdateRunning = false
+    private val positionUpdateRunnable = object : Runnable {
+        override fun run() {
+            updateProgressDisplay()
+            if (positionUpdateRunning) {
+                postDelayed(this, POSITION_UPDATE_INTERVAL_MS)
+            }
+        }
+    }
 
     init {
         inflate(context, R.layout.layout_full_player, this)
@@ -316,6 +328,50 @@ class FullPlayer @JvmOverloads constructor(
         }
     }
 
+    private fun resolveDurationMs(): Long? {
+        val duration = instance?.contentDuration
+        if (duration != null && duration != C.TIME_UNSET) {
+            return duration
+        }
+        return instance?.currentMediaItem?.mediaMetadata?.durationMs?.takeIf { it > 0L }
+    }
+
+    private fun updateProgressDisplay() {
+        val mediaDuration = resolveDurationMs()
+        val currentPosition = instance?.currentPosition ?: 0L
+        if (mediaDuration == null || instance?.mediaItemCount == 0) {
+            val placeholder = context.getString(R.string.default_duration)
+            currentTimestampTextView.text = placeholder
+            leftTimestampTextView.text = placeholder
+            progressOverlaySlider.valueTo = 1f
+            progressOverlaySlider.value = 0f
+            progressOverlaySlider.invalidate()
+            return
+        }
+
+        val safeDuration = mediaDuration.coerceAtLeast(1L)
+        val boundedPosition = currentPosition.coerceIn(0L, safeDuration)
+        val remaining = (safeDuration - boundedPosition).coerceAtLeast(0L)
+
+        currentTimestampTextView.text = convertDurationToTimeStamp(boundedPosition)
+        leftTimestampTextView.text = "-${convertDurationToTimeStamp(remaining)}"
+        progressOverlaySlider.valueTo = safeDuration.toFloat()
+        progressOverlaySlider.value = boundedPosition.toFloat()
+        progressOverlaySlider.invalidate()
+    }
+
+    private fun startPositionUpdates() {
+        if (positionUpdateRunning) return
+        positionUpdateRunning = true
+        removeCallbacks(positionUpdateRunnable)
+        post(positionUpdateRunnable)
+    }
+
+    private fun stopPositionUpdates() {
+        positionUpdateRunning = false
+        removeCallbacks(positionUpdateRunnable)
+    }
+
     private fun animateCoverChange(fraction: Float) {
         coverSimpleImageView.translationX = lerp(0f, finalTranslationX, fraction)
         coverSimpleImageView.translationY = lerp(0f, finalTranslationY, fraction)
@@ -496,9 +552,11 @@ class FullPlayer @JvmOverloads constructor(
                 mediaItem?.mediaMetadata?.artist ?: context.getString(R.string.default_artist),
                 skipAnimation = firstTime
             )
+            updateProgressDisplay()
         } else {
             lastDisposable?.dispose()
             lastDisposable = null
+            updateProgressDisplay()
         }
     }
 
@@ -547,10 +605,17 @@ class FullPlayer @JvmOverloads constructor(
 
     override fun onPlaybackStateChanged(playbackState: @Player.State Int) {
         Log.d("FullPlayer", "onPlaybackStateChanged: $playbackState")
-        if (instance?.isPlaying == true) {
+        val isPlaying = instance?.isPlaying == true
+        if (isPlaying) {
             controllerButton.playAnimation(false)
         } else if (playbackState != Player.STATE_BUFFERING) {
             controllerButton.playAnimation(true)
+        }
+        if (isPlaying) {
+            startPositionUpdates()
+        } else {
+            stopPositionUpdates()
+            updateProgressDisplay()
         }
         /*
         if (instance?.isPlaying == true) {
@@ -594,6 +659,17 @@ class FullPlayer @JvmOverloads constructor(
         }
 
          */
+    }
+
+    override fun onTimelineChanged(timeline: Timeline, reason: @Player.TimelineChangeReason Int) {
+        if (reason == Player.TIMELINE_CHANGE_REASON_SOURCE_UPDATE) {
+            updateProgressDisplay()
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        stopPositionUpdates()
+        super.onDetachedFromWindow()
     }
 
     /*
@@ -641,5 +717,6 @@ class FullPlayer @JvmOverloads constructor(
 
     companion object {
         const val TAG = "FullPlayer"
+        private const val POSITION_UPDATE_INTERVAL_MS = 500L
     }
 }
