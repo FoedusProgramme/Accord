@@ -1,9 +1,12 @@
 package uk.akane.accord.ui.components.player
 
 import android.content.Context
+import android.content.BroadcastReceiver
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.ResolveInfo
+import android.media.AudioManager
 import android.media.MediaRouter2
 import android.os.Build
 import android.util.AttributeSet
@@ -14,6 +17,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
@@ -107,6 +111,22 @@ class FullPlayer @JvmOverloads constructor(
     private var firstTime = false
     private var positionUpdateRunning = false
     private var isUserScrubbing = false
+    private var isUserVolumeScrubbing = false
+    private var maxDeviceVolume = 0
+    private val audioManager by lazy {
+        ContextCompat.getSystemService(context, AudioManager::class.java)
+    }
+    private var isVolumeReceiverRegistered = false
+    private val volumeChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                "android.media.VOLUME_CHANGED_ACTION",
+                "android.media.MASTER_VOLUME_CHANGED_ACTION",
+                "android.media.MASTER_MUTE_CHANGED_ACTION",
+                "android.media.STREAM_MUTE_CHANGED_ACTION" -> updateVolumeSlider()
+            }
+        }
+    }
     private val positionUpdateRunnable = object : Runnable {
         override fun run() {
             updateProgressDisplay()
@@ -184,6 +204,21 @@ class FullPlayer @JvmOverloads constructor(
 
             override fun onEmphasizeStartRight() {
                 speakerFullHintView.playAnim()
+            }
+        })
+        volumeOverlaySlider.addValueChangeListener(object : OverlaySlider.ValueChangeListener {
+            override fun onStartTracking(slider: OverlaySlider) {
+                isUserVolumeScrubbing = true
+            }
+
+            override fun onValueChanged(slider: OverlaySlider, value: Float, fromUser: Boolean) {
+                if (!fromUser) return
+                setDeviceVolume(value.toInt())
+            }
+
+            override fun onStopTracking(slider: OverlaySlider) {
+                setDeviceVolume(slider.value.toInt())
+                isUserVolumeScrubbing = false
             }
         })
 
@@ -269,6 +304,7 @@ class FullPlayer @JvmOverloads constructor(
                 Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
             )
             onMediaMetadataChanged(instance?.mediaMetadata ?: MediaMetadata.EMPTY)
+            updateVolumeSlider()
             firstTime = false
         }
 
@@ -290,6 +326,8 @@ class FullPlayer @JvmOverloads constructor(
             finalTranslationY = (20 - 18).dp.px
             finalScale = 74.dp.px / coverSimpleImageView.height
         }
+
+        updateVolumeSlider()
     }
 
     private fun startSystemMediaControl() {
@@ -363,6 +401,46 @@ class FullPlayer @JvmOverloads constructor(
             return duration
         }
         return instance?.currentMediaItem?.mediaMetadata?.durationMs?.takeIf { it > 0L }
+    }
+
+    private fun resolveMaxDeviceVolume(): Int {
+        if (maxDeviceVolume <= 0) {
+            maxDeviceVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: 0
+        }
+        return maxDeviceVolume
+    }
+
+    private fun resolveDeviceVolume(): Int {
+        val controller = instance
+        return if (controller != null && controller.isCommandAvailable(Player.COMMAND_GET_DEVICE_VOLUME)) {
+            controller.deviceVolume
+        } else {
+            audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0
+        }
+    }
+
+    private fun updateVolumeSlider(volume: Int? = null) {
+        if (isUserVolumeScrubbing) return
+        val maxVolume = resolveMaxDeviceVolume()
+        if (maxVolume <= 0) return
+
+        volumeOverlaySlider.valueFrom = 0f
+        volumeOverlaySlider.valueTo = maxVolume.toFloat()
+        val currentVolume = (volume ?: resolveDeviceVolume()).coerceIn(0, maxVolume)
+        volumeOverlaySlider.value = currentVolume.toFloat()
+        volumeOverlaySlider.invalidate()
+    }
+
+    private fun setDeviceVolume(volume: Int) {
+        val maxVolume = resolveMaxDeviceVolume()
+        if (maxVolume <= 0) return
+        val boundedVolume = volume.coerceIn(0, maxVolume)
+        val controller = instance
+        if (controller != null && controller.isCommandAvailable(Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS )) {
+            controller.setDeviceVolume(boundedVolume, 0)
+        } else {
+            audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, boundedVolume, 0)
+        }
     }
 
     private fun updateProgressTexts(positionMs: Long, durationMs: Long) {
@@ -697,7 +775,11 @@ class FullPlayer @JvmOverloads constructor(
             }
         }
 
-         */
+        */
+    }
+
+    override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
+        updateVolumeSlider(volume)
     }
 
     override fun onTimelineChanged(timeline: Timeline, reason: @Player.TimelineChangeReason Int) {
@@ -708,7 +790,30 @@ class FullPlayer @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         stopPositionUpdates()
+        if (isVolumeReceiverRegistered) {
+            runCatching { context.unregisterReceiver(volumeChangeReceiver) }
+            isVolumeReceiverRegistered = false
+        }
         super.onDetachedFromWindow()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (!isVolumeReceiverRegistered) {
+            val filter = IntentFilter().apply {
+                addAction("android.media.VOLUME_CHANGED_ACTION")
+                addAction("android.media.MASTER_VOLUME_CHANGED_ACTION")
+                addAction("android.media.MASTER_MUTE_CHANGED_ACTION")
+                addAction("android.media.STREAM_MUTE_CHANGED_ACTION")
+            }
+            if (Build.VERSION.SDK_INT >= 33) {
+                context.registerReceiver(volumeChangeReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("DEPRECATION")
+                context.registerReceiver(volumeChangeReceiver, filter)
+            }
+            isVolumeReceiverRegistered = true
+        }
     }
 
     /*
