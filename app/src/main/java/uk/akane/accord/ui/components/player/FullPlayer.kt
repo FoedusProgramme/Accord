@@ -495,19 +495,19 @@ class FullPlayer @JvmOverloads constructor(
                     size(coverSimpleImageView.width, coverSimpleImageView.height)
                     scale(Scale.FILL)
                     target(onSuccess = {
+                        val drawable = it.asDrawable(context.resources)
                         blendView.setImageBitmap(it.toBitmap())
-                        coverSimpleImageView.setImageDrawable(it.asDrawable(context.resources))
-                        fullPlayerToolbar.setImageViewCover(it.asDrawable(context.resources))
-                        (parent as FloatingPanelLayout).transitionImageView!!.setImageDrawable(
-                            it.asDrawable(context.resources)
-                        )
+                        coverSimpleImageView.setImageDrawable(drawable)
+                        fullPlayerToolbar.setImageViewCover(drawable)
+                        floatingPanelLayout.transitionImageView?.setImageDrawable(drawable)
+                        floatingPanelLayout.setPreviewCover(drawable)
                     }, onError = {
+                        val drawable = it?.asDrawable(context.resources)
                         blendView.setImageBitmap(it?.toBitmap())
-                        coverSimpleImageView.setImageDrawable(it?.asDrawable(context.resources))
-                        fullPlayerToolbar.setImageViewCover(it?.asDrawable(context.resources))
-                        (parent as FloatingPanelLayout).transitionImageView!!.setImageDrawable(
-                            it?.asDrawable(context.resources)
-                        )
+                        coverSimpleImageView.setImageDrawable(drawable)
+                        fullPlayerToolbar.setImageViewCover(drawable)
+                        floatingPanelLayout.transitionImageView?.setImageDrawable(drawable)
+                        floatingPanelLayout.setPreviewCover(drawable)
                     }) // do not react to onStart() which sets placeholder
                     allowHardware(coverSimpleImageView.isHardwareAccelerated)
                 }.build()

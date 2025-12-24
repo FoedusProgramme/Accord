@@ -1,6 +1,7 @@
 package uk.akane.accord.ui.components.player
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.doOnLayout
@@ -48,5 +49,9 @@ class PreviewPlayer @JvmOverloads constructor(
         doOnLayout {
             floatingPanelLayout.addOnSlideListener(this)
         }
+    }
+
+    fun setCover(drawable: Drawable?) {
+        coverSimpleImageView.setImageDrawable(drawable)
     }
 }

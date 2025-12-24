@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RenderNode
+import android.graphics.drawable.Drawable
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.GestureDetector
@@ -466,6 +467,10 @@ class FloatingPanelLayout @JvmOverloads constructor(
 
     fun addOnSlideListener(listener: OnSlideListener) {
         onSlideListeners.add(listener)
+    }
+
+    fun setPreviewCover(drawable: Drawable?) {
+        (previewView as? PreviewPlayer)?.setCover(drawable)
     }
 
     override fun onDetachedFromWindow() {
