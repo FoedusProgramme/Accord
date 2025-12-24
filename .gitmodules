@@ -1,9 +1,9 @@
 [submodule "libPhonograph"]
 	path = libPhonograph/libPhonograph
-	url = https://github.com/FoedusProgramme/libPhonograph.git
+	url = https://github.com/markakash/libPhonograph.git
 [submodule "Cupertino"]
 	path = Cupertino/Cupertino
-	url = https://github.com/FoedusProgramme/Cupertino.git
+	url = https://github.com/markakash/Cupertino.git
 [submodule "media3"]
 	path = media3
 	url = https://github.com/nift4/media.git
