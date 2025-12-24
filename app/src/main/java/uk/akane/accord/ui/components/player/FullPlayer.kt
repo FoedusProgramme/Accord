@@ -106,6 +106,7 @@ class FullPlayer @JvmOverloads constructor(
 
     private var firstTime = false
     private var positionUpdateRunning = false
+    private var isUserScrubbing = false
     private val positionUpdateRunnable = object : Runnable {
         override fun run() {
             updateProgressDisplay()
@@ -192,6 +193,34 @@ class FullPlayer @JvmOverloads constructor(
                 currentTimestampTextView.translationX = -translationX
                 leftTimestampTextView.translationY = translationY
                 leftTimestampTextView.translationX = translationX
+            }
+        })
+
+        progressOverlaySlider.addValueChangeListener(object : OverlaySlider.ValueChangeListener {
+            override fun onStartTracking(slider: OverlaySlider) {
+                isUserScrubbing = true
+                stopPositionUpdates()
+            }
+
+            override fun onValueChanged(slider: OverlaySlider, value: Float, fromUser: Boolean) {
+                if (!fromUser) return
+                val duration = resolveDurationMs() ?: return
+                updateProgressTexts(value.toLong(), duration)
+            }
+
+            override fun onStopTracking(slider: OverlaySlider) {
+                val duration = resolveDurationMs()
+                if (duration != null) {
+                    val position = slider.value.toLong().coerceIn(0L, duration)
+                    instance?.seekTo(position)
+                    updateProgressTexts(position, duration)
+                }
+                isUserScrubbing = false
+                if (instance?.isPlaying == true) {
+                    startPositionUpdates()
+                } else {
+                    updateProgressDisplay()
+                }
             }
         })
 
@@ -336,6 +365,16 @@ class FullPlayer @JvmOverloads constructor(
         return instance?.currentMediaItem?.mediaMetadata?.durationMs?.takeIf { it > 0L }
     }
 
+    private fun updateProgressTexts(positionMs: Long, durationMs: Long) {
+        val safeDuration = durationMs.coerceAtLeast(1L)
+        val boundedPosition = positionMs.coerceIn(0L, safeDuration)
+        val remaining = (safeDuration - boundedPosition).coerceAtLeast(0L)
+
+        currentTimestampTextView.text = convertDurationToTimeStamp(boundedPosition)
+        leftTimestampTextView.text =
+            context.getString(R.string.time_remaining, convertDurationToTimeStamp(remaining))
+    }
+
     private fun updateProgressDisplay() {
         val mediaDuration = resolveDurationMs()
         val currentPosition = instance?.currentPosition ?: 0L
@@ -349,12 +388,12 @@ class FullPlayer @JvmOverloads constructor(
             return
         }
 
+        if (isUserScrubbing) return
+
         val safeDuration = mediaDuration.coerceAtLeast(1L)
         val boundedPosition = currentPosition.coerceIn(0L, safeDuration)
-        val remaining = (safeDuration - boundedPosition).coerceAtLeast(0L)
 
-        currentTimestampTextView.text = convertDurationToTimeStamp(boundedPosition)
-        leftTimestampTextView.text = "-${convertDurationToTimeStamp(remaining)}"
+        updateProgressTexts(boundedPosition, safeDuration)
         progressOverlaySlider.valueTo = safeDuration.toFloat()
         progressOverlaySlider.value = boundedPosition.toFloat()
         progressOverlaySlider.invalidate()
