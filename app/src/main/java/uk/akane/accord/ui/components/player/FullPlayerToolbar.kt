@@ -39,7 +39,9 @@ class FullPlayerToolbar @JvmOverloads constructor(
     private var subtitleTextView: OverlayTextView
     private var starTransformButton: StarTransformButton
     private var ellipsisBackgroundButton: OverlayBackgroundButton
+    private var shuffleButton: OverlayPillButton
     private var repeatButton: OverlayPillButton
+    private var autoplayButton: OverlayPillButton
 
     init {
         inflate(context, R.layout.layout_full_player_tool_bar, this)
@@ -49,7 +51,9 @@ class FullPlayerToolbar @JvmOverloads constructor(
         subtitleTextView = findViewById(R.id.subtitle)
         starTransformButton = findViewById(R.id.star)
         ellipsisBackgroundButton = findViewById(R.id.ellipsis)
+        shuffleButton = findViewById(R.id.btnShuffle)
         repeatButton = findViewById(R.id.btnRepeat)
+        autoplayButton = findViewById(R.id.btnAutoplay)
 
         doOnLayout {
             maxTranslation = (height - subtitleTextView.bottom).toFloat()
@@ -68,11 +72,17 @@ class FullPlayerToolbar @JvmOverloads constructor(
         subtitleTextView.translationY = lerp(maxTranslation, 0F, validFraction)
         starTransformButton.translationY = lerp(maxTranslation, 0F, validFraction)
         ellipsisBackgroundButton.translationY = lerp(maxTranslation, 0F, validFraction)
+        shuffleButton.translationY = lerp(maxTranslation, 0F, validFraction)
+        repeatButton.translationY = lerp(maxTranslation, 0F, validFraction)
+        autoplayButton.translationY = lerp(maxTranslation, 0F, validFraction)
 
         titleTextView.alpha = validFraction
         subtitleTextView.alpha = validFraction
         starTransformButton.alpha = validFraction
         ellipsisBackgroundButton.alpha = validFraction
+        shuffleButton.alpha = validFraction
+        repeatButton.alpha = validFraction
+        autoplayButton.alpha = validFraction
     }
 
     private var lastDisposable: Disposable? = null
