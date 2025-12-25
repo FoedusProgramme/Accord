@@ -176,6 +176,18 @@ class FullPlayer @JvmOverloads constructor(
             true
         }
 
+        fullPlayerToolbar.setOnRepeatClickListener {
+            val controller = instance ?: return@setOnRepeatClickListener
+            val nextRepeatMode = when (controller.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_OFF
+                else -> Player.REPEAT_MODE_OFF
+            }
+            controller.repeatMode = nextRepeatMode
+            fullPlayerToolbar.setRepeatMode(nextRepeatMode)
+        }
+
         clipToOutline = true
 
         fadingEdgeLayout.visibility = GONE
@@ -736,6 +748,10 @@ class FullPlayer @JvmOverloads constructor(
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
         onPlaybackStateChanged(instance?.playbackState ?: Player.STATE_IDLE)
+    }
+
+    override fun onRepeatModeChanged(repeatMode: Int) {
+        fullPlayerToolbar.setRepeatMode(repeatMode)
     }
 
     override fun onPlaybackStateChanged(playbackState: @Player.State Int) {

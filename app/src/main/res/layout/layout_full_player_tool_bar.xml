@@ -15,10 +15,9 @@
         app:cornerRadius="5dp"
         android:elevation="5dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginStart="32dp"
-        android:layout_marginVertical="20dp"
+        android:layout_marginTop="20dp"
         />
 
     <uk.akane.cupertino.widget.OverlayTextView
@@ -78,5 +77,53 @@
         app:icon="@drawable/ic_ellipsis"
         app:iconSize="30dp"
         />
+
+    <uk.akane.cupertino.widget.button.OverlayPillButton
+        android:id="@+id/btnShuffle"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="20dp"
+        app:icon="@drawable/ic_nowplaying_shuffle"
+        app:iconSize="40dp"
+        app:cornerRadius="10dp"
+        app:layout_constraintTop_toBottomOf="@id/cover"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnRepeat"
+        app:layout_constraintHorizontal_chainStyle="spread" />
+
+    <uk.akane.cupertino.widget.button.OverlayPillButton
+        android:id="@+id/btnRepeat"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="20dp"
+        app:icon="@drawable/ic_nowplaying_repeat"
+        app:iconSize="40dp"
+        app:cornerRadius="10dp"
+        app:layout_constraintTop_toTopOf="@id/btnShuffle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btnShuffle"
+        app:layout_constraintEnd_toStartOf="@id/btnAutoplay" />
+
+    <uk.akane.cupertino.widget.button.OverlayPillButton
+        android:id="@+id/btnAutoplay"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="20dp"
+        app:icon="@drawable/ic_nowplaying_autoplay"
+        app:iconSize="40dp"
+        app:cornerRadius="10dp"
+        android:checked="true"
+        app:layout_constraintTop_toTopOf="@id/btnShuffle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btnRepeat"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </merge>
