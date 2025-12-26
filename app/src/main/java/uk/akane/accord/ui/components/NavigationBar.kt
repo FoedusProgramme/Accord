@@ -293,7 +293,7 @@ class NavigationBar @JvmOverloads constructor(
 
         val collapsedTop = paddingTop + calculateExpandedHeightPadding() + collapseExpandDiff + returnButtonTopTranslation
         val collapsedBottom = collapsedTop + COLLAPSED_STATE_HEIGHT.dp.px + childTopMargin
-        val centerY = (collapsedTop + collapsedBottom) / 2f
+        val centerY = (collapsedTop + collapsedBottom) / 2f + COLLAPSED_TITLE_Y_OFFSET.dp.px
 
         val baseline = centerY - (fm.ascent + fm.descent) / 2f
 
@@ -554,7 +554,9 @@ class NavigationBar @JvmOverloads constructor(
 
         val childLeft = paddingLeft + marginStart
         val childRight = width - paddingRight - marginEnd
-        val childTop = (paddingTop + EXPANDED_STATE_HEIGHT.dp.px + calculateExpandedHeightPadding() + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()).toInt() + marginTop
+        val childTop = (paddingTop + EXPANDED_STATE_HEIGHT.dp.px + calculateExpandedHeightPadding() +
+            (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()
+            ).toInt() + marginTop + COLLAPSED_CHILD_TOP_PADDING.dp.px.toInt()
         val childBottom = childTop + child.measuredHeight
 
         child.layout(childLeft, childTop, childRight, childBottom)
@@ -608,6 +610,8 @@ class NavigationBar @JvmOverloads constructor(
         const val RETURN_ROW_Y_OFFSET = 8
 
         const val COLLAPSED_STATE_HEIGHT = 44
+        const val COLLAPSED_TITLE_Y_OFFSET = 8
+        const val COLLAPSED_CHILD_TOP_PADDING = 4
         const val DIVIDER_SIZE = 0.5F
         const val BLUR_STRENGTH = 50F
     }
