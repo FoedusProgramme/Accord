@@ -311,7 +311,7 @@ class NavigationBar @JvmOverloads constructor(
         val chevronHeight = (chevronWidth * (chevronDrawable.intrinsicHeight.toFloat() /
                 chevronDrawable.intrinsicWidth.toFloat())).toInt()
 
-        val centerY = paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f)
+        val centerY = paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f) + returnRowYOffset
 
         val chevronLeft = EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px.toInt()
         val chevronTop = (centerY - chevronHeight / 2f).toInt()
@@ -336,7 +336,7 @@ class NavigationBar @JvmOverloads constructor(
         val ellipsisSize = 18.dp.px
 
         val textCenterY = if (shouldDrawReturnButton) {
-            paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f)
+            paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f) + returnRowYOffset
         } else {
             val topY = paddingTop + calculateExpandedHeightPadding() + 3f.dp.px
             val baseline = topY - expandedTitleFontMetrics.ascent
@@ -406,6 +406,7 @@ class NavigationBar @JvmOverloads constructor(
     private var returnClickListener: (() -> Unit)? = null
     private var returnButtonPressed = false
     private val returnButtonBounds = RectF()
+    private val returnRowYOffset = RETURN_ROW_Y_OFFSET.dp.px
 
     fun setOnReturnClickListener(listener: (() -> Unit)?) {
         returnClickListener = listener
@@ -486,7 +487,7 @@ class NavigationBar @JvmOverloads constructor(
         val chevronHeight = (chevronWidth * (chevronDrawable.intrinsicHeight.toFloat() /
                 chevronDrawable.intrinsicWidth.toFloat())).toInt()
 
-        val centerY = paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f)
+        val centerY = paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f) + returnRowYOffset
         val chevronLeft = EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px
         val chevronTop = centerY - chevronHeight / 2f
         val textX = chevronLeft + chevronWidth + EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px
@@ -604,11 +605,10 @@ class NavigationBar @JvmOverloads constructor(
 
         const val EXPANDED_MENU_ITEM_SIZE = 30
         const val EXPANDED_ELLIPSIS_MARGIN = 18
-
+        const val RETURN_ROW_Y_OFFSET = 8
 
         const val COLLAPSED_STATE_HEIGHT = 44
         const val DIVIDER_SIZE = 0.5F
         const val BLUR_STRENGTH = 50F
     }
-
 }
