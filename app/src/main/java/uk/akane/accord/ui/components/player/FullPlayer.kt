@@ -33,6 +33,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil3.asDrawable
@@ -50,6 +51,8 @@ import uk.akane.accord.logic.playOrPause
 import uk.akane.accord.logic.setTextAnimation
 import uk.akane.accord.logic.utils.CalculationUtils.convertDurationToTimeStamp
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
+import uk.akane.accord.ui.adapters.QueueItemTouchHelperCallback
+import uk.akane.accord.ui.adapters.QueuePreviewAdapter
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.components.FadingVerticalEdgeLayout
 import uk.akane.accord.ui.components.PopupHelper
@@ -115,6 +118,7 @@ class FullPlayer @JvmOverloads constructor(
     private var queueAutoplayButton: OverlayPillButton
     private var queueTextView: OverlayTextView
     private var queueRecyclerView: RecyclerView
+    private var queueItemTouchHelper: ItemTouchHelper? = null
 
     private var lyricsViewModel: LyricsViewModel? = null
     private val floatingPanelLayout: FloatingPanelLayout
@@ -182,6 +186,26 @@ class FullPlayer @JvmOverloads constructor(
         queueTextView = findViewById(R.id.queue)
         queueRecyclerView = findViewById(R.id.queue_list)
         queueRecyclerView.layoutManager = LinearLayoutManager(context)
+        val queueAdapter = QueuePreviewAdapter(
+            mutableListOf(
+                QueuePreviewAdapter.Item("Hollowlight", "Moonshade"),
+                QueuePreviewAdapter.Item("Paper Trails", "The Vellum Set"),
+                QueuePreviewAdapter.Item("Daybreak Avenue", "Arlo Winters"),
+                QueuePreviewAdapter.Item("Slow Orbit", "Nocturne Park"),
+                QueuePreviewAdapter.Item("Midnight Bloom", "City Flora"),
+                QueuePreviewAdapter.Item("So easy", "Olivia Dean"),
+                QueuePreviewAdapter.Item("Blinding Lights", "The Weeknd")
+            ),
+            object : QueuePreviewAdapter.DragStartListener {
+                override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
+                    queueItemTouchHelper?.startDrag(viewHolder)
+                }
+            }
+        )
+        queueRecyclerView.adapter = queueAdapter
+        queueItemTouchHelper = ItemTouchHelper(QueueItemTouchHelperCallback(queueAdapter)).apply {
+            attachToRecyclerView(queueRecyclerView)
+        }
         queueContainer.doOnLayout {
             queueEnterOffset = resolveQueueEnterOffset()
         }
