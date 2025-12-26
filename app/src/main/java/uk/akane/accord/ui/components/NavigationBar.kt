@@ -83,6 +83,7 @@ class NavigationBar @JvmOverloads constructor(
 
     private var collapseProgress = 0F
     private var renderShowProgress = 0F
+    private var scrollOffsetPx = 0
 
     var blurRadius: Float = 0F
         set(value) {
@@ -435,7 +436,8 @@ class NavigationBar @JvmOverloads constructor(
 
                     var shouldInvalidate = false
 
-                    val offset = recyclerView.computeVerticalScrollOffset()
+                    scrollOffsetPx = (scrollOffsetPx + dy).coerceAtLeast(0)
+                    val offset = scrollOffsetPx
                     val maxOffset = height - paddingTop - COLLAPSED_STATE_HEIGHT.dp.px - appendHeight
                     val dstTranslationY = (-offset.toFloat()).coerceAtLeast(-maxOffset)
 
@@ -448,7 +450,11 @@ class NavigationBar @JvmOverloads constructor(
                     if (dstTranslationY != translationY) {
                         shouldInvalidate = true
                         translationY = dstTranslationY
-                        collapseProgress = (offset / maxOffset).coerceIn(0f, 1f)
+                        collapseProgress = if (maxOffset > 0) {
+                            (offset / maxOffset).coerceIn(0f, 1f)
+                        } else {
+                            0f
+                        }
                     }
 
                     if (secondStageProgress != renderShowProgress) {
@@ -470,6 +476,8 @@ class NavigationBar @JvmOverloads constructor(
             renderNodeHeight = (paddingTop + COLLAPSED_STATE_HEIGHT.dp.px + appendHeight).takeIf { it > 0 }?.toInt() ?: view.height
 
             renderNode?.setPosition(0, 0, renderNodeWidth, renderNodeHeight)
+
+            scrollOffsetPx = view.computeVerticalScrollOffset()
         }
     }
 
