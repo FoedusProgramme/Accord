@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:title="@string/category_albums"
-        app:hasLargeMenuItems="false"
+        app:hasLargeMenuItems="true"
         app:hasReturnButton="true"
         app:returnButtonText="@string/bottom_nav_library">
 
