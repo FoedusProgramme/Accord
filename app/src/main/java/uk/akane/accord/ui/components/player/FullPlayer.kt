@@ -33,6 +33,8 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import coil3.asDrawable
 import coil3.imageLoader
 import coil3.request.Disposable
@@ -43,6 +45,7 @@ import coil3.toBitmap
 import com.google.android.material.slider.Slider
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
+import uk.akane.accord.logic.inverseLerp
 import uk.akane.accord.logic.playOrPause
 import uk.akane.accord.logic.setTextAnimation
 import uk.akane.accord.logic.utils.CalculationUtils.convertDurationToTimeStamp
@@ -55,6 +58,7 @@ import uk.akane.cupertino.widget.OverlayTextView
 import uk.akane.cupertino.widget.button.AnimatedVectorButton
 import uk.akane.cupertino.widget.button.OverlayBackgroundButton
 import uk.akane.cupertino.widget.button.OverlayButton
+import uk.akane.cupertino.widget.button.OverlayPillButton
 import uk.akane.cupertino.widget.button.StarTransformButton
 import uk.akane.cupertino.widget.button.StateAnimatedVectorButton
 import uk.akane.cupertino.widget.divider.OverlayDivider
@@ -105,6 +109,12 @@ class FullPlayer @JvmOverloads constructor(
 
     private var fullPlayerToolbar: FullPlayerToolbar
     private var testSlider: Slider
+    private var queueContainer: View
+    private var queueShuffleButton: OverlayPillButton
+    private var queueRepeatButton: OverlayPillButton
+    private var queueAutoplayButton: OverlayPillButton
+    private var queueTextView: OverlayTextView
+    private var queueRecyclerView: RecyclerView
 
     private var lyricsViewModel: LyricsViewModel? = null
     private val floatingPanelLayout: FloatingPanelLayout
@@ -165,6 +175,16 @@ class FullPlayer @JvmOverloads constructor(
         nextButton = findViewById(R.id.forward_btn)
         fullPlayerToolbar = findViewById(R.id.full_player_tool_bar)
         testSlider = findViewById(R.id.test_slider)
+        queueContainer = findViewById(R.id.queue_container)
+        queueShuffleButton = findViewById(R.id.btnShuffle)
+        queueRepeatButton = findViewById(R.id.btnRepeat)
+        queueAutoplayButton = findViewById(R.id.btnAutoplay)
+        queueTextView = findViewById(R.id.queue)
+        queueRecyclerView = findViewById(R.id.queue_list)
+        queueRecyclerView.layoutManager = LinearLayoutManager(context)
+        queueContainer.doOnLayout {
+            queueEnterOffset = resolveQueueEnterOffset()
+        }
 
         ellipsisButton.setOnCheckedChangeListener { v, checked ->
             callUpPlayerPopupMenu(v)
@@ -176,21 +196,10 @@ class FullPlayer @JvmOverloads constructor(
             true
         }
 
-        fullPlayerToolbar.setOnRepeatClickListener {
-            val controller = instance ?: return@setOnRepeatClickListener
-            val nextRepeatMode = when (controller.repeatMode) {
-                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
-                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
-                Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_OFF
-                else -> Player.REPEAT_MODE_OFF
-            }
-            controller.repeatMode = nextRepeatMode
-            fullPlayerToolbar.setRepeatMode(nextRepeatMode)
-        }
-
         clipToOutline = true
 
         fadingEdgeLayout.visibility = GONE
+        queueContainer.visibility = INVISIBLE
         lyricsViewModel = LyricsViewModel(context)
 
         lyricsBtn.setOnClickListener {
@@ -302,6 +311,18 @@ class FullPlayer @JvmOverloads constructor(
             listOverlayButton.toggle()
         }
 
+        queueRepeatButton.setOnClickListener {
+            val controller = instance ?: return@setOnClickListener
+            val nextRepeatMode = when (controller.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_OFF
+                else -> Player.REPEAT_MODE_OFF
+            }
+            controller.repeatMode = nextRepeatMode
+            updateRepeatButton(nextRepeatMode)
+        }
+
         airplayOverlayButton.setOnClickListener {
             startSystemMediaControl()
         }
@@ -390,6 +411,8 @@ class FullPlayer @JvmOverloads constructor(
     private var initialElevation = 24.dp.px
     private var finalScale = 0F
     private val queueCoverRadius = 5.dp.px
+    private var queueEnterOffset = 0f
+    private val queueStartFraction = 1F / 1.2F
 
     private fun updateTransitionTargetForContentType(value: ContentType) {
         val targetView = if (value == ContentType.PLAYLIST) {
@@ -409,6 +432,16 @@ class FullPlayer @JvmOverloads constructor(
                 targetElevation
             )
         }
+    }
+
+    private fun updateRepeatButton(repeatMode: Int) {
+        val iconRes = if (repeatMode == Player.REPEAT_MODE_ONE) {
+            R.drawable.ic_nowplaying_repeat_one
+        } else {
+            R.drawable.ic_nowplaying_repeat
+        }
+        queueRepeatButton.setIconResource(iconRes)
+        queueRepeatButton.setChecked(repeatMode != Player.REPEAT_MODE_OFF)
     }
 
     private fun resolveDurationMs(): Long? {
@@ -553,6 +586,40 @@ class FullPlayer @JvmOverloads constructor(
         ellipsisButton.alpha = lerp(1F, 0F, quickFraction)
 
         fullPlayerToolbar.animateFade(fraction)
+        animateQueuePanel(fraction)
+    }
+
+    private fun resolveQueueEnterOffset(): Float {
+        // Animate from just above the seekbar, not from title area
+        val progressBarTop = progressOverlaySlider.top.toFloat()
+        val queueContainerBottom = queueContainer.bottom.toFloat()
+
+        // Offset to move queue container so its top aligns with progressBar top
+        return progressBarTop - queueContainerBottom
+    }
+
+    private fun animateQueuePanel(fraction: Float) {
+        val queueFraction = inverseLerp(queueStartFraction, 1F, fraction, clamp = true)
+        if (queueFraction <= 0F) {
+            queueEnterOffset = resolveQueueEnterOffset()
+            queueContainer.translationY = queueEnterOffset
+            queueContainer.visibility = INVISIBLE
+            setQueueChildrenAlpha(0F)
+            return
+        }
+
+        queueContainer.visibility = VISIBLE
+        // Simply animate from start offset to 0 (final position)
+        queueContainer.translationY = lerp(queueEnterOffset, 0F, queueFraction)
+        setQueueChildrenAlpha(queueFraction)
+    }
+
+    private fun setQueueChildrenAlpha(alpha: Float) {
+        queueShuffleButton.alpha = alpha
+        queueRepeatButton.alpha = alpha
+        queueAutoplayButton.alpha = alpha
+        queueTextView.alpha = alpha
+        queueRecyclerView.alpha = alpha
     }
 
     private fun callUpPlayerPopupMenu(v: View) {
@@ -666,6 +733,10 @@ class FullPlayer @JvmOverloads constructor(
 
                 ContentType.PLAYLIST -> {
                     captionOverlayButton.isChecked = false
+                    queueContainer.visibility = VISIBLE
+                    queueContainer.translationY = queueEnterOffset
+                    setQueueChildrenAlpha(0F)
+                    queueContainer.bringToFront()
                     AnimationUtils.createValAnimator(
                         transformationFraction, 1F,
                         duration = MID_DURATION
@@ -751,7 +822,7 @@ class FullPlayer @JvmOverloads constructor(
     }
 
     override fun onRepeatModeChanged(repeatMode: Int) {
-        fullPlayerToolbar.setRepeatMode(repeatMode)
+        updateRepeatButton(repeatMode)
     }
 
     override fun onPlaybackStateChanged(playbackState: @Player.State Int) {

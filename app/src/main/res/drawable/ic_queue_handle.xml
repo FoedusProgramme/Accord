@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="38dp"
+    android:height="38dp"
+    android:viewportWidth="38"
+    android:viewportHeight="38">
+
+    <!-- Scale original 512x512 SVG into 38x38 -->
+    <group
+        android:scaleX="0.07421875"
+        android:scaleY="0.07421875">
+
+        <!-- Top line -->
+        <path
+            android:pathData="M96,176 L416,176"
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="@color/primaryOverlayShadeColor"
+            android:strokeWidth="32"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+
+        <!-- Middle line -->
+        <path
+            android:pathData="M96,256 L416,256"
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="@color/primaryOverlayShadeColor"
+            android:strokeWidth="32"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+
+        <!-- Bottom line -->
+        <path
+            android:pathData="M96,336 L416,336"
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="@color/primaryOverlayShadeColor"
+            android:strokeWidth="32"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+    </group>
+
+</vector>

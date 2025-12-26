@@ -4,10 +4,8 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.Log
-import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.doOnLayout
-import androidx.media3.common.Player
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaController
 import coil3.request.Disposable
@@ -18,7 +16,6 @@ import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.ui.MainActivity
 import uk.akane.cupertino.widget.OverlayTextView
 import uk.akane.cupertino.widget.button.OverlayBackgroundButton
-import uk.akane.cupertino.widget.button.OverlayPillButton
 import uk.akane.cupertino.widget.button.StarTransformButton
 import uk.akane.cupertino.widget.image.SimpleImageView
 
@@ -39,9 +36,6 @@ class FullPlayerToolbar @JvmOverloads constructor(
     private var subtitleTextView: OverlayTextView
     private var starTransformButton: StarTransformButton
     private var ellipsisBackgroundButton: OverlayBackgroundButton
-    private var shuffleButton: OverlayPillButton
-    private var repeatButton: OverlayPillButton
-    private var autoplayButton: OverlayPillButton
 
     init {
         inflate(context, R.layout.layout_full_player_tool_bar, this)
@@ -51,9 +45,6 @@ class FullPlayerToolbar @JvmOverloads constructor(
         subtitleTextView = findViewById(R.id.subtitle)
         starTransformButton = findViewById(R.id.star)
         ellipsisBackgroundButton = findViewById(R.id.ellipsis)
-        shuffleButton = findViewById(R.id.btnShuffle)
-        repeatButton = findViewById(R.id.btnRepeat)
-        autoplayButton = findViewById(R.id.btnAutoplay)
 
         doOnLayout {
             maxTranslation = (height - subtitleTextView.bottom).toFloat()
@@ -72,17 +63,11 @@ class FullPlayerToolbar @JvmOverloads constructor(
         subtitleTextView.translationY = lerp(maxTranslation, 0F, validFraction)
         starTransformButton.translationY = lerp(maxTranslation, 0F, validFraction)
         ellipsisBackgroundButton.translationY = lerp(maxTranslation, 0F, validFraction)
-        shuffleButton.translationY = lerp(maxTranslation, 0F, validFraction)
-        repeatButton.translationY = lerp(maxTranslation, 0F, validFraction)
-        autoplayButton.translationY = lerp(maxTranslation, 0F, validFraction)
 
         titleTextView.alpha = validFraction
         subtitleTextView.alpha = validFraction
         starTransformButton.alpha = validFraction
         ellipsisBackgroundButton.alpha = validFraction
-        shuffleButton.alpha = validFraction
-        repeatButton.alpha = validFraction
-        autoplayButton.alpha = validFraction
     }
 
     private var lastDisposable: Disposable? = null
@@ -111,19 +96,5 @@ class FullPlayerToolbar @JvmOverloads constructor(
         coverSimpleImageView.setImageDrawable(drawable)
 
     fun getCoverView(): SimpleImageView = coverSimpleImageView
-
-    fun setOnRepeatClickListener(listener: View.OnClickListener) {
-        repeatButton.setOnClickListener(listener)
-    }
-
-    fun setRepeatMode(repeatMode: Int) {
-        val iconRes = if (repeatMode == Player.REPEAT_MODE_ONE) {
-            R.drawable.ic_nowplaying_repeat_one
-        } else {
-            R.drawable.ic_nowplaying_repeat
-        }
-        repeatButton.setIconResource(iconRes)
-        repeatButton.setChecked(repeatMode != Player.REPEAT_MODE_OFF)
-    }
 
 }

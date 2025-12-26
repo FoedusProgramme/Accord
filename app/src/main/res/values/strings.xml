@@ -245,6 +245,7 @@
     <string name="browse_by_artist">Browse by Artist</string>
     <string name="browse_by_album">Browse by Album</string>
     <string name="browse_by_genre">Browse by Genre</string>
+    <string name="queue">Queue</string>
 
     <string name="time_remaining">-%1$s</string>
 </resources>
