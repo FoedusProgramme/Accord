@@ -334,16 +334,25 @@ class NavigationBar @JvmOverloads constructor(
         val size = EXPANDED_MENU_ITEM_SIZE.dp.px
         val ellipsisSize = 18.dp.px
 
-        val topY = paddingTop + calculateExpandedHeightPadding() + 3f.dp.px + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()
-        val baseline = topY - expandedTitleFontMetrics.ascent
-        val textCenterY = baseline + (expandedTitleFontMetrics.ascent + expandedTitleFontMetrics.descent) / 2f
+        val textCenterY = if (shouldDrawReturnButton) {
+            paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f)
+        } else {
+            val topY = paddingTop + calculateExpandedHeightPadding() + 3f.dp.px
+            val baseline = topY - expandedTitleFontMetrics.ascent
+            baseline + (expandedTitleFontMetrics.ascent + expandedTitleFontMetrics.descent) / 2f
+        }
 
         val drawableLeft = width - EXPANDED_SIDE_PADDING.dp.px - size
         val drawableTop = textCenterY - size / 2f
         val drawableRight = drawableLeft + size
         val drawableBottom = drawableTop + size
 
-        val ellipsisLeft = drawableLeft - size - EXPANDED_ELLIPSIS_MARGIN.dp.px
+        val shouldDrawAvatar = !shouldDrawReturnButton
+        val ellipsisLeft = if (shouldDrawAvatar) {
+            drawableLeft - size - EXPANDED_ELLIPSIS_MARGIN.dp.px
+        } else {
+            drawableLeft
+        }
         val ellipsisTop = drawableTop
         val ellipsisRight = ellipsisLeft + size
         val ellipsisBottom = ellipsisTop + size
@@ -363,15 +372,17 @@ class NavigationBar @JvmOverloads constructor(
             ellipsisDrawableBottom.toInt()
         )
 
-        avatarDrawable.setBounds(
-            drawableLeft.toInt(),
-            drawableTop.toInt(),
-            drawableRight.toInt(),
-            drawableBottom.toInt()
-        )
+        if (shouldDrawAvatar) {
+            avatarDrawable.setBounds(
+                drawableLeft.toInt(),
+                drawableTop.toInt(),
+                drawableRight.toInt(),
+                drawableBottom.toInt()
+            )
 
-        avatarDrawable.setTint(avatarColor)
-        avatarDrawable.draw(canvas)
+            avatarDrawable.setTint(avatarColor)
+            avatarDrawable.draw(canvas)
+        }
 
         canvas.drawRoundRect(
             ellipsisLeft,
