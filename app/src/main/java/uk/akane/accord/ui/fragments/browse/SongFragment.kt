@@ -54,8 +54,7 @@ class SongFragment : SwitcherPostponeFragment() {
         recyclerView.layoutManager = layoutManager
 
         navigationBar.attach(recyclerView)
-
-        rootView.findViewById<View>(R.id.popback).setOnClickListener {
+        navigationBar.setOnReturnClickListener {
             activity.fragmentSwitcherView.popBackTopFragmentIfExists()
         }
 

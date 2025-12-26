@@ -6,10 +6,12 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RenderEffect
 import android.graphics.RenderNode
+import android.graphics.RectF
 import android.graphics.Shader
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.res.ResourcesCompat
@@ -76,6 +78,7 @@ class NavigationBar @JvmOverloads constructor(
             Log.d("TAG", "should: $shouldDrawLargeMenuItem")
         }
         setWillNotDraw(false)
+        isClickable = true
     }
 
     private var collapseProgress = 0F
@@ -388,6 +391,13 @@ class NavigationBar @JvmOverloads constructor(
     private var renderNodeHeight = 0
 
     private var targetView: View? = null
+    private var returnClickListener: (() -> Unit)? = null
+    private var returnButtonPressed = false
+    private val returnButtonBounds = RectF()
+
+    fun setOnReturnClickListener(listener: (() -> Unit)?) {
+        returnClickListener = listener
+    }
 
     fun attach(view: RecyclerView) {
         targetView = view
@@ -450,6 +460,66 @@ class NavigationBar @JvmOverloads constructor(
 
             renderNode?.setPosition(0, 0, renderNodeWidth, renderNodeHeight)
         }
+    }
+
+    private fun updateReturnButtonBounds(): RectF {
+        val chevronWidth = chevronDrawable.intrinsicWidth
+        val chevronHeight = (chevronWidth * (chevronDrawable.intrinsicHeight.toFloat() /
+                chevronDrawable.intrinsicWidth.toFloat())).toInt()
+
+        val centerY = paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f)
+        val chevronLeft = EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px
+        val chevronTop = centerY - chevronHeight / 2f
+        val textX = chevronLeft + chevronWidth + EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px
+        val textWidth = returnTextPaint.measureText(returnButtonText)
+        val hitPadding = 8.dp.px
+
+        returnButtonBounds.set(
+            (chevronLeft - hitPadding).coerceAtLeast(0f),
+            (chevronTop - hitPadding).coerceAtLeast(0f),
+            (textX + textWidth + hitPadding).coerceAtMost(width.toFloat()),
+            (chevronTop + chevronHeight + hitPadding).coerceAtMost(height.toFloat())
+        )
+        return returnButtonBounds
+    }
+
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        if (!shouldDrawReturnButton) return super.onInterceptTouchEvent(ev)
+        if (ev.actionMasked == MotionEvent.ACTION_DOWN &&
+            updateReturnButtonBounds().contains(ev.x, ev.y)
+        ) {
+            returnButtonPressed = true
+            return true
+        }
+        return super.onInterceptTouchEvent(ev)
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (!shouldDrawReturnButton) return super.onTouchEvent(event)
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                returnButtonPressed = updateReturnButtonBounds().contains(event.x, event.y)
+                return returnButtonPressed
+            }
+            MotionEvent.ACTION_UP -> {
+                if (returnButtonPressed && updateReturnButtonBounds().contains(event.x, event.y)) {
+                    returnClickListener?.invoke()
+                    performClick()
+                }
+                returnButtonPressed = false
+                return true
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                returnButtonPressed = false
+                return false
+            }
+        }
+        return super.onTouchEvent(event)
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {

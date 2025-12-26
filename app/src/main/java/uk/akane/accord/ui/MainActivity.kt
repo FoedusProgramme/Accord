@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.FrameLayout
 import androidx.activity.viewModels
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -102,6 +103,16 @@ class MainActivity : AppCompatActivity() {
         floatingPanelLayout = findViewById(R.id.floating)
         shrinkContainerLayout = findViewById(R.id.shrink_container)
         fragmentSwitcherView = findViewById(R.id.switcher)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (!fragmentSwitcherView.popBackTopFragmentIfExists()) {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        })
 
         fragmentSwitcherView.setup(
             this,
