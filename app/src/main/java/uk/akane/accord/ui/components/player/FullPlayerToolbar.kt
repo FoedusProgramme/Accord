@@ -46,7 +46,6 @@ class FullPlayerToolbar @JvmOverloads constructor(
         starTransformButton = findViewById(R.id.star)
         ellipsisBackgroundButton = findViewById(R.id.ellipsis)
         titleTextView.isSelected = true
-        subtitleTextView.isSelected = true
 
         doOnLayout {
             maxTranslation = (height - subtitleTextView.bottom).toFloat()

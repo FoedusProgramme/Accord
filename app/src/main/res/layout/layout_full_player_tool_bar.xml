@@ -51,8 +51,6 @@
         android:text="@string/default_artist"
         app:textViewLayer="primary"
         android:maxLines="1"
-        android:ellipsize="marquee"
-        android:marqueeRepeatLimit="marquee_forever"
         app:layout_constraintVertical_chainStyle="packed"
         app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintBottom_toBottomOf="@id/cover"
