@@ -611,7 +611,7 @@ class NavigationBar @JvmOverloads constructor(
 
         const val COLLAPSED_STATE_HEIGHT = 44
         const val COLLAPSED_TITLE_Y_OFFSET = 8
-        const val COLLAPSED_CHILD_TOP_PADDING = 4
+        const val COLLAPSED_CHILD_TOP_PADDING = 8
         const val DIVIDER_SIZE = 0.5F
         const val BLUR_STRENGTH = 50F
     }
