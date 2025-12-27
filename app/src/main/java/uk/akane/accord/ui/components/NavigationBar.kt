@@ -487,7 +487,9 @@ class NavigationBar @JvmOverloads constructor(
         val chevronHeight = (chevronWidth * (chevronDrawable.intrinsicHeight.toFloat() /
                 chevronDrawable.intrinsicWidth.toFloat())).toInt()
 
-        val centerY = paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f) + returnRowYOffset
+        val translationYOffset = -translationY
+        val centerY = paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f) +
+            returnRowYOffset + translationYOffset
         val chevronLeft = EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px
         val chevronTop = centerY - chevronHeight / 2f
         val textX = chevronLeft + chevronWidth + EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px
