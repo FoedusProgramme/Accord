@@ -612,7 +612,7 @@ fun View.fadInAnimation(duration: Long = 300, completion: (() -> Unit)? = null) 
 }
 
 fun Player.playOrPause() {
-    if (playWhenReady) {
+    if (isPlaying) {
         pause()
     } else {
         play()
