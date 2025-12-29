@@ -1,8 +1,10 @@
 package uk.akane.accord.ui.components
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.BlendMode
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RenderEffect
 import android.graphics.RenderNode
@@ -16,6 +18,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.withStyledAttributes
+import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.withSave
 import androidx.core.graphics.withTranslation
 import androidx.core.view.doOnLayout
@@ -32,6 +35,7 @@ import uk.akane.accord.logic.sp
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.components.player.FloatingPanelLayout
 import uk.akane.accord.ui.components.player.PlayerPopupMenu
+import uk.akane.cupertino.widget.utils.AnimationUtils
 
 class NavigationBar @JvmOverloads constructor(
     context: Context,
@@ -388,6 +392,10 @@ class NavigationBar @JvmOverloads constructor(
             avatarDrawable.draw(canvas)
         }
 
+        val backgroundAlpha = (Color.alpha(ellipsisBackgroundColor) *
+            (1F - menuButtonTransformFactor * 0.35F)).toInt()
+        ellipsisBackgroundPaint.color =
+            ColorUtils.setAlphaComponent(ellipsisBackgroundColor, backgroundAlpha)
         canvas.drawRoundRect(
             ellipsisLeft,
             ellipsisTop,
@@ -399,6 +407,7 @@ class NavigationBar @JvmOverloads constructor(
         )
 
         ellipsisDrawable.setTint(ellipsisColor)
+        ellipsisDrawable.alpha = (255 * (1F - menuButtonTransformFactor * 0.25F)).toInt()
         ellipsisDrawable.draw(canvas)
 
         menuButtonBounds.set(
@@ -420,6 +429,9 @@ class NavigationBar @JvmOverloads constructor(
     private val returnButtonBounds = RectF()
     private val menuButtonBounds = RectF()
     private val returnRowYOffset = RETURN_ROW_Y_OFFSET.dp.px
+    private var menuButtonChecked = false
+    private var menuButtonTransformFactor = 0F
+    private var menuButtonAnimator: ValueAnimator? = null
 
     fun setOnReturnClickListener(listener: (() -> Unit)?) {
         returnClickListener = listener
@@ -618,6 +630,17 @@ class NavigationBar @JvmOverloads constructor(
         refreshRenderNode()
     }
 
+    override fun onDetachedFromWindow() {
+        menuButtonAnimator?.cancel()
+        menuButtonAnimator = null
+        menuButtonChecked = false
+        menuButtonPressed = false
+        returnButtonPressed = false
+        returnClickListener = null
+        menuClickListener = null
+        super.onDetachedFromWindow()
+    }
+
     fun onVisibilityChangedFromFragment(isHidden: Boolean) {
         if (!isHidden) {
             refreshRenderNode()
@@ -643,7 +666,32 @@ class NavigationBar @JvmOverloads constructor(
             anchorRect = menuButtonBounds,
             showBelow = true,
             backgroundView = backgroundView
-        )
+        ) {
+            setMenuButtonChecked(false)
+        }
+        setMenuButtonChecked(true)
+    }
+
+    private fun setMenuButtonChecked(checked: Boolean) {
+        if (menuButtonChecked == checked) return
+        menuButtonChecked = checked
+        animateMenuButtonChecked(checked)
+    }
+
+    private fun animateMenuButtonChecked(checked: Boolean) {
+        menuButtonAnimator?.cancel()
+        menuButtonAnimator = ValueAnimator.ofFloat(
+            if (checked) 0F else 1F,
+            if (checked) 1F else 0F
+        ).apply {
+            duration = 300L
+            interpolator = AnimationUtils.easingStandardInterpolator
+            addUpdateListener {
+                menuButtonTransformFactor = it.animatedValue as Float
+                invalidate()
+            }
+            start()
+        }
     }
 
     private fun calculateExpandedHeightPadding() =
