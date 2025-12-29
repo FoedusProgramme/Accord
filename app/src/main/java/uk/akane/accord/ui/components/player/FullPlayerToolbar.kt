@@ -98,4 +98,16 @@ class FullPlayerToolbar @JvmOverloads constructor(
 
     fun getCoverView(): SimpleImageView = coverSimpleImageView
 
+    fun setOnEllipsisCheckedChangeListener(
+        listener: OverlayBackgroundButton.OnCheckedChangeListener
+    ) {
+        ellipsisBackgroundButton.setOnCheckedChangeListener(listener)
+    }
+
+    fun setEllipsisChecked(checked: Boolean) {
+        ellipsisBackgroundButton.setChecked(checked)
+    }
+
+    fun getEllipsisView(): OverlayBackgroundButton = ellipsisBackgroundButton
+
 }

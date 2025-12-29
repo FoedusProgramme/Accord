@@ -557,6 +557,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
         entryList: PopupHelper.PopupEntries,
         locationX: Int,
         locationY: Int,
+        anchorFromTop: Boolean = false,
         dismissAction: (() -> Unit)? = null,
 
         ) {
@@ -565,6 +566,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
             entryList,
             locationX,
             locationY,
+            anchorFromTop,
             dismissAction,
             invalidate = {
                 invalidate()

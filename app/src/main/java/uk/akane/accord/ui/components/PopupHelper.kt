@@ -54,10 +54,8 @@ class PopupHelper(
     // Motion
     private var popupLeft = 0F
     private var popupTop = 0F
-    private val popupRight: Float
-        get() = popupInitialLocationX.toFloat()
-    private val popupBottom: Float
-        get() = popupInitialLocationY.toFloat()
+    private var popupRight = 0F
+    private var popupBottom = 0F
 
     // Last popup
     private var lastPopupWidth = 0
@@ -68,6 +66,7 @@ class PopupHelper(
     private var popupRenderNodeDirty = true
     val transformFraction: Float
         get() = popupTransformFraction
+    private var popupAnchorFromTop = false
 
     // Called upon dismiss
     private var popupDismissAction: (() -> Unit)? = null
@@ -122,6 +121,7 @@ class PopupHelper(
         entryList: PopupEntries?,
         locationX: Int = 0,
         locationY: Int = 0,
+        anchorFromTop: Boolean = false,
         dismissAction: (() -> Unit)? = null,
         invalidate: (() -> Unit),
         doOnStart: (() -> Unit),
@@ -132,12 +132,10 @@ class PopupHelper(
             return
         }
 
-        if (locationX != 0) {
+        if (!isRetract) {
             popupInitialLocationX = locationX + 16.dp.px.toInt()
-        }
-
-        if (locationY != 0) {
             popupInitialLocationY = locationY - 12.dp.px.toInt()
+            popupAnchorFromTop = anchorFromTop
         }
 
         if (entryList != null) {
@@ -159,11 +157,22 @@ class PopupHelper(
             popupRenderNode.discardDisplayList()
         }
 
+        val renderTop = if (popupAnchorFromTop) {
+            popupInitialLocationY.toFloat()
+        } else {
+            popupInitialLocationY - popupHeight
+        }
+        val renderBottom = if (popupAnchorFromTop) {
+            popupInitialLocationY + popupHeight
+        } else {
+            popupInitialLocationY.toFloat()
+        }
+
         popupRenderNode.setPosition(
             (popupInitialLocationX - popupWidth).toInt(),
-            (popupInitialLocationY - popupHeight).toInt(),
+            renderTop.toInt(),
             popupInitialLocationX,
-            popupInitialLocationY
+            renderBottom.toInt()
         )
 
         doOnStart.invoke()
@@ -215,11 +224,23 @@ class PopupHelper(
             (popupInitialLocationX - popupWidth),
             popupTransformFraction
         ) { f -> AnimationUtils.linearOutSlowInInterpolator.getInterpolation(f) }
-        popupTop = lerp(
-            popupInitialLocationY - popupHeight * 0.1F,
-            (popupInitialLocationY - popupHeight),
-            popupTransformFraction
-        ) { f -> AnimationUtils.fastOutSlowInInterpolator.getInterpolation(f) }
+        popupRight = popupInitialLocationX.toFloat()
+
+        if (popupAnchorFromTop) {
+            popupTop = popupInitialLocationY.toFloat()
+            popupBottom = lerp(
+                popupInitialLocationY + popupHeight * 0.1F,
+                popupInitialLocationY + popupHeight,
+                popupTransformFraction
+            ) { f -> AnimationUtils.fastOutSlowInInterpolator.getInterpolation(f) }
+        } else {
+            popupTop = lerp(
+                popupInitialLocationY - popupHeight * 0.1F,
+                (popupInitialLocationY - popupHeight),
+                popupTransformFraction
+            ) { f -> AnimationUtils.fastOutSlowInInterpolator.getInterpolation(f) }
+            popupBottom = popupInitialLocationY.toFloat()
+        }
 
         val newWidth = (popupRight - popupLeft).toInt()
         val newHeight = (popupBottom - popupTop).toInt()
@@ -231,7 +252,11 @@ class PopupHelper(
 
             popupRenderNode.setOutline(
                 (popupLeft - popupInitialLocationX + popupWidth).toInt(),
-                (popupTop - popupInitialLocationY + popupHeight).toInt(),
+                if (popupAnchorFromTop) {
+                    (popupTop - popupInitialLocationY).toInt()
+                } else {
+                    (popupTop - popupInitialLocationY + popupHeight).toInt()
+                },
                 popupWidth.toInt(),
                 popupHeight.toInt(),
                 popupRadius)
@@ -242,7 +267,12 @@ class PopupHelper(
         if (!popupRenderNodeDirty) return
 
         val recordingCanvas = popupRenderNode.beginRecording(popupWidth.toInt(), popupHeight.toInt())
-        recordingCanvas.translate(-popupInitialLocationX + popupWidth, -popupInitialLocationY + popupHeight)
+        val translateY = if (popupAnchorFromTop) {
+            -popupInitialLocationY.toFloat()
+        } else {
+            -popupInitialLocationY + popupHeight
+        }
+        recordingCanvas.translate(-popupInitialLocationX + popupWidth, translateY)
         recordingCanvas.drawRenderNode(contentRenderNode)
 
         popupRenderNode.endRecording()
@@ -259,7 +289,11 @@ class PopupHelper(
             canvas.scale(scale, scale, popupLeft, popupTop)
 
             val distanceX = popupLeft - (popupInitialLocationX - popupWidth)
-            val distanceY = popupTop - (popupInitialLocationY - popupHeight)
+            val distanceY = popupTop - if (popupAnchorFromTop) {
+                popupInitialLocationY.toFloat()
+            } else {
+                (popupInitialLocationY - popupHeight)
+            }
 
             canvas.translate(
                 distanceX,
@@ -269,7 +303,11 @@ class PopupHelper(
             currentPopupEntries!!.entries.forEachIndexed { index, entry ->
                 // Calculate bounds
                 val entryLeft = popupInitialLocationX - popupWidth
-                val entryTop = popupInitialLocationY - popupHeight + heightAccumulated
+                val entryTop = (if (popupAnchorFromTop) {
+                    popupInitialLocationY.toFloat()
+                } else {
+                    popupInitialLocationY - popupHeight
+                }) + heightAccumulated
                 val entryRight = popupRight
                 val entryBottom = entryTop + entry.heightInPx
 

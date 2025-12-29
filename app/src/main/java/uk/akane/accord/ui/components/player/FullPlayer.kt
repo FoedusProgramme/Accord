@@ -220,6 +220,12 @@ class FullPlayer @JvmOverloads constructor(
             true
         }
 
+        fullPlayerToolbar.setOnEllipsisCheckedChangeListener(
+            OverlayBackgroundButton.OnCheckedChangeListener { button, _ ->
+                callUpPlayerPopupMenu(button)
+            }
+        )
+
         clipToOutline = true
 
         fadingEdgeLayout.visibility = GONE
@@ -647,28 +653,54 @@ class FullPlayer @JvmOverloads constructor(
     }
 
     private fun callUpPlayerPopupMenu(v: View) {
+        val popupEntries = PopupHelper.PopupMenuBuilder()
+            .addMenuEntry(resources, R.drawable.ic_info, R.string.popup_view_credits)
+            .addSpacer()
+            .addDestructiveMenuEntry(
+                resources,
+                R.drawable.ic_trash,
+                R.string.popup_delete_from_library
+            )
+            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_add_to_a_playlist)
+            .addSpacer()
+            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_song)
+            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_lyrics)
+            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_go_to_album)
+            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_create_station)
+            .addSpacer()
+            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_undo_favorite)
+            .build()
+
+        val anchorView = if (contentType == ContentType.PLAYLIST) {
+            fullPlayerToolbar.getEllipsisView()
+        } else {
+            v
+        }
+
+        val anchor = IntArray(2)
+        val container = IntArray(2)
+        anchorView.getLocationOnScreen(anchor)
+        floatingPanelLayout.getLocationOnScreen(container)
+        val localX = anchor[0] - container[0]
+        val localY = anchor[1] - container[1]
+
+        val popupAnchorOffset = 12.dp.px
+        val popupBelowGap = 8.dp.px
+        val showBelow = contentType == ContentType.PLAYLIST
+        val locationY = if (showBelow) {
+            (localY + anchorView.height + popupBelowGap + popupAnchorOffset).toInt()
+        } else {
+            localY
+        }
+
         floatingPanelLayout.callUpPopup(
-            PopupHelper.PopupMenuBuilder()
-                .addMenuEntry(resources, R.drawable.ic_info, R.string.popup_view_credits)
-                .addSpacer()
-                .addDestructiveMenuEntry(
-                    resources,
-                    R.drawable.ic_trash,
-                    R.string.popup_delete_from_library
-                )
-                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_add_to_a_playlist)
-                .addSpacer()
-                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_song)
-                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_lyrics)
-                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_go_to_album)
-                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_create_station)
-                .addSpacer()
-                .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_undo_favorite)
-                .build(),
-            v.left + v.width,
-            v.top
+            popupEntries,
+            localX + anchorView.width,
+            locationY,
+            showBelow
         ) {
             ellipsisButton.isChecked = false
+            fullPlayerToolbar.setEllipsisChecked(false)
         }
     }
 
