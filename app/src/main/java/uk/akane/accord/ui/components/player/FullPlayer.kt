@@ -652,35 +652,16 @@ class FullPlayer @JvmOverloads constructor(
     }
 
     private fun callUpPlayerPopupMenu(v: View) {
-        val popupEntries = PlayerPopupMenu.build(resources)
-
         val anchorView = if (contentType == ContentType.PLAYLIST) {
             fullPlayerToolbar.getEllipsisView()
         } else {
             v
         }
-
-        val anchor = IntArray(2)
-        val container = IntArray(2)
-        anchorView.getLocationOnScreen(anchor)
-        floatingPanelLayout.getLocationOnScreen(container)
-        val localX = anchor[0] - container[0]
-        val localY = anchor[1] - container[1]
-
-        val popupAnchorOffset = 12.dp.px
-        val popupBelowGap = 8.dp.px
         val showBelow = contentType == ContentType.PLAYLIST
-        val locationY = if (showBelow) {
-            (localY + anchorView.height + popupBelowGap + popupAnchorOffset).toInt()
-        } else {
-            localY
-        }
-
-        floatingPanelLayout.callUpPopup(
-            popupEntries,
-            localX + anchorView.width,
-            locationY,
-            showBelow
+        PlayerPopupMenu.show(
+            host = floatingPanelLayout,
+            anchorView = anchorView,
+            showBelow = showBelow
         ) {
             ellipsisButton.isChecked = false
             fullPlayerToolbar.setEllipsisChecked(false)

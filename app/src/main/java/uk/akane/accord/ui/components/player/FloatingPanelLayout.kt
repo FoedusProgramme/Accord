@@ -18,6 +18,7 @@ import android.view.View
 import android.view.WindowInsets
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
@@ -34,7 +35,8 @@ import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.setOutline
 import uk.akane.accord.logic.utils.CalculationUtils.lerp
-import uk.akane.accord.ui.components.PopupHelper
+import uk.akane.cupertino.widget.popup.PopupHelper
+import uk.akane.cupertino.widget.popup.PopupMenuHost
 import uk.akane.cupertino.widget.dpToPx
 import uk.akane.cupertino.widget.image.SimpleImageView
 import uk.akane.cupertino.widget.utils.AnimationUtils
@@ -46,7 +48,8 @@ class FloatingPanelLayout @JvmOverloads constructor(
     defStyleAttr: Int = 0,
     defStyleRes: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr, defStyleRes),
-    GestureDetector.OnGestureListener {
+    GestureDetector.OnGestureListener,
+    PopupMenuHost {
 
     private val activity: Activity
         get() = context as Activity
@@ -106,7 +109,14 @@ class FloatingPanelLayout @JvmOverloads constructor(
         clipToOutline = true
     }
 
-    private val popupHelper = PopupHelper(context, contentRenderNode)
+    private val popupHelper = PopupHelper(
+        context,
+        contentRenderNode,
+        ResourcesCompat.getFont(context, R.font.inter_regular)
+    )
+
+    override val popupHostView: View
+        get() = this
     private val popupBackgroundRenderNode = RenderNode("popupBackground")
 
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -604,6 +614,17 @@ class FloatingPanelLayout @JvmOverloads constructor(
                 fullScreenView.unfreeze()
             }
         )
+    }
+
+    override fun showPopupMenu(
+        entries: PopupHelper.PopupEntries,
+        locationX: Int,
+        locationY: Int,
+        anchorFromTop: Boolean,
+        backgroundView: View?,
+        onDismiss: (() -> Unit)?
+    ) {
+        callUpPopup(entries, locationX, locationY, anchorFromTop, backgroundView, onDismiss)
     }
 
     @Suppress("CanBeParameter")

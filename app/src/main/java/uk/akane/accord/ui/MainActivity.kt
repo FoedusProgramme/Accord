@@ -34,7 +34,6 @@ import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.logic.utils.UiUtils
 import uk.akane.accord.setupwizard.fragments.SetupWizardFragment
 import uk.akane.accord.ui.components.player.FloatingPanelLayout
-import uk.akane.accord.ui.components.player.PlayerPopupMenu
 import uk.akane.accord.ui.fragments.BrowseFragment
 import uk.akane.accord.ui.fragments.HomeFragment
 import uk.akane.accord.ui.fragments.LibraryFragment
@@ -345,28 +344,6 @@ class MainActivity : AppCompatActivity() {
      *   Returns a media controller.
      */
     fun getPlayer() = controllerViewModel.get()
-
-    fun showPlayerPopupMenuAtScreen(
-        screenX: Int,
-        screenY: Int,
-        anchorFromTop: Boolean,
-        backgroundView: View? = null,
-        onDismiss: (() -> Unit)? = null
-    ) {
-        val container = IntArray(2)
-        floatingPanelLayout.getLocationOnScreen(container)
-        val localX = screenX - container[0]
-        val localY = screenY - container[1]
-
-        floatingPanelLayout.callUpPopup(
-            PlayerPopupMenu.build(resources),
-            localX,
-            localY,
-            anchorFromTop,
-            backgroundView = backgroundView,
-            dismissAction = onDismiss
-        )
-    }
 
     val controllerViewModel: MediaControllerViewModel by viewModels()
 

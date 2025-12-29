@@ -30,6 +30,8 @@ import uk.akane.accord.logic.inverseLerp
 import uk.akane.accord.logic.isDarkMode
 import uk.akane.accord.logic.sp
 import uk.akane.accord.ui.MainActivity
+import uk.akane.accord.ui.components.player.FloatingPanelLayout
+import uk.akane.accord.ui.components.player.PlayerPopupMenu
 
 class NavigationBar @JvmOverloads constructor(
     context: Context,
@@ -633,17 +635,13 @@ class NavigationBar @JvmOverloads constructor(
 
     private fun showDefaultMenu() {
         if (menuButtonBounds.isEmpty) return
-        val location = IntArray(2)
-        getLocationOnScreen(location)
-        val popupAnchorOffset = 12.dp.px
-        val popupBelowGap = 8.dp.px
-        val screenX = (location[0] + menuButtonBounds.right).toInt()
-        val screenY = (location[1] + menuButtonBounds.bottom + popupBelowGap + popupAnchorOffset).toInt()
+        val popupHost = activity.findViewById<FloatingPanelLayout>(R.id.floating)
         val backgroundView = activity.findViewById<View>(R.id.shrink_container)
-        activity.showPlayerPopupMenuAtScreen(
-            screenX,
-            screenY,
-            anchorFromTop = true,
+        PlayerPopupMenu.show(
+            host = popupHost,
+            anchorView = this,
+            anchorRect = menuButtonBounds,
+            showBelow = true,
             backgroundView = backgroundView
         )
     }
