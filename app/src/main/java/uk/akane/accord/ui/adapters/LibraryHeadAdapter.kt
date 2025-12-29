@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import uk.akane.accord.R
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.fragments.browse.AlbumsFragment
+import uk.akane.accord.ui.fragments.browse.ArtistsFragment
 import uk.akane.accord.ui.fragments.browse.SongFragment
 
 class LibraryHeadAdapter(private val context: Context) : RecyclerView.Adapter<LibraryHeadAdapter.ViewHolder>() {
@@ -56,6 +57,7 @@ class LibraryHeadAdapter(private val context: Context) : RecyclerView.Adapter<Li
                 when (currentHeaderArrangeList[holder.bindingAdapterPosition]) {
                     SectionType.SONG -> SongFragment()
                     SectionType.ALBUM -> AlbumsFragment()
+                    SectionType.ARTIST -> ArtistsFragment()
                     else -> SongFragment()
                 }
             )

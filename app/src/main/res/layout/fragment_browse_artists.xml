@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <uk.akane.accord.ui.components.NavigationBar
+        android:id="@+id/navigation_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="@string/category_artists"
+        app:hasLargeMenuItems="true"
+        app:hasReturnButton="true"
+        app:returnButtonText="@string/bottom_nav_library">
+
+        <include layout="@layout/layout_search_bar" />
+
+    </uk.akane.accord.ui.components.NavigationBar>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
