@@ -5,8 +5,11 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.doOnLayout
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import com.google.android.material.button.MaterialButton
+import android.widget.TextView
 import uk.akane.accord.R
 import uk.akane.accord.logic.playOrPause
 import uk.akane.accord.ui.MainActivity
@@ -22,12 +25,14 @@ class PreviewPlayer @JvmOverloads constructor(
     private var controlMaterialButton: MaterialButton
     private var nextMaterialButton: MaterialButton
     private var coverSimpleImageView: SimpleImageView
+    private var titleTextView: TextView
     private val floatingPanelLayout: FloatingPanelLayout
         get() = parent as FloatingPanelLayout
     private val activity: MainActivity
         get() = context as MainActivity
 
     private var lastControlIconRes: Int? = null
+    private var lastTitleText: String? = null
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             updatePlaybackControls()
@@ -35,6 +40,14 @@ class PreviewPlayer @JvmOverloads constructor(
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             updatePlaybackControls(playbackState)
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            updateTitle()
+        }
+
+        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+            updateTitle()
         }
 
         override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
@@ -61,6 +74,7 @@ class PreviewPlayer @JvmOverloads constructor(
         controlMaterialButton = findViewById(R.id.control_btn)
         nextMaterialButton = findViewById(R.id.next_btn)
         coverSimpleImageView = findViewById(R.id.preview_cover)
+        titleTextView = findViewById(R.id.title)
 
         coverSimpleImageView.doOnLayout {
             floatingPanelLayout.setupMetrics(
@@ -83,9 +97,11 @@ class PreviewPlayer @JvmOverloads constructor(
         activity.controllerViewModel.addControllerCallback(activity.lifecycle) { controller, _ ->
             controller.addListener(playerListener)
             updatePlaybackControls(controller.playbackState)
+            updateTitle(controller)
         }
 
         updatePlaybackControls()
+        updateTitle()
     }
 
     fun setCover(drawable: Drawable?) {
@@ -116,6 +132,20 @@ class PreviewPlayer @JvmOverloads constructor(
         if (iconRes != lastControlIconRes) {
             controlMaterialButton.setIconResource(iconRes)
             lastControlIconRes = iconRes
+        }
+    }
+
+    private fun updateTitle(playerOverride: Player? = null) {
+        val player = playerOverride ?: activity.getPlayer()
+        val title = player?.mediaMetadata?.title?.toString()?.trim().orEmpty()
+        val resolved = if (title.isNotEmpty()) {
+            title
+        } else {
+            resources.getString(R.string.default_track)
+        }
+        if (resolved != lastTitleText) {
+            titleTextView.text = resolved
+            lastTitleText = resolved
         }
     }
 }
