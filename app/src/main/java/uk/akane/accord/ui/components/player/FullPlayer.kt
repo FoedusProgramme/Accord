@@ -55,7 +55,6 @@ import uk.akane.accord.ui.adapters.QueueItemTouchHelperCallback
 import uk.akane.accord.ui.adapters.QueuePreviewAdapter
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.components.FadingVerticalEdgeLayout
-import uk.akane.accord.ui.components.PopupHelper
 import uk.akane.accord.ui.components.lyrics.LyricsViewModel
 import uk.akane.cupertino.widget.OverlayTextView
 import uk.akane.cupertino.widget.button.AnimatedVectorButton
@@ -653,23 +652,7 @@ class FullPlayer @JvmOverloads constructor(
     }
 
     private fun callUpPlayerPopupMenu(v: View) {
-        val popupEntries = PopupHelper.PopupMenuBuilder()
-            .addMenuEntry(resources, R.drawable.ic_info, R.string.popup_view_credits)
-            .addSpacer()
-            .addDestructiveMenuEntry(
-                resources,
-                R.drawable.ic_trash,
-                R.string.popup_delete_from_library
-            )
-            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_add_to_a_playlist)
-            .addSpacer()
-            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_song)
-            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_share_lyrics)
-            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_go_to_album)
-            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_create_station)
-            .addSpacer()
-            .addMenuEntry(resources, R.drawable.ic_square, R.string.popup_undo_favorite)
-            .build()
+        val popupEntries = PlayerPopupMenu.build(resources)
 
         val anchorView = if (contentType == ContentType.PLAYLIST) {
             fullPlayerToolbar.getEllipsisView()

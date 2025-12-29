@@ -67,6 +67,7 @@ class PopupHelper(
     val transformFraction: Float
         get() = popupTransformFraction
     private var popupAnchorFromTop = false
+    private var popupBackgroundRenderNode: RenderNode? = null
 
     // Called upon dismiss
     private var popupDismissAction: (() -> Unit)? = null
@@ -122,6 +123,7 @@ class PopupHelper(
         locationX: Int = 0,
         locationY: Int = 0,
         anchorFromTop: Boolean = false,
+        backgroundRenderNode: RenderNode? = null,
         dismissAction: (() -> Unit)? = null,
         invalidate: (() -> Unit),
         doOnStart: (() -> Unit),
@@ -136,6 +138,9 @@ class PopupHelper(
             popupInitialLocationX = locationX + 16.dp.px.toInt()
             popupInitialLocationY = locationY - 12.dp.px.toInt()
             popupAnchorFromTop = anchorFromTop
+            popupBackgroundRenderNode = backgroundRenderNode
+        } else {
+            popupBackgroundRenderNode = null
         }
 
         if (entryList != null) {
@@ -273,7 +278,7 @@ class PopupHelper(
             -popupInitialLocationY + popupHeight
         }
         recordingCanvas.translate(-popupInitialLocationX + popupWidth, translateY)
-        recordingCanvas.drawRenderNode(contentRenderNode)
+        recordingCanvas.drawRenderNode(popupBackgroundRenderNode ?: contentRenderNode)
 
         popupRenderNode.endRecording()
         popupRenderNodeDirty = false

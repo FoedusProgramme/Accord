@@ -188,6 +188,7 @@ class NavigationBar @JvmOverloads constructor(
         drawExpandedTitle(canvas)
 
         Log.d("TAG", "invalidated! $shouldDrawLargeMenuItem")
+        menuButtonBounds.setEmpty()
         if (shouldDrawLargeMenuItem) {
             drawMenuItems(canvas)
         }
@@ -397,6 +398,13 @@ class NavigationBar @JvmOverloads constructor(
 
         ellipsisDrawable.setTint(ellipsisColor)
         ellipsisDrawable.draw(canvas)
+
+        menuButtonBounds.set(
+            ellipsisLeft,
+            ellipsisTop,
+            ellipsisRight,
+            ellipsisBottom
+        )
     }
 
     private var renderNodeWidth = 0
@@ -404,12 +412,19 @@ class NavigationBar @JvmOverloads constructor(
 
     private var targetView: View? = null
     private var returnClickListener: (() -> Unit)? = null
+    private var menuClickListener: (() -> Unit)? = null
     private var returnButtonPressed = false
+    private var menuButtonPressed = false
     private val returnButtonBounds = RectF()
+    private val menuButtonBounds = RectF()
     private val returnRowYOffset = RETURN_ROW_Y_OFFSET.dp.px
 
     fun setOnReturnClickListener(listener: (() -> Unit)?) {
         returnClickListener = listener
+    }
+
+    fun setOnMenuClickListener(listener: (() -> Unit)?) {
+        menuClickListener = listener
     }
 
     fun attach(view: RecyclerView) {
@@ -506,6 +521,13 @@ class NavigationBar @JvmOverloads constructor(
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        if (shouldDrawLargeMenuItem &&
+            ev.actionMasked == MotionEvent.ACTION_DOWN &&
+            menuButtonBounds.contains(ev.x, ev.y)
+        ) {
+            menuButtonPressed = true
+            return true
+        }
         if (!shouldDrawReturnButton) return super.onInterceptTouchEvent(ev)
         if (ev.actionMasked == MotionEvent.ACTION_DOWN &&
             updateReturnButtonBounds().contains(ev.x, ev.y)
@@ -517,13 +539,25 @@ class NavigationBar @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (!shouldDrawReturnButton) return super.onTouchEvent(event)
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                if (shouldDrawLargeMenuItem) {
+                    menuButtonPressed = menuButtonBounds.contains(event.x, event.y)
+                    if (menuButtonPressed) {
+                        return true
+                    }
+                }
+                if (!shouldDrawReturnButton) return super.onTouchEvent(event)
                 returnButtonPressed = updateReturnButtonBounds().contains(event.x, event.y)
                 return returnButtonPressed
             }
             MotionEvent.ACTION_UP -> {
+                if (menuButtonPressed && menuButtonBounds.contains(event.x, event.y)) {
+                    (menuClickListener ?: { showDefaultMenu() }).invoke()
+                    performClick()
+                }
+                menuButtonPressed = false
+                if (!shouldDrawReturnButton) return true
                 if (returnButtonPressed && updateReturnButtonBounds().contains(event.x, event.y)) {
                     returnClickListener?.invoke()
                     performClick()
@@ -533,6 +567,7 @@ class NavigationBar @JvmOverloads constructor(
             }
             MotionEvent.ACTION_CANCEL -> {
                 returnButtonPressed = false
+                menuButtonPressed = false
                 return false
             }
         }
@@ -594,6 +629,23 @@ class NavigationBar @JvmOverloads constructor(
                 invalidate()
             }
         }
+    }
+
+    private fun showDefaultMenu() {
+        if (menuButtonBounds.isEmpty) return
+        val location = IntArray(2)
+        getLocationOnScreen(location)
+        val popupAnchorOffset = 12.dp.px
+        val popupBelowGap = 8.dp.px
+        val screenX = (location[0] + menuButtonBounds.right).toInt()
+        val screenY = (location[1] + menuButtonBounds.bottom + popupBelowGap + popupAnchorOffset).toInt()
+        val backgroundView = activity.findViewById<View>(R.id.shrink_container)
+        activity.showPlayerPopupMenuAtScreen(
+            screenX,
+            screenY,
+            anchorFromTop = true,
+            backgroundView = backgroundView
+        )
     }
 
     private fun calculateExpandedHeightPadding() =

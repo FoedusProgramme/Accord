@@ -107,6 +107,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
     }
 
     private val popupHelper = PopupHelper(context, contentRenderNode)
+    private val popupBackgroundRenderNode = RenderNode("popupBackground")
 
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = resources.getColor(R.color.bottomNavigationPanelColor, null)
@@ -553,21 +554,46 @@ class FloatingPanelLayout @JvmOverloads constructor(
         }
     }
 
+    private fun recordPopupBackground(backgroundView: View): RenderNode? {
+        if (width == 0 || height == 0 || backgroundView.width == 0 || backgroundView.height == 0) {
+            return null
+        }
+
+        popupBackgroundRenderNode.setPosition(0, 0, width, height)
+        val recordingCanvas = popupBackgroundRenderNode.beginRecording(width, height)
+
+        val backgroundLocation = IntArray(2)
+        val containerLocation = IntArray(2)
+        backgroundView.getLocationOnScreen(backgroundLocation)
+        getLocationOnScreen(containerLocation)
+
+        val offsetX = backgroundLocation[0] - containerLocation[0]
+        val offsetY = backgroundLocation[1] - containerLocation[1]
+
+        recordingCanvas.translate(offsetX.toFloat(), offsetY.toFloat())
+        backgroundView.draw(recordingCanvas)
+
+        popupBackgroundRenderNode.endRecording()
+        return popupBackgroundRenderNode
+    }
+
     fun callUpPopup(
         entryList: PopupHelper.PopupEntries,
         locationX: Int,
         locationY: Int,
         anchorFromTop: Boolean = false,
-        dismissAction: (() -> Unit)? = null,
-
-        ) {
+        backgroundView: View? = null,
+        dismissAction: (() -> Unit)? = null
+    ) {
+        val backgroundRenderNode = backgroundView?.let { recordPopupBackground(it) }
         popupHelper.callUpPopup(
             false,
             entryList,
             locationX,
             locationY,
             anchorFromTop,
-            dismissAction,
+            backgroundRenderNode = backgroundRenderNode,
+            dismissAction = dismissAction,
             invalidate = {
                 invalidate()
             },
