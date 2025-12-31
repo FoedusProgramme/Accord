@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.FrameLayout
+import androidx.activity.BackEventCompat
 import androidx.activity.viewModels
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -105,7 +106,29 @@ class MainActivity : AppCompatActivity() {
         fragmentSwitcherView = findViewById(R.id.switcher)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackStarted(backEvent: BackEventCompat) {
+                if (backEvent.swipeEdge != BackEventCompat.EDGE_LEFT &&
+                    backEvent.swipeEdge != BackEventCompat.EDGE_RIGHT
+                ) return
+                fragmentSwitcherView.startPredictiveBack()
+                fragmentSwitcherView.updatePredictiveBack(backEvent.progress)
+            }
+
+            override fun handleOnBackProgressed(backEvent: BackEventCompat) {
+                if (backEvent.swipeEdge != BackEventCompat.EDGE_LEFT &&
+                    backEvent.swipeEdge != BackEventCompat.EDGE_RIGHT
+                ) return
+                fragmentSwitcherView.updatePredictiveBack(backEvent.progress)
+            }
+
+            override fun handleOnBackCancelled() {
+                fragmentSwitcherView.cancelPredictiveBack()
+            }
+
             override fun handleOnBackPressed() {
+                if (fragmentSwitcherView.commitPredictiveBack()) {
+                    return
+                }
                 if (!fragmentSwitcherView.popBackTopFragmentIfExists()) {
                     isEnabled = false
                     onBackPressedDispatcher.onBackPressed()
