@@ -190,18 +190,18 @@ class FloatingPanelLayout @JvmOverloads constructor(
             return
         }
 
-        var x = 0
-        var y = 0
+        var x = 0F
+        var y = 0F
         var current: View = targetView
         while (current !== fullScreenView && current.parent is View) {
-            x += current.left
-            y += current.top
+            x += current.left + current.translationX
+            y += current.top + current.translationY
             current = current.parent as View
         }
 
-        fullCoverX = x
-        fullCoverY = y
-        fullCoverScale = targetView.width.toFloat() / imageView.width.toFloat()
+        fullCoverX = x.toInt()
+        fullCoverY = y.toInt()
+        fullCoverScale = (targetView.width.toFloat() / imageView.width.toFloat()) * targetView.scaleX
 
         lockTransitionCornerRadius = lockCornerRadius
         if (lockCornerRadius) {

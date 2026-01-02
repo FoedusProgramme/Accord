@@ -127,6 +127,11 @@ class FullPlayer @JvmOverloads constructor(
     private var positionUpdateRunning = false
     private var isUserScrubbing = false
     private var isUserVolumeScrubbing = false
+    private var coverBaseScale = 1F
+    private var coverBaseTranslationX = 0F
+    private var coverBaseTranslationY = 0F
+    private var coverPauseScale = 1F
+    private var coverPauseAnimator: ValueAnimator? = null
     private var maxDeviceVolume = 0
     private var volumeUpdateAnimator: ValueAnimator? = null
     private val audioManager by lazy {
@@ -453,13 +458,18 @@ class FullPlayer @JvmOverloads constructor(
         val targetRadius = if (lockCornerRadius) queueCoverRadius else 0F
         val targetElevation = if (value == ContentType.PLAYLIST) null else initialElevation
 
-        targetView.doOnLayout {
+        val update = {
             floatingPanelLayout.updateTransitionTarget(
                 targetView,
                 targetRadius,
                 lockCornerRadius,
                 targetElevation
             )
+        }
+        if (targetView.isLaidOut) {
+            update()
+        } else {
+            targetView.doOnLayout { update() }
         }
     }
 
@@ -582,12 +592,14 @@ class FullPlayer @JvmOverloads constructor(
     }
 
     private fun animateCoverChange(fraction: Float) {
-        coverSimpleImageView.translationX = lerp(0f, finalTranslationX, fraction)
-        coverSimpleImageView.translationY = lerp(0f, finalTranslationY, fraction)
+        coverBaseTranslationX = lerp(0f, finalTranslationX, fraction)
+        coverBaseTranslationY = lerp(0f, finalTranslationY, fraction)
+        coverSimpleImageView.translationX = coverBaseTranslationX
+        coverSimpleImageView.translationY = coverBaseTranslationY
         coverSimpleImageView.pivotX = 0F
         coverSimpleImageView.pivotY = 0F
-        coverSimpleImageView.scaleX = lerp(1f, finalScale, fraction)
-        coverSimpleImageView.scaleY = lerp(1f, finalScale, fraction)
+        coverBaseScale = lerp(1f, finalScale, fraction)
+        applyCoverScale()
         coverSimpleImageView.elevation = lerp(initialElevation, 5f.dp.px, fraction)
         coverSimpleImageView.updateCornerRadius(
             lerp(
@@ -599,14 +611,12 @@ class FullPlayer @JvmOverloads constructor(
 
         coverSimpleImageView.visibility = if (fraction == 1F) INVISIBLE else VISIBLE
 
-        titleTextView.translationY =
-            coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
-        starTransformButton.translationY =
-            coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
-        ellipsisButton.translationY =
-            coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
-        subtitleTextView.translationY =
-            coverSimpleImageView.translationY - coverSimpleImageView.height * (1f - coverSimpleImageView.scaleX)
+        val coverTranslationY =
+            coverBaseTranslationY - coverSimpleImageView.height * (1f - coverBaseScale)
+        titleTextView.translationY = coverTranslationY
+        starTransformButton.translationY = coverTranslationY
+        ellipsisButton.translationY = coverTranslationY
+        subtitleTextView.translationY = coverTranslationY
 
         val quickFraction = (fraction * 1.2f).coerceIn(0F, 1F)
         titleTextView.alpha = lerp(1F, 0F, quickFraction)
@@ -744,7 +754,8 @@ class FullPlayer @JvmOverloads constructor(
                 ContentType.NORMAL -> {
                     AnimationUtils.createValAnimator(
                         transformationFraction, 0F,
-                        duration = MID_DURATION
+                        duration = MID_DURATION,
+                        doOnEnd = { updateTransitionTargetForContentType(ContentType.NORMAL) }
                     ) {
                         transformationFraction = it
                         animateCoverChange(it)
@@ -759,7 +770,8 @@ class FullPlayer @JvmOverloads constructor(
                     queueContainer.bringToFront()
                     AnimationUtils.createValAnimator(
                         transformationFraction, 1F,
-                        duration = MID_DURATION
+                        duration = MID_DURATION,
+                        doOnEnd = { updateTransitionTargetForContentType(ContentType.PLAYLIST) }
                     ) {
                         transformationFraction = it
                         animateCoverChange(it)
@@ -848,6 +860,10 @@ class FullPlayer @JvmOverloads constructor(
     override fun onPlaybackStateChanged(playbackState: @Player.State Int) {
         Log.d("FullPlayer", "onPlaybackStateChanged: $playbackState")
         val isPlaying = instance?.isPlaying == true
+        updateCoverPauseScale(
+            isPlaying = isPlaying || playbackState == Player.STATE_BUFFERING,
+            animate = !firstTime
+        )
         if (isPlaying) {
             controllerButton.playAnimation(false)
         } else if (playbackState != Player.STATE_BUFFERING) {
@@ -901,6 +917,50 @@ class FullPlayer @JvmOverloads constructor(
         }
 
         */
+    }
+
+    private fun updateCoverPauseScale(isPlaying: Boolean, animate: Boolean) {
+        val targetScale = if (isPlaying) 1F else PAUSED_COVER_SCALE
+        if (coverPauseScale == targetScale) return
+        coverPauseAnimator?.cancel()
+        coverPauseAnimator = null
+        if (!animate) {
+            coverPauseScale = targetScale
+            applyCoverScale()
+            syncTransitionCoverScale()
+            return
+        }
+        coverPauseAnimator = AnimationUtils.createValAnimator(
+            coverPauseScale,
+            targetScale,
+            duration = LONG_DURATION,
+            interpolator = AnimationUtils.easingStandardInterpolator
+        ) {
+            coverPauseScale = it
+            applyCoverScale()
+            syncTransitionCoverScale()
+        }
+    }
+
+    private fun applyCoverScale() {
+        val queueBlend = transformationFraction.coerceIn(0F, 1F)
+        val effectivePauseScale = lerp(coverPauseScale, 1F, queueBlend)
+        val scale = coverBaseScale * effectivePauseScale
+        coverSimpleImageView.pivotX = 0F
+        coverSimpleImageView.pivotY = 0F
+        coverSimpleImageView.scaleX = scale
+        coverSimpleImageView.scaleY = scale
+        val pauseOffsetX =
+            coverSimpleImageView.width * coverBaseScale * (1f - effectivePauseScale) / 2f
+        val pauseOffsetY =
+            coverSimpleImageView.height * coverBaseScale * (1f - effectivePauseScale) / 2f
+        coverSimpleImageView.translationX = coverBaseTranslationX + pauseOffsetX
+        coverSimpleImageView.translationY = coverBaseTranslationY + pauseOffsetY
+    }
+
+    private fun syncTransitionCoverScale() {
+        if (!coverSimpleImageView.isLaidOut) return
+        updateTransitionTargetForContentType(contentType)
     }
 
     override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
@@ -987,5 +1047,6 @@ class FullPlayer @JvmOverloads constructor(
     companion object {
         const val TAG = "FullPlayer"
         private const val POSITION_UPDATE_INTERVAL_MS = 500L
+        private const val PAUSED_COVER_SCALE = 0.84F
     }
 }
