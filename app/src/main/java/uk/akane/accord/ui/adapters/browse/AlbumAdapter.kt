@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.ui.MainActivity
+import uk.akane.accord.ui.fragments.browse.AlbumDetailFragment
 import com.google.android.material.button.MaterialButton
 import kotlin.random.Random
 
@@ -106,12 +107,9 @@ class AlbumAdapter(
         holder.subtitle?.text = item.artist
 
         holder.itemView.setOnClickListener {
-            val mediaController = mainActivity.getPlayer() ?: return@setOnClickListener
-            if (item.tracks.isEmpty()) return@setOnClickListener
-
-            mediaController.setMediaItems(item.tracks, 0, C.TIME_UNSET)
-            mediaController.prepare()
-            mediaController.play()
+            mainActivity.fragmentSwitcherView.addFragmentToCurrentStack(
+                AlbumDetailFragment.newInstance(item.title, item.artist)
+            )
         }
     }
 

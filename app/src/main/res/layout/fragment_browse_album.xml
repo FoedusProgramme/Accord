@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/scrollContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/headerContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/ivHeaderArt"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="Album art"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/default_cover" />
+
+                <View
+                    android:id="@+id/vHeaderGradient"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_header_bottom_fade" />
+
+                <LinearLayout
+                    android:id="@+id/headerContent"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <TextView
+                        android:id="@+id/tvAlbumTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Gigaton"
+                        android:textAlignment="center"
+                        android:textColor="@android:color/white"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium" />
+
+                    <TextView
+                        android:id="@+id/tvAlbumArtist"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Pearl Jam"
+                        android:textAlignment="center"
+                        android:textColor="#E6FFFFFF"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/tvMeta"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="ROCK · 2020"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.08"
+                        android:textAlignment="center"
+                        android:textColor="#99FFFFFF"
+                        android:textSize="12sp"
+                        android:fontFamily="sans-serif-medium" />
+
+                    <LinearLayout
+                        android:id="@+id/rowButtons"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal"
+                        android:weightSum="2">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnPlay"
+                            style="@style/Widget.Accord.ActionPanel.MasterControl.Button"
+                            android:layout_width="0dp"
+                            android:layout_height="51dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:text="@string/play"
+                            android:textColor="#0B0B0F"
+                            app:icon="@drawable/ic_master_play"
+                            app:iconGravity="textStart"
+                            app:iconPadding="12dp"
+                            app:iconTint="#0B0B0F"
+                            app:backgroundTint="#F5F5F5" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnShuffle"
+                            style="@style/Widget.Accord.ActionPanel.MasterControl.Button"
+                            android:layout_width="0dp"
+                            android:layout_height="51dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:text="@string/shuffle"
+                            android:textColor="#0B0B0F"
+                            app:icon="@drawable/ic_master_shuffle"
+                            app:iconGravity="textStart"
+                            app:iconPadding="12dp"
+                            app:iconTint="#0B0B0F"
+                            app:backgroundTint="#F5F5F5" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvQuote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Over the last 20 years, a Pearl Jam studio album has come to signal more of something else—more tour dates, more boo…"
+                        android:textAlignment="viewStart"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="14sp"
+                        android:lineSpacingExtra="3dp" />
+
+                </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/trackContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="16dp">
+
+                <View
+                    android:id="@+id/divider"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:background="@color/dividerColor"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvTracks"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:overScrollMode="never"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    app:layout_constraintTop_toBottomOf="@id/divider"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <uk.akane.accord.ui.components.NavigationBar
+        android:id="@+id/navigation_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title=""
+        app:hasLargeMenuItems="true"
+        app:hasReturnButton="true"
+        app:hasExpandedTitle="false"
+        app:transparentExpandedBackground="true"
+        app:expandedAccentColor="@android:color/white"
+        app:returnButtonText="@string/category_albums" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

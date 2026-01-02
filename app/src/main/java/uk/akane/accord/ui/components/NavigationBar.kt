@@ -22,6 +22,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.withSave
 import androidx.core.graphics.withTranslation
 import androidx.core.view.doOnLayout
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -72,6 +73,9 @@ class NavigationBar @JvmOverloads constructor(
 
     private var titleText = ""
     private var returnButtonText = ""
+    private var shouldDrawExpandedTitle = true
+    private var useTransparentExpandedBackground = false
+    private var expandedAccentColor = accentColor
 
     private var lifecycle: Lifecycle? = null
 
@@ -81,6 +85,15 @@ class NavigationBar @JvmOverloads constructor(
             returnButtonText = getString(R.styleable.NavigationBar_returnButtonText) ?: ""
             shouldDrawLargeMenuItem = getBoolean(R.styleable.NavigationBar_hasLargeMenuItems, true)
             shouldDrawReturnButton = getBoolean(R.styleable.NavigationBar_hasReturnButton, false)
+            shouldDrawExpandedTitle = getBoolean(R.styleable.NavigationBar_hasExpandedTitle, true)
+            useTransparentExpandedBackground = getBoolean(
+                R.styleable.NavigationBar_transparentExpandedBackground,
+                false
+            )
+            expandedAccentColor = getColor(
+                R.styleable.NavigationBar_expandedAccentColor,
+                accentColor
+            )
             Log.d("TAG", "should: $shouldDrawLargeMenuItem")
         }
         setWillNotDraw(false)
@@ -90,6 +103,8 @@ class NavigationBar @JvmOverloads constructor(
     private var collapseProgress = 0F
     private var renderShowProgress = 0F
     private var scrollOffsetPx = 0
+    private var scrollOffsetBaselinePx = 0
+    private var collapseStartOffsetPx = 0
 
     var blurRadius: Float = 0F
         set(value) {
@@ -114,6 +129,19 @@ class NavigationBar @JvmOverloads constructor(
             field = value
             invalidate()
         }
+
+    fun setTitle(text: String) {
+        if (titleText == text) return
+        titleText = text
+        invalidate()
+    }
+
+    fun setCollapseStartOffsetPx(offsetPx: Int) {
+        val clamped = offsetPx.coerceAtLeast(0)
+        if (collapseStartOffsetPx == clamped) return
+        collapseStartOffsetPx = clamped
+        handleScroll(scrollOffsetPx)
+    }
 
     private var renderNode: RenderNode? = null
 
@@ -253,7 +281,14 @@ class NavigationBar @JvmOverloads constructor(
     }
 
     private fun drawExpandedBackground(canvas: Canvas) {
-        canvas.drawColor(expandedNavigationBarBackgroundColor)
+        val color = if (useTransparentExpandedBackground) {
+            val alpha = (collapseProgress * 255).toInt().coerceIn(0, 255)
+            ColorUtils.setAlphaComponent(expandedNavigationBarBackgroundColor, alpha)
+        } else {
+            expandedNavigationBarBackgroundColor
+        }
+        if (Color.alpha(color) == 0) return
+        canvas.drawColor(color)
     }
 
     private fun drawBottomDivider(canvas: Canvas) {
@@ -267,6 +302,8 @@ class NavigationBar @JvmOverloads constructor(
     }
 
     private fun drawExpandedTitle(canvas: Canvas) {
+        if (!shouldDrawExpandedTitle) return
+        if (titleText.isEmpty()) return
         val topY = paddingTop + calculateExpandedHeightPadding() + 3f.dp.px + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt()
 
         val baseline = topY - expandedTitleFontMetrics.ascent
@@ -314,6 +351,7 @@ class NavigationBar @JvmOverloads constructor(
     }
 
     private fun drawReturnButton(canvas: Canvas) {
+        val accent = resolveAccentColor()
         val chevronWidth = chevronDrawable.intrinsicWidth
         val chevronHeight = (chevronWidth * (chevronDrawable.intrinsicHeight.toFloat() /
                 chevronDrawable.intrinsicWidth.toFloat())).toInt()
@@ -329,16 +367,18 @@ class NavigationBar @JvmOverloads constructor(
             chevronLeft + chevronWidth,
             chevronTop + chevronHeight
         )
-        chevronDrawable.setTint(chevronColor)
+        chevronDrawable.setTint(accent)
         chevronDrawable.draw(canvas)
 
         val fm = returnTextPaint.fontMetrics
         val baseline = centerY - (fm.ascent + fm.descent) / 2f
         val textX = chevronLeft + chevronWidth + EXPANDED_PADDED_HEIGHT_RETURN_START_PADDING.dp.px
+        returnTextPaint.color = accent
         canvas.drawText(returnButtonText, textX, baseline, returnTextPaint)
     }
 
     private fun drawMenuItems(canvas: Canvas) {
+        val accent = resolveAccentColor()
         val size = EXPANDED_MENU_ITEM_SIZE.dp.px
         val ellipsisSize = 18.dp.px
 
@@ -389,6 +429,9 @@ class NavigationBar @JvmOverloads constructor(
             )
 
             avatarDrawable.setTint(avatarColor)
+            if (avatarColor != accent) {
+                avatarDrawable.setTint(accent)
+            }
             avatarDrawable.draw(canvas)
         }
 
@@ -406,7 +449,7 @@ class NavigationBar @JvmOverloads constructor(
             ellipsisBackgroundPaint
         )
 
-        ellipsisDrawable.setTint(ellipsisColor)
+        ellipsisDrawable.setTint(accent)
         ellipsisDrawable.alpha = (255 * (1F - menuButtonTransformFactor * 0.25F)).toInt()
         ellipsisDrawable.draw(canvas)
 
@@ -441,7 +484,11 @@ class NavigationBar @JvmOverloads constructor(
         menuClickListener = listener
     }
 
-    fun attach(view: RecyclerView) {
+    fun attach(
+        view: RecyclerView,
+        applyTopPadding: Boolean = true,
+        applyBottomPadding: Boolean = true
+    ) {
         targetView = view
         renderNode = RenderNode("BlurredTarget")
         blurRadius = BLUR_STRENGTH.dp.px
@@ -453,9 +500,9 @@ class NavigationBar @JvmOverloads constructor(
             view.clipToPadding = false
             view.setPadding(
                 view.paddingLeft,
-                view.paddingTop + height,
+                view.paddingTop + (if (applyTopPadding) height else 0),
                 view.paddingEnd,
-                activity.bottomHeight
+                if (applyBottomPadding) activity.bottomHeight else view.paddingBottom
             )
 
             drawRenderNode()
@@ -463,38 +510,9 @@ class NavigationBar @JvmOverloads constructor(
             view.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
-
-                    var shouldInvalidate = false
-
-                    scrollOffsetPx = (scrollOffsetPx + dy).coerceAtLeast(0)
-                    val offset = scrollOffsetPx
-                    val maxOffset = height - paddingTop - COLLAPSED_STATE_HEIGHT.dp.px - appendHeight
-                    val dstTranslationY = (-offset.toFloat()).coerceAtLeast(-maxOffset)
-
-                    val secondStageOffsetEnd = EXPANDED_STATE_HEIGHT.dp.px + calculateExpandedHeightPadding() + (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt() -
-                            COLLAPSED_STATE_HEIGHT.dp.px + paddingTop + COLLAPSED_STATE_HEIGHT.dp.px + appendHeight * 2
-                    val secondStageProgress = inverseLerp(-maxOffset, -secondStageOffsetEnd, -offset.toFloat()).coerceIn(0F, 1F)
-
-                    drawRenderNode()
-
-                    if (dstTranslationY != translationY) {
-                        shouldInvalidate = true
-                        translationY = dstTranslationY
-                        collapseProgress = if (maxOffset > 0) {
-                            (offset / maxOffset).coerceIn(0f, 1f)
-                        } else {
-                            0f
-                        }
-                    }
-
-                    if (secondStageProgress != renderShowProgress) {
-                        shouldInvalidate = true
-                        renderShowProgress = secondStageProgress
-                    }
-
-                    if (shouldInvalidate) {
-                        invalidate()
-                    }
+                    val rawOffset = recyclerView.computeVerticalScrollOffset()
+                    val currentOffset = (rawOffset - scrollOffsetBaselinePx).coerceAtLeast(0)
+                    handleScroll(currentOffset)
                 }
             })
 
@@ -507,8 +525,103 @@ class NavigationBar @JvmOverloads constructor(
 
             renderNode?.setPosition(0, 0, renderNodeWidth, renderNodeHeight)
 
-            scrollOffsetPx = view.computeVerticalScrollOffset()
+            scrollOffsetBaselinePx = view.computeVerticalScrollOffset()
+            scrollOffsetPx = 0
+            handleScroll(0)
         }
+    }
+
+    fun attach(
+        view: NestedScrollView,
+        applyTopPadding: Boolean = true,
+        applyBottomPadding: Boolean = true
+    ) {
+        targetView = view
+        renderNode = RenderNode("BlurredTarget")
+        blurRadius = BLUR_STRENGTH.dp.px
+
+        doOnLayout {
+            lifecycle = findViewTreeLifecycleOwner()?.lifecycle
+            lifecycle?.addObserver(this)
+
+            view.clipToPadding = false
+            view.setPadding(
+                view.paddingLeft,
+                view.paddingTop + (if (applyTopPadding) height else 0),
+                view.paddingRight,
+                if (applyBottomPadding) activity.bottomHeight else view.paddingBottom
+            )
+
+            drawRenderNode()
+
+            view.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+                handleScroll(scrollY)
+            }
+
+            if (view.scrollY == height) {
+                view.scrollBy(0, -height)
+            }
+
+            renderNodeWidth = width.takeIf { it > 0 } ?: view.width
+            renderNodeHeight = (paddingTop + COLLAPSED_STATE_HEIGHT.dp.px + appendHeight)
+                .takeIf { it > 0 }?.toInt() ?: view.height
+
+            renderNode?.setPosition(0, 0, renderNodeWidth, renderNodeHeight)
+
+            val currentOffset = view.scrollY
+            scrollOffsetPx = currentOffset
+            handleScroll(currentOffset)
+        }
+    }
+
+    private fun handleScroll(offsetPx: Int) {
+        var shouldInvalidate = false
+        scrollOffsetPx = offsetPx.coerceAtLeast(0)
+        val offset = (scrollOffsetPx - collapseStartOffsetPx).coerceAtLeast(0)
+        val maxOffset = height - paddingTop - COLLAPSED_STATE_HEIGHT.dp.px - appendHeight
+
+        val dstTranslationY = (-offset.toFloat()).coerceAtLeast(-maxOffset)
+        val newCollapseProgress = if (maxOffset > 0) {
+            (offset / maxOffset).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+
+        val secondStageOffsetEnd = EXPANDED_STATE_HEIGHT.dp.px +
+            calculateExpandedHeightPadding() +
+            (if (shouldDrawReturnButton) EXPANDED_PADDED_HEIGHT_RETURN else 0).dp.px.toInt() -
+            COLLAPSED_STATE_HEIGHT.dp.px + paddingTop + COLLAPSED_STATE_HEIGHT.dp.px + appendHeight * 2
+        val secondStageProgress = inverseLerp(
+            -maxOffset,
+            -secondStageOffsetEnd,
+            -offset.toFloat()
+        ).coerceIn(0F, 1F)
+
+        drawRenderNode()
+
+        if (dstTranslationY != translationY) {
+            shouldInvalidate = true
+            translationY = dstTranslationY
+        }
+
+        if (newCollapseProgress != collapseProgress) {
+            shouldInvalidate = true
+            collapseProgress = newCollapseProgress
+        }
+
+        if (secondStageProgress != renderShowProgress) {
+            shouldInvalidate = true
+            renderShowProgress = secondStageProgress
+        }
+
+        if (shouldInvalidate) {
+            invalidate()
+        }
+    }
+
+    private fun resolveAccentColor(): Int {
+        if (expandedAccentColor == accentColor) return accentColor
+        return ColorUtils.blendARGB(expandedAccentColor, accentColor, collapseProgress)
     }
 
     private fun updateReturnButtonBounds(): RectF {
