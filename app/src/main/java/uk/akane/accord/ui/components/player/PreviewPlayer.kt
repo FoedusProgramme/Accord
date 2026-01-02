@@ -1,6 +1,11 @@
 package uk.akane.accord.ui.components.player
 
 import android.content.Context
+import android.graphics.BlendMode
+import android.graphics.Canvas
+import android.graphics.RenderEffect
+import android.graphics.RenderNode
+import android.graphics.Shader
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -11,8 +16,11 @@ import androidx.media3.common.Player
 import com.google.android.material.button.MaterialButton
 import android.widget.TextView
 import uk.akane.accord.R
+import uk.akane.accord.logic.dp
+import uk.akane.accord.logic.isDarkMode
 import uk.akane.accord.logic.playOrPause
 import uk.akane.accord.ui.MainActivity
+import uk.akane.accord.ui.components.NavigationBar
 import uk.akane.cupertino.widget.image.SimpleImageView
 
 class PreviewPlayer @JvmOverloads constructor(
@@ -30,6 +38,21 @@ class PreviewPlayer @JvmOverloads constructor(
         get() = parent as FloatingPanelLayout
     private val activity: MainActivity
         get() = context as MainActivity
+
+    private val expandedBackgroundColor = resources.getColor(R.color.navigationBarExpandedBackground, null)
+    private val blurAppendColor = resources.getColor(R.color.navigationBarBlurAppendColor, null)
+    private val blurAppendColorDark = resources.getColor(R.color.navigationBarBlurAppendDarkModeColor, null)
+    private val backgroundLocation = IntArray(2)
+    private val selfLocation = IntArray(2)
+    private val backgroundRenderNode = RenderNode("PreviewPlayerBlur").apply {
+        setRenderEffect(
+            RenderEffect.createBlurEffect(
+                NavigationBar.BLUR_STRENGTH.dp.px,
+                NavigationBar.BLUR_STRENGTH.dp.px,
+                Shader.TileMode.MIRROR
+            )
+        )
+    }
 
     private var lastControlIconRes: Int? = null
     private var lastTitleText: String? = null
@@ -104,6 +127,11 @@ class PreviewPlayer @JvmOverloads constructor(
         updateTitle()
     }
 
+    override fun dispatchDraw(canvas: Canvas) {
+        drawBlurredBackground(canvas)
+        super.dispatchDraw(canvas)
+    }
+
     fun setCover(drawable: Drawable?) {
         coverSimpleImageView.setImageDrawable(drawable)
     }
@@ -146,6 +174,35 @@ class PreviewPlayer @JvmOverloads constructor(
         if (resolved != lastTitleText) {
             titleTextView.text = resolved
             lastTitleText = resolved
+        }
+    }
+
+    private fun drawBlurredBackground(canvas: Canvas) {
+        if (width == 0 || height == 0) return
+        val backgroundView = activity.findViewById<android.view.View>(R.id.shrink_container)
+            ?: return
+        if (backgroundView.width == 0 || backgroundView.height == 0) return
+
+        backgroundRenderNode.setPosition(0, 0, width, height)
+        val recordingCanvas = backgroundRenderNode.beginRecording(width, height)
+        recordingCanvas.drawColor(expandedBackgroundColor)
+
+        backgroundView.getLocationOnScreen(backgroundLocation)
+        getLocationOnScreen(selfLocation)
+        val offsetX = backgroundLocation[0] - selfLocation[0]
+        val offsetY = backgroundLocation[1] - selfLocation[1]
+        recordingCanvas.save()
+        recordingCanvas.translate(offsetX.toFloat(), offsetY.toFloat())
+        backgroundView.draw(recordingCanvas)
+        recordingCanvas.restore()
+        backgroundRenderNode.endRecording()
+
+        canvas.drawRenderNode(backgroundRenderNode)
+        if (context.isDarkMode()) {
+            canvas.drawColor(blurAppendColor, BlendMode.OVERLAY)
+            canvas.drawColor(blurAppendColorDark)
+        } else {
+            canvas.drawColor(blurAppendColor, BlendMode.HARD_LIGHT)
         }
     }
 }
