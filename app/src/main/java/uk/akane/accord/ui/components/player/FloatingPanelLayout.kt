@@ -188,14 +188,14 @@ class FloatingPanelLayout @JvmOverloads constructor(
     fun updateTransitionTarget(targetView: View, targetRadius: Float, lockCornerRadius: Boolean,
                                targetElevation: Float? = null) {
         val imageView = transitionImageView ?: return
-        if (imageView.width == 0) {
-            imageView.doOnLayout {
+        if (imageView.width == 0 || imageView.height == 0) {
+            deferTransitionUpdate(imageView) {
                 updateTransitionTarget(targetView, targetRadius, lockCornerRadius, targetElevation)
             }
             return
         }
         if (targetView.width == 0 || targetView.height == 0) {
-            targetView.doOnLayout {
+            deferTransitionUpdate(targetView) {
                 updateTransitionTarget(targetView, targetRadius, lockCornerRadius, targetElevation)
             }
             return
@@ -226,6 +226,47 @@ class FloatingPanelLayout @JvmOverloads constructor(
         transitionEndElevation = targetElevation ?: targetView.elevation
         updateTransitionFraction(fraction)
     }
+
+    private fun deferTransitionUpdate(view: View, action: () -> Unit) {
+        if (view.width > 0 && view.height > 0) {
+            action()
+            return
+        }
+
+        val existing = view.getTag(R.id.transition_update_listener) as? PendingTransitionUpdate
+        if (existing != null) {
+            existing.action = action
+            return
+        }
+
+        lateinit var holder: PendingTransitionUpdate
+        val listener = object : View.OnLayoutChangeListener {
+            override fun onLayoutChange(
+                v: View,
+                left: Int,
+                top: Int,
+                right: Int,
+                bottom: Int,
+                oldLeft: Int,
+                oldTop: Int,
+                oldRight: Int,
+                oldBottom: Int
+            ) {
+                if (v.width == 0 || v.height == 0) return
+                v.removeOnLayoutChangeListener(this)
+                v.setTag(R.id.transition_update_listener, null)
+                holder.action()
+            }
+        }
+        holder = PendingTransitionUpdate(action, listener)
+        view.setTag(R.id.transition_update_listener, holder)
+        view.addOnLayoutChangeListener(listener)
+    }
+
+    private data class PendingTransitionUpdate(
+        var action: () -> Unit,
+        val listener: View.OnLayoutChangeListener
+    )
 
     private val startPadding = 5F.dp.px
     private val endElevation = 24F.dp.px
