@@ -45,4 +45,9 @@ class LibraryFragment: Fragment() {
 
         return rootView
     }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        navigationBar.onVisibilityChangedFromFragment(hidden)
+    }
 }
