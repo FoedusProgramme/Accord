@@ -289,16 +289,6 @@
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.google.android.material.slider.Slider
-        android:id="@+id/test_slider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:layout_marginHorizontal="24dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        />
-
     <include
         layout="@layout/layout_full_player_lyrics"
         />

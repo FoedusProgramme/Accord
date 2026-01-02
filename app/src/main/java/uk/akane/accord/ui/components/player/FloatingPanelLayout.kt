@@ -41,6 +41,7 @@ import uk.akane.cupertino.widget.dpToPx
 import uk.akane.cupertino.widget.image.SimpleImageView
 import uk.akane.cupertino.widget.utils.AnimationUtils
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 class FloatingPanelLayout @JvmOverloads constructor(
     context: Context,
@@ -93,8 +94,12 @@ class FloatingPanelLayout @JvmOverloads constructor(
     var panelCornerRadius = 0F
 
     private var previewCoverBoxMetrics: Int = 0
-    private var previewCoverMargin: Int = 8.dpToPx(context)
+    private var previewCoverMarginX: Float = 8.dpToPx(context).toFloat()
+    private var previewCoverMarginY: Float = 8.dpToPx(context).toFloat()
     private var previewCoverHorizontalMargin: Int = 12.dpToPx(context)
+    private var previewCoverPaddingPx: Float = (0.5F.dp.px).roundToInt().toFloat()
+    private var previewCoverStrokePx: Float = (0.5F.dp.px).roundToInt().toFloat()
+    private var previewCoverCornerRadius: Float = 0F
 
     private var fullCoverX: Int = 0
     private var fullCoverY: Int = 0
@@ -139,8 +144,14 @@ class FloatingPanelLayout @JvmOverloads constructor(
         }
     }
 
-    fun setupMetrics(metrics: Int) {
+    fun setupMetrics(metrics: Int, previewCoverView: SimpleImageView) {
         previewCoverBoxMetrics = metrics
+        previewCoverMarginX = previewCoverView.left.toFloat()
+        previewCoverMarginY = previewCoverView.top.toFloat()
+        previewCoverPaddingPx = previewCoverView.paddingLeft.toFloat()
+        previewCoverStrokePx = previewCoverView.getStrokeWidth()
+        previewCoverCornerRadius = previewCoverView.getCornerRadius().toFloat()
+        previewCoverHorizontalMargin = previewView.marginStart
     }
 
     fun setupTransitionImageView(w: Int, h: Int, mx: Int, mh: Int, bitmap: Bitmap) {
@@ -220,6 +231,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
     private val endElevation = 24F.dp.px
     private val startRadius = 36F.dp.px
     private val endRadius = 10F.dp.px
+    private val previewCoverStrokeColor = resources.getColor(R.color.coverBorder, null)
     private var transitionStartRadius = startRadius
     private var transitionEndRadius = endRadius
     private var transitionEndElevation = endElevation
@@ -228,24 +240,39 @@ class FloatingPanelLayout @JvmOverloads constructor(
         transitionImageView?.let {
             if (it.width != 0) {
                 val rawDelta = fullScreenView.height - previewView.height - previewView.marginBottom
-                val initialScale = previewCoverBoxMetrics / it.width.toFloat() * previewView.scaleX
-                val initialTranslationX = + previewCoverMargin.toFloat() * previewView.scaleX - previewCoverHorizontalMargin * fraction
+                val initialScale = previewCoverBoxMetrics / it.width.toFloat()
+                val initialTranslationX = previewCoverMarginX * previewView.scaleX - previewCoverHorizontalMargin * fraction
                 val scale = lerp(initialScale, fullCoverScale, fraction)
 
                 it.scaleX = scale
                 it.scaleY = scale
                 it.translationX = lerp(initialTranslationX, fullCoverX - previewCoverHorizontalMargin.toFloat(), fraction)
-                it.translationY = lerp(previewCoverMargin.toFloat(), -rawDelta.toFloat() + fullCoverY, fraction)
+                it.translationY = lerp(previewCoverMarginY, -rawDelta.toFloat() + fullCoverY, fraction)
 
-                val targetVisualPadding = 0.5F.dp.px
-                val dynamicStartPadding = if (initialScale > 0) targetVisualPadding / initialScale else 0F
-                it.setPadding(lerp(dynamicStartPadding, 0F, fraction).toInt())
+                val targetVisualPadding = previewCoverPaddingPx
+                val targetVisualStroke = previewCoverStrokePx
+                val visualPadding = lerp(targetVisualPadding, 0F, fraction)
+                val visualStroke = lerp(targetVisualStroke, 0F, fraction)
+                val scaledPadding = if (scale > 0F) visualPadding / scale else 0F
+                val scaledStroke = if (scale > 0F) visualStroke / scale else 0F
+                it.setPadding(scaledPadding.roundToInt())
+                it.setStroke(scaledStroke, previewCoverStrokeColor)
 
                 it.elevation = lerp(0F, transitionEndElevation, fraction)
-                val cornerRadius = if (lockTransitionCornerRadius && scale != 0F) {
-                    transitionStartRadius / scale
+                val cornerRadius = if (scale > 0F) {
+                    val startVisualRadius = if (previewCoverCornerRadius > 0F) {
+                        previewCoverCornerRadius
+                    } else {
+                        transitionStartRadius
+                    }
+                    val endVisualRadius = if (lockTransitionCornerRadius) {
+                        transitionStartRadius
+                    } else {
+                        transitionEndRadius
+                    }
+                    lerp(startVisualRadius, endVisualRadius, fraction) / scale
                 } else {
-                    lerp(transitionStartRadius, transitionEndRadius, fraction)
+                    0F
                 }
                 it.updateCornerRadius(cornerRadius.toInt())
             }

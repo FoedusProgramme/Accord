@@ -101,7 +101,8 @@ class PreviewPlayer @JvmOverloads constructor(
 
         coverSimpleImageView.doOnLayout {
             floatingPanelLayout.setupMetrics(
-                coverSimpleImageView.width
+                coverSimpleImageView.width,
+                coverSimpleImageView
             )
         }
 

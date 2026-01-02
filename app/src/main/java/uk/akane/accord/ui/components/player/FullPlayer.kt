@@ -43,7 +43,6 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.size.Scale
 import coil3.toBitmap
-import com.google.android.material.slider.Slider
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.inverseLerp
@@ -110,7 +109,6 @@ class FullPlayer @JvmOverloads constructor(
     private var ellipsisButton: OverlayBackgroundButton
 
     private var fullPlayerToolbar: FullPlayerToolbar
-    private var testSlider: Slider
     private var queueContainer: View
     private var queueShuffleButton: OverlayPillButton
     private var queueRepeatButton: OverlayPillButton
@@ -182,7 +180,6 @@ class FullPlayer @JvmOverloads constructor(
         previousButton = findViewById(R.id.backward_btn)
         nextButton = findViewById(R.id.forward_btn)
         fullPlayerToolbar = findViewById(R.id.full_player_tool_bar)
-        testSlider = findViewById(R.id.test_slider)
         queueContainer = findViewById(R.id.queue_container)
         queueShuffleButton = findViewById(R.id.btnShuffle)
         queueRepeatButton = findViewById(R.id.btnRepeat)
@@ -329,10 +326,6 @@ class FullPlayer @JvmOverloads constructor(
             )
 
             updateTransitionTargetForContentType(contentType)
-        }
-
-        testSlider.addOnChangeListener { slider, progress, isUser ->
-            animateCoverChange(progress)
         }
 
         listOverlayButton.setOnClickListener {
