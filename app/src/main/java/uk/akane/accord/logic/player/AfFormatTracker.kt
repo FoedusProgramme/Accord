@@ -6,6 +6,7 @@ import android.media.AudioRouting
 import android.media.AudioTrack
 import android.os.Build
 import android.os.Handler
+import android.os.Looper
 import android.os.Parcelable
 import android.util.Log
 import androidx.annotation.OptIn
@@ -88,6 +89,19 @@ class AfFormatTracker(
         return field.get(this) as AudioTrack?
     }
 
+    private fun runOnPlaybackHandler(action: () -> Unit) {
+        val looper = playbackHandler.looper
+        if (!looper.thread.isAlive) {
+            action()
+            return
+        }
+        if (Looper.myLooper() == looper) {
+            action()
+        } else {
+            playbackHandler.post(action)
+        }
+    }
+
     fun setAudioSink(sink: DefaultAudioSink) {
         this.audioSink = sink
     }
@@ -97,7 +111,7 @@ class AfFormatTracker(
         audioTrackConfig: AudioTrackConfig
     ) {
         format = null
-        playbackHandler.post {
+        runOnPlaybackHandler {
             val audioTrack = (audioSink ?: throw NullPointerException(
                 "audioSink is null in onAudioTrackInitialized"
             )).getAudioTrack()
@@ -136,7 +150,7 @@ class AfFormatTracker(
         eventTime: AnalyticsListener.EventTime,
         audioTrackConfig: AudioTrackConfig
     ) {
-        playbackHandler.post {
+        runOnPlaybackHandler {
             if (lastAudioTrack?.state == AudioTrack.STATE_UNINITIALIZED) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     lastAudioTrack?.removeOnRoutingChangedListener(
