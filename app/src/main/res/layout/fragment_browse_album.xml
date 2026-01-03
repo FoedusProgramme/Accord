@@ -106,7 +106,7 @@
                             android:textColor="#0B0B0F"
                             app:icon="@drawable/ic_master_play"
                             app:iconGravity="textStart"
-                            app:iconPadding="12dp"
+                            app:iconPadding="8dp"
                             app:iconTint="#0B0B0F"
                             app:backgroundTint="#F5F5F5" />
 
@@ -121,7 +121,7 @@
                             android:textColor="#0B0B0F"
                             app:icon="@drawable/ic_master_shuffle"
                             app:iconGravity="textStart"
-                            app:iconPadding="12dp"
+                            app:iconPadding="8dp"
                             app:iconTint="#0B0B0F"
                             app:backgroundTint="#F5F5F5" />
                     </LinearLayout>
