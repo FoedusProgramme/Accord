@@ -11,6 +11,7 @@ import uk.akane.accord.R
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.fragments.browse.AlbumsFragment
 import uk.akane.accord.ui.fragments.browse.ArtistsFragment
+import uk.akane.accord.ui.fragments.browse.PlaylistsFragment
 import uk.akane.accord.ui.fragments.browse.SongFragment
 
 class LibraryHeadAdapter(private val context: Context) : RecyclerView.Adapter<LibraryHeadAdapter.ViewHolder>() {
@@ -55,6 +56,7 @@ class LibraryHeadAdapter(private val context: Context) : RecyclerView.Adapter<Li
         holder.itemView.setOnClickListener {
             activity.fragmentSwitcherView.addFragmentToCurrentStack(
                 when (currentHeaderArrangeList[holder.bindingAdapterPosition]) {
+                    SectionType.PLAYLIST -> PlaylistsFragment()
                     SectionType.SONG -> SongFragment()
                     SectionType.ALBUM -> AlbumsFragment()
                     SectionType.ARTIST -> ArtistsFragment()

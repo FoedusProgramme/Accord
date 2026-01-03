@@ -22,6 +22,7 @@
         <attr name="title" format="string"/>
         <attr name="returnButtonText" format="string" />
         <attr name="hasLargeMenuItems" format="boolean"/>
+        <attr name="hasAddButton" format="boolean"/>
         <attr name="hasReturnButton" format="boolean"/>
         <attr name="hasExpandedTitle" format="boolean"/>
         <attr name="transparentExpandedBackground" format="boolean"/>

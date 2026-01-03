@@ -63,6 +63,8 @@ class NavigationBar @JvmOverloads constructor(
     private val ellipsisColor = accentColor
     private val ellipsisDrawable = ResourcesCompat.getDrawable(resources, R.drawable.ic_ellipsis_navigation_bar, null)!!
 
+    private val addDrawable = ResourcesCompat.getDrawable(resources, R.drawable.ic_plus, null)!!
+
     private val chevronColor = accentColor
     private val chevronDrawable = ResourcesCompat.getDrawable(resources, R.drawable.ic_chevron_left, null)!!
 
@@ -76,6 +78,11 @@ class NavigationBar @JvmOverloads constructor(
     private var shouldDrawExpandedTitle = true
     private var useTransparentExpandedBackground = false
     private var expandedAccentColor = accentColor
+    var shouldDrawAddButton: Boolean = false
+        set(value) {
+            field = value
+            invalidate()
+        }
 
     private var lifecycle: Lifecycle? = null
 
@@ -84,6 +91,7 @@ class NavigationBar @JvmOverloads constructor(
             titleText = getString(R.styleable.NavigationBar_title) ?: ""
             returnButtonText = getString(R.styleable.NavigationBar_returnButtonText) ?: ""
             shouldDrawLargeMenuItem = getBoolean(R.styleable.NavigationBar_hasLargeMenuItems, true)
+            shouldDrawAddButton = getBoolean(R.styleable.NavigationBar_hasAddButton, false)
             shouldDrawReturnButton = getBoolean(R.styleable.NavigationBar_hasReturnButton, false)
             shouldDrawExpandedTitle = getBoolean(R.styleable.NavigationBar_hasExpandedTitle, true)
             useTransparentExpandedBackground = getBoolean(
@@ -223,6 +231,7 @@ class NavigationBar @JvmOverloads constructor(
 
         Log.d("TAG", "invalidated! $shouldDrawLargeMenuItem")
         menuButtonBounds.setEmpty()
+        addButtonBounds.setEmpty()
         if (shouldDrawLargeMenuItem) {
             drawMenuItems(canvas)
         }
@@ -380,7 +389,7 @@ class NavigationBar @JvmOverloads constructor(
     private fun drawMenuItems(canvas: Canvas) {
         val accent = resolveAccentColor()
         val size = EXPANDED_MENU_ITEM_SIZE.dp.px
-        val ellipsisSize = 18.dp.px
+        val iconSize = 18.dp.px
 
         val textCenterY = if (shouldDrawReturnButton) {
             paddingTop + (EXPANDED_PADDED_HEIGHT_RETURN.dp.px / 2f) + returnRowYOffset
@@ -401,6 +410,11 @@ class NavigationBar @JvmOverloads constructor(
         } else {
             drawableLeft
         }
+        val addLeft = if (shouldDrawAddButton) {
+            ellipsisLeft - size - EXPANDED_ELLIPSIS_MARGIN.dp.px
+        } else {
+            0f
+        }
         val ellipsisTop = drawableTop
         val ellipsisRight = ellipsisLeft + size
         val ellipsisBottom = ellipsisTop + size
@@ -408,10 +422,10 @@ class NavigationBar @JvmOverloads constructor(
         val ellipsisCenterX = (ellipsisLeft + ellipsisRight) / 2f
         val ellipsisCenterY = (ellipsisTop + ellipsisBottom) / 2f
 
-        val ellipsisDrawableLeft = (ellipsisCenterX - ellipsisSize / 2f).toInt()
-        val ellipsisDrawableTop = (ellipsisCenterY - ellipsisSize / 2f).toInt()
-        val ellipsisDrawableRight = ellipsisDrawableLeft + ellipsisSize
-        val ellipsisDrawableBottom = ellipsisDrawableTop + ellipsisSize
+        val ellipsisDrawableLeft = (ellipsisCenterX - iconSize / 2f).toInt()
+        val ellipsisDrawableTop = (ellipsisCenterY - iconSize / 2f).toInt()
+        val ellipsisDrawableRight = ellipsisDrawableLeft + iconSize
+        val ellipsisDrawableBottom = ellipsisDrawableTop + iconSize
 
         ellipsisDrawable.setBounds(
             ellipsisDrawableLeft,
@@ -433,6 +447,47 @@ class NavigationBar @JvmOverloads constructor(
                 avatarDrawable.setTint(accent)
             }
             avatarDrawable.draw(canvas)
+        }
+
+        if (shouldDrawAddButton) {
+            val addRight = addLeft + size
+            val addBottom = ellipsisBottom
+            val addCenterX = (addLeft + addRight) / 2f
+            val addCenterY = (ellipsisTop + addBottom) / 2f
+            val addDrawableLeft = (addCenterX - iconSize / 2f).toInt()
+            val addDrawableTop = (addCenterY - iconSize / 2f).toInt()
+            val addDrawableRight = addDrawableLeft + iconSize
+            val addDrawableBottom = addDrawableTop + iconSize
+
+            val backgroundAlpha = (Color.alpha(ellipsisBackgroundColor) *
+                (1F - menuButtonTransformFactor * 0.35F)).toInt()
+            ellipsisBackgroundPaint.color =
+                ColorUtils.setAlphaComponent(ellipsisBackgroundColor, backgroundAlpha)
+            canvas.drawRoundRect(
+                addLeft,
+                ellipsisTop,
+                addRight,
+                addBottom,
+                size / 2f,
+                size / 2f,
+                ellipsisBackgroundPaint
+            )
+
+            addDrawable.setBounds(
+                addDrawableLeft,
+                addDrawableTop,
+                addDrawableRight.toInt(),
+                addDrawableBottom.toInt()
+            )
+            addDrawable.setTint(accent)
+            addDrawable.draw(canvas)
+
+            addButtonBounds.set(
+                addLeft,
+                ellipsisTop,
+                addRight,
+                addBottom
+            )
         }
 
         val backgroundAlpha = (Color.alpha(ellipsisBackgroundColor) *
@@ -467,10 +522,13 @@ class NavigationBar @JvmOverloads constructor(
     private var targetView: View? = null
     private var returnClickListener: (() -> Unit)? = null
     private var menuClickListener: (() -> Unit)? = null
+    private var addClickListener: (() -> Unit)? = null
     private var returnButtonPressed = false
     private var menuButtonPressed = false
+    private var addButtonPressed = false
     private val returnButtonBounds = RectF()
     private val menuButtonBounds = RectF()
+    private val addButtonBounds = RectF()
     private val returnRowYOffset = RETURN_ROW_Y_OFFSET.dp.px
     private var menuButtonChecked = false
     private var menuButtonTransformFactor = 0F
@@ -482,6 +540,10 @@ class NavigationBar @JvmOverloads constructor(
 
     fun setOnMenuClickListener(listener: (() -> Unit)?) {
         menuClickListener = listener
+    }
+
+    fun setOnAddClickListener(listener: (() -> Unit)?) {
+        addClickListener = listener
     }
 
     fun attach(
@@ -648,12 +710,15 @@ class NavigationBar @JvmOverloads constructor(
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
-        if (shouldDrawLargeMenuItem &&
-            ev.actionMasked == MotionEvent.ACTION_DOWN &&
-            menuButtonBounds.contains(ev.x, ev.y)
-        ) {
-            menuButtonPressed = true
-            return true
+        if (shouldDrawLargeMenuItem && ev.actionMasked == MotionEvent.ACTION_DOWN) {
+            if (addButtonBounds.contains(ev.x, ev.y)) {
+                addButtonPressed = true
+                return true
+            }
+            if (menuButtonBounds.contains(ev.x, ev.y)) {
+                menuButtonPressed = true
+                return true
+            }
         }
         if (!shouldDrawReturnButton) return super.onInterceptTouchEvent(ev)
         if (ev.actionMasked == MotionEvent.ACTION_DOWN &&
@@ -669,6 +734,10 @@ class NavigationBar @JvmOverloads constructor(
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 if (shouldDrawLargeMenuItem) {
+                    addButtonPressed = addButtonBounds.contains(event.x, event.y)
+                    if (addButtonPressed) {
+                        return true
+                    }
                     menuButtonPressed = menuButtonBounds.contains(event.x, event.y)
                     if (menuButtonPressed) {
                         return true
@@ -679,6 +748,11 @@ class NavigationBar @JvmOverloads constructor(
                 return returnButtonPressed
             }
             MotionEvent.ACTION_UP -> {
+                if (addButtonPressed && addButtonBounds.contains(event.x, event.y)) {
+                    (addClickListener ?: {}).invoke()
+                    performClick()
+                }
+                addButtonPressed = false
                 if (menuButtonPressed && menuButtonBounds.contains(event.x, event.y)) {
                     (menuClickListener ?: { showDefaultMenu() }).invoke()
                     performClick()
@@ -695,6 +769,7 @@ class NavigationBar @JvmOverloads constructor(
             MotionEvent.ACTION_CANCEL -> {
                 returnButtonPressed = false
                 menuButtonPressed = false
+                addButtonPressed = false
                 return false
             }
         }
