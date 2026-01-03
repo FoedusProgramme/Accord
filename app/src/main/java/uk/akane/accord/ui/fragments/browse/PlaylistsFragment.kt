@@ -53,6 +53,9 @@ class PlaylistsFragment : SwitcherPostponeFragment() {
         navigationBar.setOnReturnClickListener {
             activity.fragmentSwitcherView.popBackTopFragmentIfExists()
         }
+        navigationBar.setOnAddClickListener {
+            activity.showContainer(AddPlaylistFragment())
+        }
 
         return rootView
     }

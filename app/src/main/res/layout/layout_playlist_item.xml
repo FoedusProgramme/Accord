@@ -7,8 +7,7 @@
     android:layout_height="wrap_content"
     android:background="?selectableItemBackground"
     android:clickable="true"
-    android:focusable="true"
-    android:paddingVertical="8dp">
+    android:focusable="true">
 
     <ImageView
         android:id="@+id/favorite_marker"
@@ -27,6 +26,7 @@
         android:layout_width="74dp"
         android:layout_height="74dp"
         android:layout_marginStart="22dp"
+        android:layout_marginVertical="8dp"
         app:cardCornerRadius="8dp"
         app:cardElevation="0dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -53,10 +53,10 @@
         android:includeFontPadding="false"
         android:textColor="@color/onSurfaceColor"
         android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="@id/cover_card"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/chevron"
         app:layout_constraintStart_toEndOf="@id/cover_card"
-        app:layout_constraintTop_toTopOf="@id/cover_card"
+        app:layout_constraintTop_toTopOf="parent"
         tools:text="Playlist" />
 
     <ImageView
@@ -66,9 +66,9 @@
         android:layout_marginEnd="22dp"
         android:contentDescription="Open"
         android:src="@drawable/ic_chevron_small"
-        app:layout_constraintBottom_toBottomOf="@id/cover_card"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/cover_card"
+        app:layout_constraintTop_toTopOf="parent"
         app:tint="@color/onSurfaceColorInactive" />
 
     <View

@@ -1,6 +1,8 @@
 package uk.akane.accord.ui.adapters.browse
 
+import android.content.Context
 import android.graphics.Color
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -112,6 +114,7 @@ class PlaylistAdapter(
 
     private suspend fun submitPlaylists(playlists: List<Playlist>, songs: List<MediaItem>) {
         val oldList = list.toList()
+        val coverPrefs = mainActivity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val result = withContext(Dispatchers.Default) {
             val favoriteFromPlaylists = playlists.firstOrNull { it is Favorite } as? Favorite
             val favoriteSongs = favoriteFromPlaylists?.songList
@@ -133,6 +136,11 @@ class PlaylistAdapter(
             val items = basePlaylists.map { playlist ->
                 val isFavorite = playlist is Favorite
                 val isRecentlyAdded = playlist is RecentlyAdded
+                val storedCoverUri = playlist.title
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { coverPrefs.getString(coverKey(it), null) }
+                    ?.let { Uri.parse(it) }
+                val hasCustomCover = storedCoverUri != null
                 val title = when {
                     isFavorite -> "Favourite Songs"
                     isRecentlyAdded -> "New"
@@ -142,7 +150,7 @@ class PlaylistAdapter(
                 val iconRes = when {
                     isFavorite -> uk.akane.cupertino.R.drawable.ic_star_filled
                     isRecentlyAdded -> R.drawable.ic_playlist
-                    playlist.songList.isEmpty() -> R.drawable.ic_playlist
+                    playlist.songList.isEmpty() && !hasCustomCover -> R.drawable.ic_playlist
                     else -> null
                 }
                 val iconTintRes = when {
@@ -150,10 +158,10 @@ class PlaylistAdapter(
                     iconRes != null -> R.color.onSurfaceColorInactive
                     else -> R.color.onSurfaceColorInactive
                 }
-                val artworkUri = if (iconRes == null) {
-                    playlist.songList.firstOrNull()?.mediaMetadata?.artworkUri
-                } else {
-                    null
+                val artworkUri = when {
+                    hasCustomCover -> storedCoverUri
+                    iconRes == null -> playlist.songList.firstOrNull()?.mediaMetadata?.artworkUri
+                    else -> null
                 }
 
                 PlaylistRow(
@@ -180,6 +188,8 @@ class PlaylistAdapter(
         result.second.dispatchUpdatesTo(this@PlaylistAdapter)
         recyclerView.post { onContentLoaded.invoke() }
     }
+
+    private fun coverKey(name: String): String = "$COVER_KEY_PREFIX$name"
 
     private fun buildKey(
         playlist: Playlist,
@@ -221,4 +231,9 @@ class PlaylistAdapter(
         val isRecentlyAdded: Boolean,
         val songs: List<MediaItem>
     )
+
+    companion object {
+        private const val PREFS_NAME = "playlist_covers"
+        private const val COVER_KEY_PREFIX = "playlist_cover_"
+    }
 }

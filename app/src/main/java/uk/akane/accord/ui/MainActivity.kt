@@ -268,6 +268,9 @@ class MainActivity : AppCompatActivity() {
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
+            isClickable = true
+            isFocusable = true
+            isFocusableInTouchMode = true
         }
 
         containerId = container.id
@@ -322,10 +325,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun showContainer(fragment: Fragment) {
+        val rootView = findViewById<ViewGroup>(android.R.id.content)
+        val existing = rootView.findViewById<FragmentContainerView>(containerId)
+        if (existing != null) return
+        insertContainer(fragment)
+    }
+
     fun removeContainer() {
         val rootView = findViewById<ViewGroup>(android.R.id.content)
 
         val container = rootView.findViewById<FragmentContainerView>(containerId)
+            ?: return
 
         val containerCardView: MaterialCardView = container.findViewById(R.id.root_card_view)
         val screenHeight = Resources.getSystem().displayMetrics.heightPixels.toFloat()
@@ -339,6 +350,7 @@ class MainActivity : AppCompatActivity() {
                     supportFragmentManager.beginTransaction().remove(it).commit()
                 }
                 rootView.removeView(container)
+                containerId = View.NO_ID
             }
         ) { animatedValue ->
             containerCardView.translationY = animatedValue
