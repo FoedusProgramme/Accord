@@ -243,6 +243,8 @@
     <string name="media_control_text_error">Failed to open media control</string>
 
     <string name="browse_by_artist">Browse by Artist</string>
+    <string name="artist_top_songs">Top songs</string>
+    <string name="artist_song_count">%1$d songs</string>
     <string name="browse_by_album">Browse by Album</string>
     <string name="browse_by_genre">Browse by Genre</string>
     <string name="queue">Queue</string>

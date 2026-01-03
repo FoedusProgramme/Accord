@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surfaceColor">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/scrollContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/headerContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/ivHeaderArt"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/category_artists"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/default_cover" />
+
+                <View
+                    android:id="@+id/vHeaderGradient"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_header_bottom_fade" />
+
+                <TextView
+                    android:id="@+id/tvArtistName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="20dp"
+                    android:fontFamily="@font/inter_bold"
+                    android:includeFontPadding="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="32sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnPlay"
+                    tools:text="Artist Name" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnPlay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="20dp"
+                    android:contentDescription="@string/play"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:srcCompat="@drawable/ic_master_play"
+                    app:backgroundTint="@color/accentColor"
+                    app:tint="@android:color/white" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/latestCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/surfaceColor">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="0dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:paddingEnd="0dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/ivLatestCover"
+                        style="@style/Widget.Accord.BottomNavigation.BottomSheet.Preview.Cover"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
+                        android:contentDescription="@string/category_albums"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/default_cover"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tvLatestDate"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:textColor="@color/onSurfaceColorInactive"
+                        android:textSize="12sp"
+                        android:includeFontPadding="false"
+                        app:layout_constraintStart_toEndOf="@id/ivLatestCover"
+                        app:layout_constraintTop_toTopOf="@id/ivLatestCover"
+                        app:layout_constraintEnd_toStartOf="@id/btnLatestAdd"
+                        tools:text="2025-09-05" />
+
+                    <TextView
+                        android:id="@+id/tvLatestTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/inter_semibold"
+                        android:includeFontPadding="false"
+                        android:textColor="@color/onSurfaceColor"
+                        android:textSize="18sp"
+                        app:layout_constraintStart_toEndOf="@id/ivLatestCover"
+                        app:layout_constraintTop_toBottomOf="@id/tvLatestDate"
+                        app:layout_constraintEnd_toStartOf="@id/btnLatestAdd"
+                        tools:text="Latest Album" />
+
+                    <TextView
+                        android:id="@+id/tvLatestCount"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginTop="4dp"
+                        android:includeFontPadding="false"
+                        android:textColor="@color/onSurfaceColorInactive"
+                        android:textSize="14sp"
+                        app:layout_constraintStart_toEndOf="@id/ivLatestCover"
+                        app:layout_constraintTop_toBottomOf="@id/tvLatestTitle"
+                        app:layout_constraintEnd_toStartOf="@id/btnLatestAdd"
+                        tools:text="5 songs" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLatestAdd"
+                        style="@style/Widget.Accord.ActionButton"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="0dp"
+                        android:contentDescription="@string/popup_add_to_a_playlist"
+                        app:icon="@android:drawable/ic_input_add"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/accentColor"
+                        app:backgroundTint="@color/navigationBarEllipsisBackground"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:id="@+id/topSongsHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvTopSongs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/inter_semibold"
+                    android:includeFontPadding="false"
+                    android:text="@string/artist_top_songs"
+                    android:textColor="@color/onSurfaceColor"
+                    android:textSize="20sp" />
+
+                <ImageView
+                    android:id="@+id/ivTopSongsChevron"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="6dp"
+                    android:contentDescription="@string/artist_top_songs"
+                    android:src="@drawable/ic_chevron_small"
+                    app:tint="@color/onSurfaceColorInactive" />
+
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvSongs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <uk.akane.accord.ui.components.NavigationBar
+        android:id="@+id/navigation_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title=""
+        app:hasLargeMenuItems="true"
+        app:hasReturnButton="true"
+        app:hasExpandedTitle="false"
+        app:transparentExpandedBackground="true"
+        app:expandedAccentColor="@android:color/white"
+        app:returnButtonText="@string/category_artists" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

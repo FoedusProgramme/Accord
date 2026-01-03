@@ -8,7 +8,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -22,6 +21,7 @@ import kotlinx.coroutines.withContext
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.ui.MainActivity
+import uk.akane.accord.ui.fragments.browse.ArtistDetailFragment
 
 class ArtistAdapter(
     private val recyclerView: RecyclerView,
@@ -64,12 +64,9 @@ class ArtistAdapter(
         holder.artistName.text = item.name
 
         holder.itemView.setOnClickListener {
-            val mediaController = mainActivity.getPlayer() ?: return@setOnClickListener
-            if (item.tracks.isEmpty()) return@setOnClickListener
-
-            mediaController.setMediaItems(item.tracks, 0, C.TIME_UNSET)
-            mediaController.prepare()
-            mediaController.play()
+            mainActivity.fragmentSwitcherView.addFragmentToCurrentStack(
+                ArtistDetailFragment.newInstance(item.name)
+            )
         }
     }
 
