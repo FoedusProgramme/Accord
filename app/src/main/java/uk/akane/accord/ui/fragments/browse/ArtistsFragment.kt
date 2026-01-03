@@ -70,7 +70,7 @@ class ArtistsFragment : SwitcherPostponeFragment() {
                 if (position == RecyclerView.NO_POSITION) return
 
                 outRect.left = sidePx
-                outRect.right = sidePx
+                outRect.right = 0
             }
 
             private fun dpToPx(dp: Int): Int =

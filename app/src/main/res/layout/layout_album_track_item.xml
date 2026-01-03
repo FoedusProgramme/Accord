@@ -20,7 +20,7 @@
             android:id="@+id/track_number"
             android:layout_width="24dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
+            android:layout_marginStart="16dp"
             android:gravity="center"
             android:textColor="@color/onSurfaceColorInactive"
             android:fontFamily="@font/inter_medium"
@@ -62,14 +62,12 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.google.android.material.divider.MaterialDivider
+    <View
         android:id="@+id/divider"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="56dp"
-        android:layout_marginEnd="24dp"
-        app:dividerThickness="0.5dp"
-        app:dividerColor="@color/dividerColor"
+        android:layout_height="0.25dp"
+        android:layout_marginStart="52dp"
+        android:background="@color/bottomNavigationDividerColor"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
