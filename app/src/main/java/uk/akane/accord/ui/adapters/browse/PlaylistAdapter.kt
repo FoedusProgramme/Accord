@@ -12,7 +12,6 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.media3.common.C
 import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.DiffUtil
@@ -27,6 +26,7 @@ import kotlinx.coroutines.withContext
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.ui.MainActivity
+import uk.akane.accord.ui.fragments.browse.PlaylistDetailFragment
 import uk.akane.libphonograph.dynamicitem.Favorite
 import uk.akane.libphonograph.dynamicitem.RecentlyAdded
 import uk.akane.libphonograph.items.Playlist
@@ -94,11 +94,9 @@ class PlaylistAdapter(
         }
 
         holder.itemView.setOnClickListener {
-            val mediaController = mainActivity.getPlayer() ?: return@setOnClickListener
-            if (item.songs.isEmpty()) return@setOnClickListener
-            mediaController.setMediaItems(item.songs, 0, C.TIME_UNSET)
-            mediaController.prepare()
-            mediaController.play()
+            mainActivity.fragmentSwitcherView.addFragmentToCurrentStack(
+                PlaylistDetailFragment.newInstance(item.playlistId, item.title, item.songs.size)
+            )
         }
     }
 
@@ -126,6 +124,7 @@ class PlaylistAdapter(
                 artworkUri = null,
                 iconRes = uk.akane.cupertino.R.drawable.ic_star_filled,
                 iconTintRes = R.color.accentColor,
+                playlistId = favoriteFromPlaylists?.id,
                 isFavorite = true,
                 isRecentlyAdded = false,
                 songs = favoriteSongs
@@ -170,6 +169,7 @@ class PlaylistAdapter(
                     artworkUri = artworkUri,
                     iconRes = iconRes,
                     iconTintRes = iconTintRes,
+                    playlistId = playlist.id,
                     isFavorite = isFavorite,
                     isRecentlyAdded = isRecentlyAdded,
                     songs = playlist.songList
@@ -227,6 +227,7 @@ class PlaylistAdapter(
         val artworkUri: android.net.Uri?,
         val iconRes: Int?,
         val iconTintRes: Int,
+        val playlistId: Long?,
         val isFavorite: Boolean,
         val isRecentlyAdded: Boolean,
         val songs: List<MediaItem>

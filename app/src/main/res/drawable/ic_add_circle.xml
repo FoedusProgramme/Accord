@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Outer circle -->
+    <path
+        android:pathData="M12,2 A10,10 0 1,1 11.999,2"
+        android:strokeWidth="2"
+        android:strokeColor="#000000"
+        android:fillColor="@android:color/transparent" />
+
+    <!-- Plus sign -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="
+            M13,7
+            C13,6.4477 12.5523,6 12,6
+            C11.4477,6 11,6.4477 11,7
+            V11
+            H7
+            C6.4477,11 6,11.4477 6,12
+            C6,12.5523 6.4477,13 7,13
+            H11
+            V17
+            C11,17.5523 11.4477,18 12,18
+            C12.5523,18 13,17.5523 13,17
+            V13
+            H17
+            C17.5523,13 18,12.5523 18,12
+            C18,11.4477 17.5523,11 17,11
+            H13
+            V7
+            Z
+        "/>
+
+</vector>

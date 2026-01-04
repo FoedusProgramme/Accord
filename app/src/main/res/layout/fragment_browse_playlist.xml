@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surfaceColor">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingTop="92dp"
+        android:paddingBottom="24dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/scrollContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- Large music placeholder card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/musicCard"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginStart="44dp"
+                android:layout_marginEnd="44dp"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="@color/searchBarBackground"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintDimensionRatio="1:1">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageView
+                        android:id="@+id/musicIcon"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:layout_gravity="center"
+                        android:alpha="0.35"
+                        android:contentDescription="@string/music"
+                        app:srcCompat="@drawable/ic_music_note"
+                        app:tint="@color/playlistMusicIconTint" />
+
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Title / artist / updated -->
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Dance"
+                android:fontFamily="@font/inter_semibold"
+                android:includeFontPadding="false"
+                android:textColor="@color/onSurfaceColor"
+                android:textSize="22sp"
+                app:layout_constraintTop_toBottomOf="@+id/musicCard"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <TextView
+                android:id="@+id/tvArtist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Reece Toth"
+                android:fontFamily="@font/inter_medium"
+                android:includeFontPadding="false"
+                android:textColor="@color/onSurfaceColorInactive"
+                android:textSize="16sp"
+                app:layout_constraintTop_toBottomOf="@+id/tvTitle"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <TextView
+                android:id="@+id/tvUpdated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Just Updated"
+                android:textAllCaps="false"
+                android:fontFamily="@font/inter_regular"
+                android:includeFontPadding="false"
+                android:textColor="@color/labels_tertiary"
+                android:textSize="12sp"
+                app:layout_constraintTop_toBottomOf="@+id/tvArtist"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <View
+                android:id="@+id/addMusicDivider"
+                android:layout_width="0dp"
+                android:layout_height="0.5dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="12dp"
+                android:background="@color/bottomNavigationDividerColor"
+                app:layout_constraintTop_toBottomOf="@+id/tvUpdated"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Add Music row -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/addMusicRow"
+                android:layout_width="0dp"
+                android:layout_height="54dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="@color/surfaceColor"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="0dp"
+                app:layout_constraintTop_toBottomOf="@+id/addMusicDivider"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <FrameLayout
+                        android:id="@+id/addIconContainer"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:background="@drawable/bg_add_music_icon"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            app:srcCompat="@drawable/ic_plus"
+                            app:tint="@color/accentColor"/>
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvAddMusic"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:fontFamily="@font/inter_medium"
+                        android:includeFontPadding="false"
+                        android:text="@string/add_music"
+                        android:textColor="@color/onSurfaceColor"
+                        android:textSize="16sp"
+                        app:layout_constraintStart_toEndOf="@+id/addIconContainer"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"/>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Suggested Songs card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/suggestedCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="14dp"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/playlistAccentBackground"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:layout_constraintTop_toBottomOf="@+id/addMusicRow"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <!-- Header -->
+                    <TextView
+                        android:id="@+id/tvSuggestedTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/suggested_songs"
+                        android:fontFamily="@font/inter_semibold"
+                        android:includeFontPadding="false"
+                        android:textColor="@color/onSurfaceColor"
+                        android:textSize="18sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/btnRefresh"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <TextView
+                        android:id="@+id/tvSuggestedSubtitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/preview_and_add_to_playlist"
+                        android:fontFamily="@font/inter_regular"
+                        android:includeFontPadding="false"
+                        android:textColor="@color/onSurfaceColorInactive"
+                        android:textSize="13sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/btnRefresh"
+                        app:layout_constraintTop_toBottomOf="@+id/tvSuggestedTitle"/>
+
+                    <ImageButton
+                        android:id="@+id/btnRefresh"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:padding="8dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:srcCompat="@drawable/ic_refresh"
+                        app:tint="@color/onSurfaceColorInactive" />
+
+                    <!-- Song row -->
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/ivAlbum"
+                        style="@style/Widget.Accord.BottomNavigation.BottomSheet.Preview.Cover"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="16dp"
+                        android:contentDescription="@string/category_albums"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/default_cover"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvSuggestedSubtitle" />
+
+                    <TextView
+                        android:id="@+id/tvSong"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="REACT"
+                        android:fontFamily="@font/inter_semibold"
+                        android:includeFontPadding="false"
+                        android:textColor="@color/onSurfaceColor"
+                        android:textSize="16sp"
+                        app:layout_constraintStart_toEndOf="@+id/ivAlbum"
+                        app:layout_constraintTop_toTopOf="@+id/ivAlbum"
+                        app:layout_constraintEnd_toStartOf="@+id/btnAddSong"/>
+
+                    <TextView
+                        android:id="@+id/tvSongArtist"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginTop="2dp"
+                        android:text="Switch Disco &amp; Ella Henderson"
+                        android:fontFamily="@font/inter_regular"
+                        android:includeFontPadding="false"
+                        android:textColor="@color/onSurfaceColorInactive"
+                        android:textSize="13sp"
+                        app:layout_constraintStart_toEndOf="@+id/ivAlbum"
+                        app:layout_constraintTop_toBottomOf="@+id/tvSong"
+                        app:layout_constraintEnd_toStartOf="@+id/btnAddSong"/>
+
+                    <ImageButton
+                        android:id="@+id/btnAddSong"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/popup_add_to_a_playlist"
+                        android:padding="8dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/ivAlbum"
+                        app:layout_constraintBottom_toBottomOf="@+id/ivAlbum"
+                        app:srcCompat="@drawable/ic_add_circle"
+                        app:tint="@color/accentColor"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <uk.akane.accord.ui.components.NavigationBar
+        android:id="@+id/navigation_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title=""
+        app:hasLargeMenuItems="true"
+        app:hasReturnButton="true"
+        app:hasExpandedTitle="false"
+        app:transparentExpandedBackground="true"
+        app:expandedAccentColor="@color/accentColor"
+        app:returnButtonText="@string/category_playlists" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

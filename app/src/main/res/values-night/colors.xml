@@ -50,4 +50,8 @@
     <!-- Default cover -->
     <color name="defaultCoverBackground">#4D4E51</color>
     <color name="defaultCoverForeground">#636366</color>
+
+    <!-- Playlist fragment -->
+    <color name="playlistAccentBackground">#101011</color>
+    <color name="playlistMusicIconTint">@color/onSurfaceColorInactive</color>
 </resources>

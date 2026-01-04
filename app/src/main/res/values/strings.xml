@@ -250,4 +250,15 @@
     <string name="queue">Queue</string>
 
     <string name="time_remaining">-%1$s</string>
+    <string name="cancel">Cancel</string>
+    <string name="new_playlist">New Playlist</string>
+    <string name="create">Create</string>
+    <string name="add_cover">Add cover</string>
+    <string name="playlist_title">Playlist Title</string>
+    <string name="playlist_cover">Playlist cover</string>
+    <string name="favourite">Favourite</string>
+    <string name="open">Open</string>
+    <string name="add_music">Add Music</string>
+    <string name="suggested_songs">Suggested Songs</string>
+    <string name="preview_and_add_to_playlist">Preview and add to playlist</string>
 </resources>
