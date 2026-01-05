@@ -111,7 +111,6 @@ class NavigationBar @JvmOverloads constructor(
     private var collapseProgress = 0F
     private var renderShowProgress = 0F
     private var scrollOffsetPx = 0
-    private var scrollOffsetBaselinePx = 0
     private var collapseStartOffsetPx = 0
 
     var blurRadius: Float = 0F
@@ -569,14 +568,15 @@ class NavigationBar @JvmOverloads constructor(
 
             drawRenderNode()
 
-            view.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            val scrollListener = object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
-                    val rawOffset = recyclerView.computeVerticalScrollOffset()
-                    val currentOffset = (rawOffset - scrollOffsetBaselinePx).coerceAtLeast(0)
-                    handleScroll(currentOffset)
+                    scrollOffsetPx = (scrollOffsetPx + dy).coerceAtLeast(0)
+                    computeRecyclerTopOffset(recyclerView)?.let { scrollOffsetPx = it }
+                    handleScroll(scrollOffsetPx)
                 }
-            })
+            }
+            view.addOnScrollListener(scrollListener)
 
             if (view.computeVerticalScrollOffset() == height) {
                 view.scrollBy(0, -height)
@@ -587,9 +587,7 @@ class NavigationBar @JvmOverloads constructor(
 
             renderNode?.setPosition(0, 0, renderNodeWidth, renderNodeHeight)
 
-            scrollOffsetBaselinePx = view.computeVerticalScrollOffset()
-            scrollOffsetPx = 0
-            handleScroll(0)
+            syncRecyclerScroll(view)
         }
     }
 
@@ -832,7 +830,37 @@ class NavigationBar @JvmOverloads constructor(
     fun onVisibilityChangedFromFragment(isHidden: Boolean) {
         if (!isHidden) {
             refreshRenderNode()
+            post { syncScrollWithTarget() }
         }
+    }
+
+    private fun syncScrollWithTarget() {
+        val view = targetView ?: return
+        when (view) {
+            is RecyclerView -> syncRecyclerScroll(view)
+            is NestedScrollView -> handleScroll(view.scrollY)
+        }
+    }
+
+    private fun syncRecyclerScroll(recyclerView: RecyclerView) {
+        val offset = computeRecyclerScrollOffset(recyclerView)
+        if (offset == scrollOffsetPx) return
+        scrollOffsetPx = offset
+        handleScroll(offset)
+    }
+
+    private fun computeRecyclerScrollOffset(recyclerView: RecyclerView): Int {
+        computeRecyclerTopOffset(recyclerView)?.let { return it }
+        return recyclerView.computeVerticalScrollOffset().coerceAtLeast(0)
+    }
+
+    private fun computeRecyclerTopOffset(recyclerView: RecyclerView): Int? {
+        val layoutManager = recyclerView.layoutManager as? androidx.recyclerview.widget.LinearLayoutManager
+            ?: return null
+        if (layoutManager.findFirstVisibleItemPosition() != 0) return null
+        val firstChild = layoutManager.findViewByPosition(0) ?: return 0
+        val decoratedTop = layoutManager.getDecoratedTop(firstChild)
+        return (recyclerView.paddingTop - decoratedTop).coerceAtLeast(0)
     }
 
     private fun refreshRenderNode() {
