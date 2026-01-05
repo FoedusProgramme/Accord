@@ -120,7 +120,7 @@ class PlaylistAdapter(
 
             val favoriteRow = PlaylistRow(
                 key = "favorite",
-                title = "Favourite Songs",
+                title = FAVORITE_PLAYLIST_TITLE,
                 artworkUri = null,
                 iconRes = uk.akane.cupertino.R.drawable.ic_star_filled,
                 iconTintRes = R.color.accentColor,
@@ -141,7 +141,7 @@ class PlaylistAdapter(
                     ?.let { Uri.parse(it) }
                 val hasCustomCover = storedCoverUri != null
                 val title = when {
-                    isFavorite -> "Favourite Songs"
+                    isFavorite -> FAVORITE_PLAYLIST_TITLE
                     isRecentlyAdded -> "New"
                     !playlist.title.isNullOrBlank() -> playlist.title!!
                     else -> "(Untitled Playlist)"
@@ -235,5 +235,6 @@ class PlaylistAdapter(
     companion object {
         private const val PREFS_NAME = "playlist_covers"
         private const val COVER_KEY_PREFIX = "playlist_cover_"
+        const val FAVORITE_PLAYLIST_TITLE = "Favourite Songs"
     }
 }
