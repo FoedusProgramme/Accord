@@ -130,7 +130,7 @@ class PlaylistAdapter(
                 songs = favoriteSongs
             )
 
-            val basePlaylists = playlists.filterNot { it is Favorite }
+            val basePlaylists = playlists.filterNot { it is Favorite || it is RecentlyAdded }
 
             val items = basePlaylists.map { playlist ->
                 val isFavorite = playlist is Favorite
@@ -176,9 +176,8 @@ class PlaylistAdapter(
                 )
             }
 
-            val recentItems = items.filter { it.isRecentlyAdded }
             val regularItems = items.filter { !it.isFavorite && !it.isRecentlyAdded }
-            val orderedItems = listOf(favoriteRow) + recentItems + regularItems
+            val orderedItems = listOf(favoriteRow) + regularItems
 
             orderedItems to DiffUtil.calculateDiff(PlaylistDiffCallback(oldList, orderedItems))
         }
