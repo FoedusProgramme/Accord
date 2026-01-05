@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.Log
+import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.doOnLayout
 import androidx.media3.common.MediaItem
@@ -102,6 +103,16 @@ class FullPlayerToolbar @JvmOverloads constructor(
         listener: OverlayBackgroundButton.OnCheckedChangeListener
     ) {
         ellipsisBackgroundButton.setOnCheckedChangeListener(listener)
+    }
+
+    fun setOnStarClickListener(listener: View.OnClickListener) {
+        starTransformButton.setOnClickListener(listener)
+    }
+
+    fun setStarChecked(checked: Boolean) {
+        if (starTransformButton.isChecked != checked) {
+            starTransformButton.toggle()
+        }
     }
 
     fun setEllipsisChecked(checked: Boolean) {

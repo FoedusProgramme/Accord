@@ -53,6 +53,7 @@ import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.ui.adapters.QueueItemTouchHelperCallback
 import uk.akane.accord.ui.adapters.QueuePreviewAdapter
 import uk.akane.accord.ui.MainActivity
+import uk.akane.accord.ui.adapters.browse.PlaylistAdapter
 import uk.akane.accord.ui.components.FadingVerticalEdgeLayout
 import uk.akane.accord.ui.components.lyrics.LyricsViewModel
 import uk.akane.cupertino.widget.OverlayTextView
@@ -226,6 +227,12 @@ class FullPlayer @JvmOverloads constructor(
                 callUpPlayerPopupMenu(button)
             }
         )
+        starTransformButton.setOnClickListener {
+            toggleFavoriteForCurrentSong()
+        }
+        fullPlayerToolbar.setOnStarClickListener {
+            toggleFavoriteForCurrentSong()
+        }
 
         clipToOutline = true
 
@@ -474,6 +481,41 @@ class FullPlayer @JvmOverloads constructor(
         }
         queueRepeatButton.setIconResource(iconRes)
         queueRepeatButton.setChecked(repeatMode != Player.REPEAT_MODE_OFF)
+    }
+
+    private fun toggleFavoriteForCurrentSong() {
+        val mediaItem = instance?.currentMediaItem ?: return
+        val key = buildSongKey(mediaItem)
+        val keys = PlaylistAdapter.loadFavoriteKeys(context)
+        val isFavorite = keys.contains(key)
+        if (isFavorite) {
+            keys.removeAll { it == key }
+        } else {
+            keys.add(0, key)
+        }
+        PlaylistAdapter.saveFavoriteKeys(context, keys)
+        updateFavoriteButtons(!isFavorite)
+        activity.updateLibrary()
+    }
+
+    private fun syncFavoriteButtonsForCurrentItem() {
+        val mediaItem = instance?.currentMediaItem ?: return updateFavoriteButtons(false)
+        val key = buildSongKey(mediaItem)
+        val keys = PlaylistAdapter.loadFavoriteKeys(context)
+        updateFavoriteButtons(keys.contains(key))
+    }
+
+    private fun updateFavoriteButtons(checked: Boolean) {
+        if (starTransformButton.isChecked != checked) {
+            starTransformButton.toggle()
+        }
+        fullPlayerToolbar.setStarChecked(checked)
+    }
+
+    private fun buildSongKey(item: MediaItem): String {
+        val mediaId = item.mediaId
+        if (mediaId.isNotBlank()) return mediaId
+        return item.localConfiguration?.uri?.toString() ?: item.hashCode().toString()
     }
 
     private fun resolveDurationMs(): Long? {
@@ -796,10 +838,12 @@ class FullPlayer @JvmOverloads constructor(
                 skipAnimation = firstTime
             )
             updateProgressDisplay()
+            syncFavoriteButtonsForCurrentItem()
         } else {
             lastDisposable?.dispose()
             lastDisposable = null
             updateProgressDisplay()
+            updateFavoriteButtons(false)
         }
     }
 
