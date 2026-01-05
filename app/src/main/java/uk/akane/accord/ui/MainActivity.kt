@@ -2,7 +2,6 @@ package uk.akane.accord.ui
 
 import android.content.res.Resources
 import android.os.Bundle
-import android.util.Log
 import android.view.RoundedCorner
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +17,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.shape.CornerFamily
@@ -91,13 +89,7 @@ class MainActivity : AppCompatActivity() {
                 updateLibrary()
             })
         } else {
-            Log.d("TAG", "yes we have permission")
             updateLibrary()
-            lifecycleScope.launch {
-                reader.songListFlow.collect { songs ->
-                    Log.d("TAG", "collected song list: ${songs.size}")
-                }
-            }
         }
 
         bottomNavigationView = findViewById(R.id.bottom_nav)
@@ -367,6 +359,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
     inline val accord: Accord
         get() = application as Accord

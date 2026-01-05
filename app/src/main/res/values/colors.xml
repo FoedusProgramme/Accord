@@ -67,7 +67,7 @@
     <color name="defaultCoverForeground">#737373</color>
 
     <!-- Playlist fragment -->
-    <color name="playlistAccentBackground">#1F787880</color>
+    <color name="playlistAccentBackground">#F9F7F9</color>
     <color name="playlistMusicIconTint">@color/defaultCoverForeground</color>
 
 </resources>

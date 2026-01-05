@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="6dp">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/cover"
+        style="@style/Widget.Accord.BottomNavigation.BottomSheet.Preview.Cover"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:contentDescription="@string/category_albums"
+        android:scaleType="centerCrop"
+        android:src="@drawable/default_cover"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:fontFamily="@font/inter_semibold"
+        android:includeFontPadding="false"
+        android:singleLine="true"
+        android:textColor="@color/onSurfaceColor"
+        android:textSize="16sp"
+        app:layout_constraintStart_toEndOf="@id/cover"
+        app:layout_constraintEnd_toStartOf="@id/btnAdd"
+        app:layout_constraintTop_toTopOf="@id/cover"
+        tools:text="REACT" />
+
+    <TextView
+        android:id="@+id/subtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="2dp"
+        android:fontFamily="@font/inter_regular"
+        android:includeFontPadding="false"
+        android:singleLine="true"
+        android:textColor="@color/onSurfaceColorInactive"
+        android:textSize="13sp"
+        app:layout_constraintStart_toEndOf="@id/cover"
+        app:layout_constraintEnd_toStartOf="@id/btnAdd"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        tools:text="Switch Disco &amp; Ella Henderson" />
+
+    <ImageButton
+        android:id="@+id/btnAdd"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/popup_add_to_a_playlist"
+        android:padding="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/cover"
+        app:layout_constraintBottom_toBottomOf="@id/cover"
+        app:srcCompat="@drawable/ic_add_circle"
+        app:tint="@color/accentColor" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
