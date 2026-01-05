@@ -12,7 +12,6 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.ui.MainActivity
@@ -113,10 +113,10 @@ class PlaylistAdapter(
     private suspend fun submitPlaylists(playlists: List<Playlist>, songs: List<MediaItem>) {
         val oldList = list.toList()
         val coverPrefs = mainActivity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val favoriteKeys = loadFavoriteKeys(mainActivity)
         val result = withContext(Dispatchers.Default) {
-            val favoriteFromPlaylists = playlists.firstOrNull { it is Favorite } as? Favorite
-            val favoriteSongs = favoriteFromPlaylists?.songList
-                ?: songs.filter { (it.mediaMetadata.userRating as? HeartRating)?.isHeart == true }
+            val songMap = songs.associateBy { buildSongKey(it) }
+            val favoriteSongs = favoriteKeys.mapNotNull { songMap[it] }
 
             val favoriteRow = PlaylistRow(
                 key = "favorite",
@@ -124,7 +124,7 @@ class PlaylistAdapter(
                 artworkUri = null,
                 iconRes = uk.akane.cupertino.R.drawable.ic_star_filled,
                 iconTintRes = R.color.accentColor,
-                playlistId = favoriteFromPlaylists?.id,
+                playlistId = null,
                 isFavorite = true,
                 isRecentlyAdded = false,
                 songs = favoriteSongs
@@ -235,6 +235,34 @@ class PlaylistAdapter(
     companion object {
         private const val PREFS_NAME = "playlist_covers"
         private const val COVER_KEY_PREFIX = "playlist_cover_"
+        private const val FAVORITE_PREFS_NAME = "favorite_playlist"
+        private const val FAVORITE_PREFS_KEY = "favorite_keys"
         const val FAVORITE_PLAYLIST_TITLE = "Favourite Songs"
+
+        fun loadFavoriteKeys(context: Context): MutableList<String> {
+            val prefs = context.getSharedPreferences(FAVORITE_PREFS_NAME, Context.MODE_PRIVATE)
+            val raw = prefs.getString(FAVORITE_PREFS_KEY, null) ?: return mutableListOf()
+            return runCatching {
+                val array = JSONArray(raw)
+                MutableList(array.length()) { index -> array.optString(index) }
+                    .filter { it.isNotBlank() }
+                    .toMutableList()
+            }.getOrDefault(mutableListOf())
+        }
+
+        fun saveFavoriteKeys(context: Context, keys: List<String>) {
+            val array = JSONArray()
+            keys.forEach { array.put(it) }
+            context.getSharedPreferences(FAVORITE_PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(FAVORITE_PREFS_KEY, array.toString())
+                .apply()
+        }
+    }
+
+    private fun buildSongKey(item: MediaItem): String {
+        val mediaId = item.mediaId
+        if (mediaId.isNotBlank()) return mediaId
+        return item.localConfiguration?.uri?.toString() ?: item.hashCode().toString()
     }
 }

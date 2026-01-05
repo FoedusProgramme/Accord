@@ -1,8 +1,6 @@
 package uk.akane.accord.ui.fragments.browse
 
 import android.content.ContentValues
-import android.app.Activity
-import android.content.ContentUris
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -12,14 +10,11 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.C
-import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -61,7 +56,6 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
     private var suggestedSongs: List<MediaItem> = emptyList()
     private var playlistSongs: MutableList<MediaItem> = mutableListOf()
     private var isFavoriteTarget = false
-    private var pendingFavoriteSong: MediaItem? = null
     private val suggestedAdapter = SuggestedSongAdapter { song ->
         addSuggestedToPlaylist(song)
     }
@@ -69,15 +63,6 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
     private val headerAdapter = HeaderAdapter()
     private val footerAdapter = FooterAdapter()
     private lateinit var concatAdapter: ConcatAdapter
-    private val favoriteRequestLauncher = registerForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            pendingFavoriteSong?.let { updateAfterSuggestionAdded(it) }
-            activity.updateLibrary()
-        }
-        pendingFavoriteSong = null
-    }
 
     init {
         postponeSwitcherAnimation()
@@ -169,18 +154,23 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
         val title = playlist.title?.takeIf { it.isNotBlank() }
             ?: requireArguments().getString(ARG_TITLE).orEmpty()
         headerTitle = title
+        if (playlist is Favorite || isFavoriteTarget) {
+            updateFromFavoriteSongs(allSongs)
+            return
+        }
         applyPlaylistSongs(playlist.songList)
     }
 
     private fun updateFromFavoriteSongs(songs: List<MediaItem>) {
-        val favoriteSongs = songs.filter {
-            (it.mediaMetadata.userRating as? HeartRating)?.isHeart == true
-        }
-        applyPlaylistSongs(favoriteSongs)
+        val favoriteKeys = PlaylistAdapter.loadFavoriteKeys(requireContext())
+        val songMap = songs.associateBy { buildSongKey(it) }
+        val ordered = favoriteKeys.mapNotNull { songMap[it] }
+        applyPlaylistSongs(ordered)
     }
 
     private fun applyPlaylistSongs(songs: List<MediaItem>) {
-        playlistSongs = mergePlaylistSongs(songs)
+        val merged = mergePlaylistSongs(songs)
+        playlistSongs = orderPlaylistSongs(merged)
         playlistSongsAdapter.submitList(playlistSongs)
         headerAdapter.update(
             headerTitle,
@@ -198,6 +188,11 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
         if (suggestedSongs.isEmpty() || shouldRefreshSuggestions) {
             refreshSuggestions(force = true)
         }
+    }
+
+    private fun orderPlaylistSongs(songs: List<MediaItem>): MutableList<MediaItem> {
+        if (songs.isEmpty()) return songs.toMutableList()
+        return if (isFavoriteTarget) songs.toMutableList() else songs.asReversed().toMutableList()
     }
 
     private fun refreshSuggestions(force: Boolean = false) {
@@ -247,19 +242,11 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
     }
 
     private fun addSuggestedToFavorites(song: MediaItem) {
-        val songUri = buildFavoriteUri(song) ?: return
-        val intentSender = ItemManipulator.setFavorite(
-            requireContext(),
-            setOf(songUri),
-            true
-        )
-        if (intentSender != null) {
-            pendingFavoriteSong = song
-            favoriteRequestLauncher.launch(
-                IntentSenderRequest.Builder(intentSender).build()
-            )
-            return
-        }
+        val key = buildSongKey(song)
+        val keys = PlaylistAdapter.loadFavoriteKeys(requireContext())
+        if (keys.contains(key)) return
+        keys.add(0, key)
+        PlaylistAdapter.saveFavoriteKeys(requireContext(), keys)
         updateAfterSuggestionAdded(song)
         activity.updateLibrary()
     }
@@ -327,22 +314,10 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
         return null
     }
 
-    private fun buildFavoriteUri(song: MediaItem): Uri? {
-        val mediaId = parseMediaStoreId(song)
-        if (mediaId != null) {
-            return ContentUris.withAppendedId(
-                MediaStore.Audio.Media.getContentUri("external"),
-                mediaId
-            )
-        }
-        val uri = song.localConfiguration?.uri
-        return if (uri != null && uri.scheme == "content") uri else null
-    }
-
     private fun updateAfterSuggestionAdded(song: MediaItem) {
         val songKey = buildSongKey(song)
         if (playlistSongs.none { buildSongKey(it) == songKey }) {
-            playlistSongs.add(song)
+            playlistSongs.add(0, song)
             playlistSongsAdapter.submitList(playlistSongs)
             headerAdapter.update(
                 headerTitle,
