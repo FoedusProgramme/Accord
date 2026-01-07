@@ -3,13 +3,13 @@ package uk.akane.accord.ui.fragments.browse
 import android.content.ContentValues
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -17,7 +17,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.ConcatAdapter
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
@@ -25,9 +27,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.logic.getFile
-import uk.akane.accord.R
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.adapters.browse.PlaylistAdapter
 import uk.akane.accord.ui.components.NavigationBar
@@ -171,7 +173,7 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
     private fun applyPlaylistSongs(songs: List<MediaItem>) {
         val merged = mergePlaylistSongs(songs)
         playlistSongs = orderPlaylistSongs(merged)
-        playlistSongsAdapter.submitList(playlistSongs)
+        playlistSongsAdapter.submitList(ArrayList(playlistSongs))
         headerAdapter.update(
             headerTitle,
             headerSubtitle,
@@ -272,12 +274,13 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
         val resolvedPlaylistId = playlistId ?: return false
         val audioId = parseMediaStoreId(song) ?: return false
         val resolver = requireContext().contentResolver
-        val membersUri = MediaStore.Audio.Playlists.Members.getContentUri("external", resolvedPlaylistId)
+        val membersUri =
+            "content://media/external/audio/playlists/$resolvedPlaylistId/members".toUri()
         val playOrder = queryNextPlayOrder(resolver, membersUri, playlistSongs.size)
 
         val values = ContentValues().apply {
-            put(MediaStore.Audio.Playlists.Members.AUDIO_ID, audioId)
-            put(MediaStore.Audio.Playlists.Members.PLAY_ORDER, playOrder)
+            put("audio_id", audioId)
+            put("play_order", playOrder)
         }
         return runCatching {
             resolver.insert(membersUri, values) != null
@@ -297,15 +300,16 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
     private fun lookupPlaylistPath(playlistId: Long): File? {
         if (playlistId == NO_ID) return null
         val resolver = requireContext().contentResolver
+        val playlistsUri = "content://media/external/audio/playlists".toUri()
         resolver.query(
-            MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
-            arrayOf(MediaStore.Audio.Playlists.DATA),
-            "${MediaStore.Audio.Playlists._ID} = ?",
+            playlistsUri,
+            arrayOf("_data"),
+            "_id = ?",
             arrayOf(playlistId.toString()),
             null
         )?.use { cursor ->
             if (!cursor.moveToFirst()) return null
-            val index = cursor.getColumnIndex(MediaStore.Audio.Playlists.DATA)
+            val index = cursor.getColumnIndex("_data")
             if (index < 0) return null
             val path = cursor.getString(index)?.trim().orEmpty()
             if (path.isBlank()) return null
@@ -318,7 +322,7 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
         val songKey = buildSongKey(song)
         if (playlistSongs.none { buildSongKey(it) == songKey }) {
             playlistSongs.add(0, song)
-            playlistSongsAdapter.submitList(playlistSongs)
+            playlistSongsAdapter.submitList(ArrayList(playlistSongs))
             headerAdapter.update(
                 headerTitle,
                 headerSubtitle,
@@ -343,7 +347,7 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
         }
 
         suggestedSongs = updatedSuggestions
-        suggestedAdapter.submitList(updatedSuggestions)
+        suggestedAdapter.submitList(ArrayList(updatedSuggestions))
         shouldRefreshSuggestions = false
     }
 
@@ -361,7 +365,7 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
         membersUri: Uri,
         fallback: Int
     ): Int {
-        val column = MediaStore.Audio.Playlists.Members.PLAY_ORDER
+        val column = "play_order"
         resolver.query(
             membersUri,
             arrayOf(column),
@@ -399,14 +403,7 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
 
     private inner class SuggestedSongAdapter(
         private val onAddClicked: (MediaItem) -> Unit
-    ) : RecyclerView.Adapter<SuggestedSongAdapter.ViewHolder>() {
-        private val items = mutableListOf<MediaItem>()
-
-        fun submitList(songs: List<MediaItem>) {
-            items.clear()
-            items.addAll(songs)
-            notifyDataSetChanged()
-        }
+    ) : ListAdapter<MediaItem, SuggestedSongAdapter.ViewHolder>(MediaItemDiffCallback) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val view = LayoutInflater.from(parent.context)
@@ -415,7 +412,7 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
         }
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = items[position]
+            val item = getItem(position)
             val artUri = item.mediaMetadata.artworkUri
             if (artUri != null) {
                 holder.cover.load(artUri) {
@@ -429,8 +426,6 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
             holder.subtitle.text = item.mediaMetadata.artist?.toString().orEmpty()
             holder.addButton.setOnClickListener { onAddClicked(item) }
         }
-
-        override fun getItemCount(): Int = items.size
 
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val cover: ImageView = view.findViewById(R.id.cover)
@@ -500,14 +495,7 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
     }
 
     private inner class PlaylistSongAdapter :
-        RecyclerView.Adapter<PlaylistSongAdapter.ViewHolder>() {
-        private val items = mutableListOf<MediaItem>()
-
-        fun submitList(songs: List<MediaItem>) {
-            items.clear()
-            items.addAll(songs)
-            notifyDataSetChanged()
-        }
+        ListAdapter<MediaItem, PlaylistSongAdapter.ViewHolder>(MediaItemDiffCallback) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             val view = LayoutInflater.from(parent.context)
@@ -516,7 +504,7 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
         }
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = items[position]
+            val item = getItem(position)
             val artUri = item.mediaMetadata.artworkUri
             if (artUri != null) {
                 holder.cover.load(artUri) {
@@ -528,18 +516,16 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
             }
             holder.title.text = item.mediaMetadata.title?.toString().orEmpty()
             holder.subtitle.text = item.mediaMetadata.artist?.toString().orEmpty()
-            holder.divider.visibility = if (position == items.lastIndex) View.GONE else View.VISIBLE
+            holder.divider.visibility = if (position == itemCount - 1) View.GONE else View.VISIBLE
 
             holder.itemView.setOnClickListener {
                 val mediaController = activity.getPlayer() ?: return@setOnClickListener
-                if (items.isEmpty()) return@setOnClickListener
-                mediaController.setMediaItems(items, position, C.TIME_UNSET)
+                if (currentList.isEmpty() || position !in currentList.indices) return@setOnClickListener
+                mediaController.setMediaItems(currentList, position, C.TIME_UNSET)
                 mediaController.prepare()
                 mediaController.play()
             }
         }
-
-        override fun getItemCount(): Int = items.size
 
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val cover: ImageView = view.findViewById(R.id.cover)
@@ -565,5 +551,15 @@ class PlaylistDetailFragment : SwitcherPostponeFragment() {
                 }
             }
         }
+    }
+}
+
+private object MediaItemDiffCallback : DiffUtil.ItemCallback<MediaItem>() {
+    override fun areItemsTheSame(oldItem: MediaItem, newItem: MediaItem): Boolean {
+        return oldItem.mediaId == newItem.mediaId
+    }
+
+    override fun areContentsTheSame(oldItem: MediaItem, newItem: MediaItem): Boolean {
+        return oldItem == newItem
     }
 }
