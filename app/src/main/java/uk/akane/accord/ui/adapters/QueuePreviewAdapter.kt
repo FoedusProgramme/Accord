@@ -4,15 +4,18 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.widget.TextView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import uk.akane.accord.R
+import uk.akane.accord.ui.components.QueueBlendView
 import uk.akane.cupertino.widget.utils.AnimationUtils.FASTEST_DURATION
 import java.util.Collections
 
 class QueuePreviewAdapter(
     private val items: MutableList<Item>,
+    private val targetView: View,
     private val dragStartListener: DragStartListener? = null
 ) : RecyclerView.Adapter<QueuePreviewAdapter.ViewHolder>() {
 
@@ -36,6 +39,8 @@ class QueuePreviewAdapter(
         holder.title.text = item.title
         holder.subtitle.text = item.subtitle
 
+        holder.blendView.setup(targetView)
+
         if (holder.itemView.background == null) {
             holder.itemView.alpha = 1f
             holder.itemView.scaleX = 1f
@@ -43,9 +48,10 @@ class QueuePreviewAdapter(
             holder.itemView.translationZ = 0f
         }
 
-        holder.reorderHandle.setOnTouchListener { _, event ->
+        holder.reorderHandle.setOnTouchListener { v, event ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN) {
                 dragStartListener?.onStartDrag(holder)
+                v.performClick()
             }
             false
         }
@@ -66,6 +72,7 @@ class QueuePreviewAdapter(
         val title: TextView = view.findViewById(R.id.title)
         val subtitle: TextView = view.findViewById(R.id.subtitle)
         val reorderHandle: View = view.findViewById(R.id.reorder_handle)
+        val blendView: QueueBlendView = view.findViewById(R.id.queue_blend_view)
     }
 }
 
@@ -104,9 +111,10 @@ class QueueItemTouchHelperCallback(
                 currentDragViewHolder = viewHolder
                 viewHolder?.itemView?.let { view ->
                     view.animate().cancel()
-                    view.setBackgroundResource(R.drawable.queue_item_drag_background)
+                    view.outlineProvider = ViewOutlineProvider.BOUNDS
+                    view.clipToOutline = true
                     view.animate()
-                        .translationZ(16f)
+                        .translationZ(8f)
                         .scaleX(1.0f)
                         .scaleY(1.0f)
                         .setDuration(FASTEST_DURATION)
@@ -125,6 +133,8 @@ class QueueItemTouchHelperCallback(
 
         viewHolder.itemView.animate().cancel()
         viewHolder.itemView.background = null
+        viewHolder.itemView.outlineProvider = ViewOutlineProvider.BACKGROUND
+        viewHolder.itemView.clipToOutline = false
         viewHolder.itemView.animate()
             .translationZ(0f)
             .scaleX(1f)

@@ -198,6 +198,7 @@ class FullPlayer @JvmOverloads constructor(
                 QueuePreviewAdapter.Item("So easy", "Olivia Dean"),
                 QueuePreviewAdapter.Item("Blinding Lights", "The Weeknd")
             ),
+            blendView,
             object : QueuePreviewAdapter.DragStartListener {
                 override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
                     queueItemTouchHelper?.startDrag(viewHolder)
@@ -480,7 +481,7 @@ class FullPlayer @JvmOverloads constructor(
             R.drawable.ic_nowplaying_repeat
         }
         queueRepeatButton.setIconResource(iconRes)
-        queueRepeatButton.setChecked(repeatMode != Player.REPEAT_MODE_OFF)
+        queueRepeatButton.isChecked = repeatMode != Player.REPEAT_MODE_OFF
     }
 
     private fun toggleFavoriteForCurrentSong() {
