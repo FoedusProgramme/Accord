@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -66,6 +67,23 @@ class QueuePreviewAdapter(
         val title: TextView = view.findViewById(R.id.title)
         val subtitle: TextView = view.findViewById(R.id.subtitle)
         val reorderHandle: View = view.findViewById(R.id.reorder_handle)
+        val cover: ImageView = view.findViewById(R.id.cover)
+        private val shadowEffectView: uk.akane.cupertino.widget.special.BlendView = view.findViewById(R.id.shadow_effect)
+        private val contentContainer: View = view.findViewById(R.id.content_container)
+
+        fun setDragState(dragging: Boolean) {
+            if (dragging) {
+                val drawable = cover.drawable
+                if (drawable is android.graphics.drawable.BitmapDrawable) {
+                    shadowEffectView.setImageBitmap(drawable.bitmap)
+                }
+                shadowEffectView.startRotationAnimation()
+                shadowEffectView.visibility = View.VISIBLE
+            } else {
+                shadowEffectView.stopRotationAnimation()
+                shadowEffectView.visibility = View.GONE
+            }
+        }
     }
 }
 
@@ -102,19 +120,20 @@ class QueueItemTouchHelperCallback(
         when (actionState) {
             ItemTouchHelper.ACTION_STATE_DRAG -> {
                 currentDragViewHolder = viewHolder
+                if (viewHolder is QueuePreviewAdapter.ViewHolder) {
+                    viewHolder.setDragState(true)
+                }
                 viewHolder?.itemView?.let { view ->
                     view.animate().cancel()
-                    view.setBackgroundResource(R.drawable.queue_item_drag_background)
                     view.animate()
                         .translationZ(16f)
-                        .scaleX(1.0f)
-                        .scaleY(1.0f)
+                        .scaleX(1.05f)
+                        .scaleY(1.05f)
                         .setDuration(FASTEST_DURATION)
                         .start()
                 }
             }
             ItemTouchHelper.ACTION_STATE_IDLE -> {
-                currentDragViewHolder?.itemView?.background = null
                 currentDragViewHolder = null
             }
         }
@@ -123,8 +142,10 @@ class QueueItemTouchHelperCallback(
     override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
         super.clearView(recyclerView, viewHolder)
 
+        if (viewHolder is QueuePreviewAdapter.ViewHolder) {
+            viewHolder.setDragState(false)
+        }
         viewHolder.itemView.animate().cancel()
-        viewHolder.itemView.background = null
         viewHolder.itemView.animate()
             .translationZ(0f)
             .scaleX(1f)
