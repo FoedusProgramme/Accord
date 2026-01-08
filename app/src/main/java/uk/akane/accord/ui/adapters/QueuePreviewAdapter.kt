@@ -24,6 +24,7 @@ class QueuePreviewAdapter(
     private val items: MutableList<QueueItem>,
     private val targetView: View,
     private val onMove: ((Int, Int) -> Unit)? = null,
+    private val onItemClick: ((Int) -> Unit)? = null,
     private val dragStartListener: DragStartListener? = null
 ) : RecyclerView.Adapter<QueuePreviewAdapter.ViewHolder>() {
 
@@ -41,7 +42,8 @@ class QueuePreviewAdapter(
         
         diffJob?.cancel()
         diffJob = CoroutineScope(Dispatchers.Default).launch {
-            val diffCallback = QueueDiffCallback(items.toList(), newItems)
+            val oldList = items.toList()
+            val diffCallback = QueueDiffCallback(oldList, newItems)
             val diffResult = DiffUtil.calculateDiff(diffCallback)
             
             if (isActive) {
@@ -86,6 +88,17 @@ class QueuePreviewAdapter(
             holder.itemView.translationZ = 0f
         }
 
+        // Handle item click to play song
+        holder.itemView.setOnClickListener {
+            if (!isDragging && holder.bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                onItemClick?.invoke(holder.bindingAdapterPosition)
+            }
+        }
+
+        // Consume clicks on the drag handle to prevent triggering onItemClick on the parent
+        holder.reorderHandle.setOnClickListener { }
+
+        // Handle touch on handle to start dragging
         holder.reorderHandle.setOnTouchListener { v, event ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN) {
                 dragStartListener?.onStartDrag(holder)
@@ -199,10 +212,10 @@ class QueueDiffCallback(
     }
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        val oldItem = oldList[oldItemPosition].mediaItem
-        val newItem = newList[newItemPosition].mediaItem
-        return oldItem.mediaMetadata.title == newItem.mediaMetadata.title &&
-                oldItem.mediaMetadata.artist == newItem.mediaMetadata.artist &&
-                oldItem.mediaMetadata.artworkUri == newItem.mediaMetadata.artworkUri
+        val oldMeta = oldList[oldItemPosition].mediaItem.mediaMetadata
+        val newMeta = newList[newItemPosition].mediaItem.mediaMetadata
+        return oldMeta.title == newMeta.title &&
+                oldMeta.artist == newMeta.artist &&
+                oldMeta.artworkUri == newMeta.artworkUri
     }
 }

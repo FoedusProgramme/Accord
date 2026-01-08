@@ -195,6 +195,10 @@ class FullPlayer @JvmOverloads constructor(
             { from, to ->
                 instance?.moveMediaItem(from, to)
             },
+            { index ->
+                instance?.seekTo(index, C.TIME_UNSET)
+                instance?.play()
+            },
             object : QueuePreviewAdapter.DragStartListener {
                 override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
                     queueItemTouchHelper?.startDrag(viewHolder)
