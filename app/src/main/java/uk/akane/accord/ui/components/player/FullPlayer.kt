@@ -899,7 +899,7 @@ class FullPlayer @JvmOverloads constructor(
         Log.d("FullPlayer", "onPlaybackStateChanged: $playbackState")
         val isPlaying = instance?.isPlaying == true
         updateCoverPauseScale(
-            isPlaying = isPlaying || playbackState == Player.STATE_BUFFERING,
+            isPlaying = isPlaying,
             animate = !firstTime
         )
         if (isPlaying) {
