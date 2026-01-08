@@ -189,16 +189,11 @@ class FullPlayer @JvmOverloads constructor(
         queueRecyclerView = findViewById(R.id.queue_list)
         queueRecyclerView.layoutManager = LinearLayoutManager(context)
         val queueAdapter = QueuePreviewAdapter(
-            mutableListOf(
-                QueuePreviewAdapter.Item("Hollowlight", "Moonshade"),
-                QueuePreviewAdapter.Item("Paper Trails", "The Vellum Set"),
-                QueuePreviewAdapter.Item("Daybreak Avenue", "Arlo Winters"),
-                QueuePreviewAdapter.Item("Slow Orbit", "Nocturne Park"),
-                QueuePreviewAdapter.Item("Midnight Bloom", "City Flora"),
-                QueuePreviewAdapter.Item("So easy", "Olivia Dean"),
-                QueuePreviewAdapter.Item("Blinding Lights", "The Weeknd")
-            ),
+            mutableListOf(),
             blendView,
+            { from, to ->
+                instance?.moveMediaItem(from, to)
+            },
             object : QueuePreviewAdapter.DragStartListener {
                 override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
                     queueItemTouchHelper?.startDrag(viewHolder)
@@ -1009,6 +1004,12 @@ class FullPlayer @JvmOverloads constructor(
         if (reason == Player.TIMELINE_CHANGE_REASON_SOURCE_UPDATE) {
             updateProgressDisplay()
         }
+        val window = Timeline.Window()
+        val items = mutableListOf<MediaItem>()
+        for (i in 0 until timeline.windowCount) {
+            items.add(timeline.getWindow(i, window).mediaItem)
+        }
+        (queueRecyclerView.adapter as? QueuePreviewAdapter)?.updateItems(items)
     }
 
     override fun onDetachedFromWindow() {

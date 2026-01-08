@@ -6,26 +6,58 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
 import android.widget.TextView
+import androidx.media3.common.MediaItem
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import coil3.load
 import uk.akane.accord.R
+import uk.akane.accord.logic.dp
 import uk.akane.accord.ui.components.QueueBlendView
 import uk.akane.cupertino.widget.utils.AnimationUtils.FASTEST_DURATION
 import java.util.Collections
+import kotlinx.coroutines.*
 
 class QueuePreviewAdapter(
-    private val items: MutableList<Item>,
+    private val items: MutableList<MediaItem>,
     private val targetView: View,
+    private val onMove: ((Int, Int) -> Unit)? = null,
     private val dragStartListener: DragStartListener? = null
 ) : RecyclerView.Adapter<QueuePreviewAdapter.ViewHolder>() {
 
-    data class Item(
-        val title: String,
-        val subtitle: String
-    )
+    var isDragging = false
+        private set
+    
+    private var diffJob: Job? = null
 
     interface DragStartListener {
         fun onStartDrag(viewHolder: RecyclerView.ViewHolder)
+    }
+
+    fun updateItems(newItems: List<MediaItem>) {
+        if (isDragging) return
+        
+        diffJob?.cancel()
+        diffJob = CoroutineScope(Dispatchers.Default).launch {
+            val diffCallback = QueueDiffCallback(items.toList(), newItems)
+            val diffResult = DiffUtil.calculateDiff(diffCallback)
+            
+            if (isActive) {
+                withContext(Dispatchers.Main) {
+                    items.clear()
+                    items.addAll(newItems)
+                    diffResult.dispatchUpdatesTo(this@QueuePreviewAdapter)
+                }
+            }
+        }
+    }
+
+    fun onDragStart() {
+        isDragging = true
+    }
+
+    fun onDragEnd() {
+        isDragging = false
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -36,8 +68,12 @@ class QueuePreviewAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-        holder.title.text = item.title
-        holder.subtitle.text = item.subtitle
+        holder.title.text = item.mediaMetadata.title?.toString() ?: "Unknown"
+        holder.subtitle.text = item.mediaMetadata.artist?.toString() ?: "Unknown Artist"
+
+        holder.cover.load(item.mediaMetadata.artworkUri) {
+            size(54.dp.px.toInt(), 54.dp.px.toInt())
+        }
 
         holder.blendView.setup(targetView)
 
@@ -65,12 +101,14 @@ class QueuePreviewAdapter(
         }
         Collections.swap(items, fromPosition, toPosition)
         notifyItemMoved(fromPosition, toPosition)
+        onMove?.invoke(fromPosition, toPosition)
         return true
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.title)
         val subtitle: TextView = view.findViewById(R.id.subtitle)
+        val cover: android.widget.ImageView = view.findViewById(R.id.cover)
         val reorderHandle: View = view.findViewById(R.id.reorder_handle)
         val blendView: QueueBlendView = view.findViewById(R.id.queue_blend_view)
     }
@@ -108,6 +146,7 @@ class QueueItemTouchHelperCallback(
 
         when (actionState) {
             ItemTouchHelper.ACTION_STATE_DRAG -> {
+                adapter.onDragStart()
                 currentDragViewHolder = viewHolder
                 viewHolder?.itemView?.let { view ->
                     view.animate().cancel()
@@ -130,6 +169,7 @@ class QueueItemTouchHelperCallback(
 
     override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
         super.clearView(recyclerView, viewHolder)
+        adapter.onDragEnd()
 
         viewHolder.itemView.animate().cancel()
         viewHolder.itemView.background = null
@@ -142,5 +182,25 @@ class QueueItemTouchHelperCallback(
             .alpha(1f)
             .setDuration(FASTEST_DURATION)
             .start()
+    }
+}
+
+class QueueDiffCallback(
+    private val oldList: List<MediaItem>,
+    private val newList: List<MediaItem>
+) : DiffUtil.Callback() {
+    override fun getOldListSize(): Int = oldList.size
+    override fun getNewListSize(): Int = newList.size
+
+    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+        return oldList[oldItemPosition].mediaId == newList[newItemPosition].mediaId
+    }
+
+    override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+        val oldItem = oldList[oldItemPosition]
+        val newItem = newList[newItemPosition]
+        return oldItem.mediaMetadata.title == newItem.mediaMetadata.title &&
+                oldItem.mediaMetadata.artist == newItem.mediaMetadata.artist &&
+                oldItem.mediaMetadata.artworkUri == newItem.mediaMetadata.artworkUri
     }
 }
