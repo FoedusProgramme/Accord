@@ -7,7 +7,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewOutlineProvider
 import androidx.core.graphics.withTranslation
-import androidx.core.view.isVisible
 
 class QueueBlendView @JvmOverloads constructor(
     context: Context,
@@ -15,8 +14,6 @@ class QueueBlendView @JvmOverloads constructor(
 ) : View(context, attributeSet) {
 
     private var targetView: View? = null
-    private val locationBuffer = IntArray(2)
-    private val targetLocationBuffer = IntArray(2)
 
     private val renderNode = RenderNode("RenderBox")
 
@@ -42,35 +39,37 @@ class QueueBlendView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         val target = targetView ?: return
-        val parent = target.parent as? View ?: return
+        if (!isShown) return
 
-        // Calculate relative position of the target's parent (FullPlayer) to this view
-        getLocationOnScreen(locationBuffer)
-        parent.getLocationOnScreen(targetLocationBuffer)
+        // Calculate offset manually by traversing up to the common parent (FullPlayer)
+        // This is much faster than getLocationOnScreen()
+        var offsetX = 0f
+        var offsetY = 0f
 
-        val dx = (targetLocationBuffer[0] - locationBuffer[0]).toFloat()
-        val dy = (targetLocationBuffer[1] - locationBuffer[1]).toFloat()
+        var current: android.view.ViewParent? = parent
+        while (current != null && current !== target.parent) {
+            if (current is View) {
+                offsetX -= current.left
+                offsetY -= current.top
+            }
+            current = current.parent
+        }
 
-        // Record drawing commands from target view
+        // Add target's own position in its parent
+        offsetX += target.left
+        offsetY += target.top
+
+        // Record drawing commands
         val recordingCanvas = renderNode.beginRecording(width, height)
-        recordingCanvas.withTranslation(dx, dy) {
-            // 1. Move to Parent's (0,0)
-            // 2. Move to Target's (left, top)
-            translate(target.left.toFloat(), target.top.toFloat())
-            // 3. Apply Target's transform (scale, etc.)
+        recordingCanvas.withTranslation(offsetX, offsetY) {
             concat(target.matrix)
-
             target.draw(this)
-
         }
         renderNode.endRecording()
 
-        // Draw the blurred render node
         canvas.drawRenderNode(renderNode)
 
-        // Keep animating if target is animating (simple approach: invalidate every frame if visible)
-        if (isVisible) {
-            postInvalidateOnAnimation()
-        }
+        // Only invalidate if we are actually visible and the background is likely animating
+        postInvalidateOnAnimation()
     }
 }
