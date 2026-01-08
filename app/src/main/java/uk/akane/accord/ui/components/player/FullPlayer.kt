@@ -53,6 +53,7 @@ import uk.akane.accord.logic.utils.CalculationUtils.lerp
 import uk.akane.accord.ui.adapters.QueueItemTouchHelperCallback
 import uk.akane.accord.ui.adapters.QueuePreviewAdapter
 import uk.akane.accord.ui.MainActivity
+import uk.akane.accord.ui.adapters.QueueItem
 import uk.akane.accord.ui.adapters.browse.PlaylistAdapter
 import uk.akane.accord.ui.components.FadingVerticalEdgeLayout
 import uk.akane.accord.ui.components.lyrics.LyricsViewModel
@@ -999,15 +1000,15 @@ class FullPlayer @JvmOverloads constructor(
     override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
         updateVolumeSlider(volume)
     }
-
     override fun onTimelineChanged(timeline: Timeline, reason: @Player.TimelineChangeReason Int) {
         if (reason == Player.TIMELINE_CHANGE_REASON_SOURCE_UPDATE) {
             updateProgressDisplay()
         }
         val window = Timeline.Window()
-        val items = mutableListOf<MediaItem>()
+        val items = mutableListOf<QueueItem>()
         for (i in 0 until timeline.windowCount) {
-            items.add(timeline.getWindow(i, window).mediaItem)
+            val w = timeline.getWindow(i, window)
+            items.add(QueueItem(w.uid, w.mediaItem))
         }
         (queueRecyclerView.adapter as? QueuePreviewAdapter)?.updateItems(items)
     }

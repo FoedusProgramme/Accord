@@ -18,8 +18,10 @@ import uk.akane.cupertino.widget.utils.AnimationUtils.FASTEST_DURATION
 import java.util.Collections
 import kotlinx.coroutines.*
 
+data class QueueItem(val uid: Any, val mediaItem: MediaItem)
+
 class QueuePreviewAdapter(
-    private val items: MutableList<MediaItem>,
+    private val items: MutableList<QueueItem>,
     private val targetView: View,
     private val onMove: ((Int, Int) -> Unit)? = null,
     private val dragStartListener: DragStartListener? = null
@@ -34,7 +36,7 @@ class QueuePreviewAdapter(
         fun onStartDrag(viewHolder: RecyclerView.ViewHolder)
     }
 
-    fun updateItems(newItems: List<MediaItem>) {
+    fun updateItems(newItems: List<QueueItem>) {
         if (isDragging) return
         
         diffJob?.cancel()
@@ -68,10 +70,10 @@ class QueuePreviewAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-        holder.title.text = item.mediaMetadata.title?.toString() ?: "Unknown"
-        holder.subtitle.text = item.mediaMetadata.artist?.toString() ?: "Unknown Artist"
+        holder.title.text = item.mediaItem.mediaMetadata.title?.toString() ?: "Unknown"
+        holder.subtitle.text = item.mediaItem.mediaMetadata.artist?.toString() ?: "Unknown Artist"
 
-        holder.cover.load(item.mediaMetadata.artworkUri) {
+        holder.cover.load(item.mediaItem.mediaMetadata.artworkUri) {
             size(54.dp.px.toInt(), 54.dp.px.toInt())
         }
 
@@ -153,7 +155,7 @@ class QueueItemTouchHelperCallback(
                     view.outlineProvider = ViewOutlineProvider.BOUNDS
                     view.clipToOutline = true
                     view.animate()
-                        .translationZ(8f)
+                        .translationZ(10f)
                         .scaleX(1.0f)
                         .scaleY(1.0f)
                         .setDuration(FASTEST_DURATION)
@@ -186,19 +188,19 @@ class QueueItemTouchHelperCallback(
 }
 
 class QueueDiffCallback(
-    private val oldList: List<MediaItem>,
-    private val newList: List<MediaItem>
+    private val oldList: List<QueueItem>,
+    private val newList: List<QueueItem>
 ) : DiffUtil.Callback() {
     override fun getOldListSize(): Int = oldList.size
     override fun getNewListSize(): Int = newList.size
 
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        return oldList[oldItemPosition].mediaId == newList[newItemPosition].mediaId
+        return oldList[oldItemPosition].uid == newList[newItemPosition].uid
     }
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        val oldItem = oldList[oldItemPosition]
-        val newItem = newList[newItemPosition]
+        val oldItem = oldList[oldItemPosition].mediaItem
+        val newItem = newList[newItemPosition].mediaItem
         return oldItem.mediaMetadata.title == newItem.mediaMetadata.title &&
                 oldItem.mediaMetadata.artist == newItem.mediaMetadata.artist &&
                 oldItem.mediaMetadata.artworkUri == newItem.mediaMetadata.artworkUri
