@@ -600,8 +600,57 @@ class FloatingPanelLayout @JvmOverloads constructor(
         fun onSlide(value: Float)
     }
 
+    val slideFraction: Float
+        get() = fraction
+
+    val slideStatus: SlideStatus
+        get() = state
+
     fun addOnSlideListener(listener: OnSlideListener) {
         onSlideListeners.add(listener)
+    }
+
+    fun setSlideFraction(value: Float) {
+        val targetFraction = value.coerceIn(0F, 1F)
+        flingValueAnimator?.cancel()
+        flingValueAnimator = null
+        isDragging = false
+        updateTransform(targetFraction)
+    }
+
+    fun animateTo(targetFraction: Float, duration: Long = DEFAULT_ANIMATION_DURATION) {
+        val clampedTarget = targetFraction.coerceIn(0F, 1F)
+        if (clampedTarget == fraction) return
+        flingValueAnimator?.cancel()
+        flingValueAnimator = null
+
+        ValueAnimator.ofFloat(fraction, clampedTarget).apply {
+            flingValueAnimator = this
+            this.duration = duration
+            interpolator = AnimationUtils.easingStandardInterpolator
+
+            addUpdateListener {
+                updateTransform(animatedValue as Float)
+            }
+
+            start()
+        }
+    }
+
+    fun collapse(animate: Boolean = true) {
+        if (animate) {
+            animateTo(0F)
+        } else {
+            setSlideFraction(0F)
+        }
+    }
+
+    fun expand(animate: Boolean = true) {
+        if (animate) {
+            animateTo(1F)
+        } else {
+            setSlideFraction(1F)
+        }
     }
 
     fun setPreviewCover(drawable: Drawable?) {
@@ -703,6 +752,7 @@ class FloatingPanelLayout @JvmOverloads constructor(
         const val MINIMUM_ANIMATION_TIME = 220L
         const val MAXIMUM_ANIMATION_TIME = 320L
         const val SPEED_FACTOR = 2F
+        const val DEFAULT_ANIMATION_DURATION = (MINIMUM_ANIMATION_TIME + MAXIMUM_ANIMATION_TIME) / 2
     }
 
 }

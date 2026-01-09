@@ -65,6 +65,8 @@ class MainActivity : AppCompatActivity() {
     private var isWindowColorSet: Boolean = false
 
     private var ready: Boolean = false
+    private var isHandlingNowPlayingBack: Boolean = false
+    private var nowPlayingBackStartFraction: Float = 0F
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,6 +101,12 @@ class MainActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackStarted(backEvent: BackEventCompat) {
+                if (floatingPanelLayout.slideFraction > 0F) {
+                    isHandlingNowPlayingBack = true
+                    nowPlayingBackStartFraction = floatingPanelLayout.slideFraction
+                    floatingPanelLayout.setSlideFraction(nowPlayingBackStartFraction)
+                    return
+                }
                 if (backEvent.swipeEdge != BackEventCompat.EDGE_LEFT &&
                     backEvent.swipeEdge != BackEventCompat.EDGE_RIGHT
                 ) return
@@ -107,6 +115,11 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun handleOnBackProgressed(backEvent: BackEventCompat) {
+                if (isHandlingNowPlayingBack) {
+                    val progress = backEvent.progress.coerceIn(0F, 1F)
+                    floatingPanelLayout.setSlideFraction(nowPlayingBackStartFraction * (1F - progress))
+                    return
+                }
                 if (backEvent.swipeEdge != BackEventCompat.EDGE_LEFT &&
                     backEvent.swipeEdge != BackEventCompat.EDGE_RIGHT
                 ) return
@@ -114,10 +127,20 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun handleOnBackCancelled() {
+                if (isHandlingNowPlayingBack) {
+                    isHandlingNowPlayingBack = false
+                    floatingPanelLayout.animateTo(nowPlayingBackStartFraction)
+                    return
+                }
                 fragmentSwitcherView.cancelPredictiveBack()
             }
 
             override fun handleOnBackPressed() {
+                if (isHandlingNowPlayingBack || floatingPanelLayout.slideFraction > 0F) {
+                    isHandlingNowPlayingBack = false
+                    floatingPanelLayout.collapse()
+                    return
+                }
                 if (fragmentSwitcherView.commitPredictiveBack()) {
                     return
                 }
