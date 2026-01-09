@@ -850,6 +850,7 @@ class NavigationBar @JvmOverloads constructor(
     }
 
     private fun computeRecyclerScrollOffset(recyclerView: RecyclerView): Int {
+        if (!recyclerView.canScrollVertically(-1)) return 0
         computeRecyclerTopOffset(recyclerView)?.let { return it }
         return recyclerView.computeVerticalScrollOffset().coerceAtLeast(0)
     }
