@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -22,6 +23,7 @@ import kotlinx.coroutines.withContext
 import uk.akane.accord.R
 import uk.akane.accord.logic.dp
 import uk.akane.accord.ui.MainActivity
+import kotlin.random.Random
 
 class SongAdapter(
     private val recyclerView: RecyclerView,
@@ -73,6 +75,7 @@ class SongAdapter(
     ) {
         when (val item = list[position]) {
             is SongListItem.Control -> {
+                bindControl(holder)
             }
             is SongListItem.Header -> {
                 holder.title?.text = item.title
@@ -111,6 +114,30 @@ class SongAdapter(
         val cover: ImageView? = view.findViewById(R.id.cover)
         val title: TextView? = view.findViewById(R.id.title)
         val subtitle: TextView? = view.findViewById(R.id.subtitle)
+    }
+
+    private fun bindControl(holder: ViewHolder) {
+        val playAll = holder.itemView.findViewById<MaterialButton?>(R.id.play_all)
+        val shuffleAll = holder.itemView.findViewById<MaterialButton?>(R.id.shuffle_all)
+
+        playAll?.setOnClickListener {
+            val mediaController = mainActivity.getPlayer() ?: return@setOnClickListener
+            if (songList.isEmpty()) return@setOnClickListener
+
+            mediaController.setMediaItems(songList, /* startIndex */ 0, C.TIME_UNSET)
+            mediaController.prepare()
+            mediaController.play()
+        }
+
+        shuffleAll?.setOnClickListener {
+            val mediaController = mainActivity.getPlayer() ?: return@setOnClickListener
+            if (songList.isEmpty()) return@setOnClickListener
+
+            val shuffled = songList.shuffled(Random(System.currentTimeMillis()))
+            mediaController.setMediaItems(shuffled, /* startIndex */ 0, C.TIME_UNSET)
+            mediaController.prepare()
+            mediaController.play()
+        }
     }
 
     private fun submitList(newList: List<MediaItem>) {
