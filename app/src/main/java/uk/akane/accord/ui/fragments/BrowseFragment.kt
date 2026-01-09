@@ -28,11 +28,6 @@ class BrowseFragment: Fragment() {
         navigationBar = rootView.findViewById(R.id.navigation_bar)
         recyclerView = rootView.findViewById(R.id.recyclerView)
 
-        recyclerView.layoutManager = LinearLayoutManager(context)
-        recyclerView.adapter = BrowseAdapter(requireContext())
-
-        navigationBar.attach(recyclerView)
-
         ViewCompat.setOnApplyWindowInsetsListener(navigationBar) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(
@@ -43,6 +38,11 @@ class BrowseFragment: Fragment() {
             )
             insets
         }
+
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView.adapter = BrowseAdapter(requireContext())
+
+        navigationBar.attach(recyclerView)
         return rootView
     }
 
