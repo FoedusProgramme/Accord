@@ -636,7 +636,8 @@ class NavigationBar @JvmOverloads constructor(
 
     private fun handleScroll(offsetPx: Int) {
         var shouldInvalidate = false
-        scrollOffsetPx = offsetPx.coerceAtLeast(0)
+        val isAtTop = targetView?.canScrollVertically(-1) == false
+        scrollOffsetPx = if (isAtTop) 0 else offsetPx.coerceAtLeast(0)
         val offset = (scrollOffsetPx - collapseStartOffsetPx).coerceAtLeast(0)
         val maxOffset = height - paddingTop - COLLAPSED_STATE_HEIGHT.dp.px - appendHeight
 
