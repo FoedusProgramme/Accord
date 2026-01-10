@@ -23,7 +23,11 @@ class EndedWorkaroundPlayer(exoPlayer: ExoPlayer) : ForwardingSimpleBasePlayer(e
         private const val TAG = "EndedWorkaroundPlayer"
     }
 
-    private val remoteDeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE).build()
+    private val remoteDeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
+        .setMinVolume(0)
+        .setMaxVolume(100)
+        .build()
+
     init {
         player.addListener(this)
     }
@@ -61,9 +65,9 @@ class EndedWorkaroundPlayer(exoPlayer: ExoPlayer) : ForwardingSimpleBasePlayer(e
             }
             return superState.buildUpon().setPlaybackState(STATE_ENDED).setIsLoading(false).build()
         }
-        // if (player.currentTimeline.isEmpty) {
-        //    return super.state.buildUpon().setDeviceInfo(remoteDeviceInfo).build()
-        // }
+        if (player.currentTimeline.isEmpty) {
+           return super.state.buildUpon().setDeviceInfo(remoteDeviceInfo).build()
+        }
         return super.getState()
     }
 }
