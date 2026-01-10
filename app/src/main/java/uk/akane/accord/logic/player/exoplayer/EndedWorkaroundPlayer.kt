@@ -61,9 +61,9 @@ class EndedWorkaroundPlayer(exoPlayer: ExoPlayer) : ForwardingSimpleBasePlayer(e
             }
             return superState.buildUpon().setPlaybackState(STATE_ENDED).setIsLoading(false).build()
         }
-        if (player.currentTimeline.isEmpty) {
-            return super.state.buildUpon().setDeviceInfo(remoteDeviceInfo).build()
-        }
+        // if (player.currentTimeline.isEmpty) {
+        //    return super.state.buildUpon().setDeviceInfo(remoteDeviceInfo).build()
+        // }
         return super.getState()
     }
 }
