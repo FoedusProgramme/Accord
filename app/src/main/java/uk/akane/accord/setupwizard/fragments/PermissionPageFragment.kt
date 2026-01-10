@@ -14,6 +14,7 @@ import uk.akane.accord.R
 import uk.akane.accord.logic.hasMediaPermissionSeparation
 import uk.akane.accord.logic.isAlbumPermissionGranted
 import uk.akane.accord.logic.isEssentialPermissionGranted
+import uk.akane.accord.ui.MainActivity
 import uk.akane.cupertino.widget.utils.AnimationUtils
 
 class PermissionPageFragment : Fragment() {
@@ -36,10 +37,8 @@ class PermissionPageFragment : Fragment() {
     private fun handlePermissionSuccessful(successful: Boolean) {
         if (successful) {
             if (requireContext().isEssentialPermissionGranted() && !musicPermissionButton.isChecked) {
-                (parentFragment as SetupWizardFragment).apply {
-                    onPermissionSuccessCallback.invoke()
-                    releaseContinueButton()
-                }
+                (requireActivity() as? MainActivity)?.updateLibrary()
+                (parentFragment as? SetupWizardFragment)?.releaseContinueButton()
             }
             if (hasMediaPermissionSeparation() &&
                 requireContext().isEssentialPermissionGranted() && !musicPermissionButton.isChecked) {

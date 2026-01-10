@@ -15,7 +15,7 @@ import uk.akane.accord.setupwizard.adapters.SetupWizardViewPagerAdapter
 import uk.akane.accord.ui.MainActivity
 import uk.akane.cupertino.widget.utils.AnimationUtils
 
-class SetupWizardFragment(val onPermissionSuccessCallback: (() -> Unit)) : Fragment() {
+class SetupWizardFragment : Fragment() {
 
     private lateinit var viewPager2: ViewPager2
     private lateinit var viewPagerAdapter: SetupWizardViewPagerAdapter
@@ -57,23 +57,21 @@ class SetupWizardFragment(val onPermissionSuccessCallback: (() -> Unit)) : Fragm
                         inactiveBtnColor,
                         isArgb = true
                     ) {
-                        continueButton.backgroundTintList = ColorStateList.valueOf(
-                            it
-                        )
+                        continueButton.backgroundTintList = ColorStateList.valueOf(it)
                     }
                     AnimationUtils.createValAnimator(
                         onActiveBtnColor,
                         onInactiveBtnColor,
                         isArgb = true
                     ) {
-                        continueButton.setTextColor(
-                            it
-                        )
+                        continueButton.setTextColor(it)
                     }
                 }
                 viewPager2.setCurrentItemInterpolated(viewPager2.currentItem + 1)
             } else {
-                (requireActivity() as MainActivity).removeContainer()
+                val mainActivity = requireActivity() as? MainActivity
+                mainActivity?.updateLibrary() 
+                mainActivity?.removeContainer()
             }
         }
 
@@ -89,18 +87,14 @@ class SetupWizardFragment(val onPermissionSuccessCallback: (() -> Unit)) : Fragm
                 continueButton.isEnabled = true
             }
         ) {
-            continueButton.backgroundTintList = ColorStateList.valueOf(
-                it
-            )
+            continueButton.backgroundTintList = ColorStateList.valueOf(it)
         }
         AnimationUtils.createValAnimator(
             onInactiveBtnColor,
             onActiveBtnColor,
             isArgb = true
         ) {
-            continueButton.setTextColor(
-                it
-            )
+            continueButton.setTextColor(it)
         }
     }
 }

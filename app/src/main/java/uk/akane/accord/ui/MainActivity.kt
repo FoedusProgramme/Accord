@@ -87,9 +87,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         if (!isEssentialPermissionGranted()) {
-            insertContainer(SetupWizardFragment {
-                updateLibrary()
-            })
+            insertContainer(SetupWizardFragment()) 
         } else {
             updateLibrary()
         }
