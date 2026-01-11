@@ -70,4 +70,10 @@
     <color name="playlistAccentBackground">#F9F7F9</color>
     <color name="playlistMusicIconTint">@color/defaultCoverForeground</color>
 
+    <!-- Navigation tab -->
+    <color name="tabContainerColor">@color/searchBarBackground</color>
+    <color name="tabSelectedColor">#FFFFFF</color>
+    <color name="searchTabShadowColor">#4D000000</color>
+    <color name="searchTabShadowAmbientColor">#4D000000</color>
+
 </resources>

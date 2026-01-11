@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/detailed_search_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:clickable="true"
+    android:focusable="true"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:background="@color/surfaceColor">
+
+    <include
+        android:id="@+id/search_bar_detail"
+        layout="@layout/layout_search_bar" />
+
+    <!-- Tab Navigation -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/tab_container"
+        android:layout_width="match_parent"
+        android:layout_height="38dp"
+        app:cardBackgroundColor="@color/tabContainerColor"
+        android:layout_marginStart="22dp"
+        android:layout_marginEnd="22dp"
+        android:layout_marginBottom="16dp"
+        android:padding="4dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:cardPreventCornerOverlap="false"
+        app:cardUseCompatPadding="false">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="0dp">
+
+            <!-- Selected Tab Indicator -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/tab_apple_music_container"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="start"
+                android:outlineAmbientShadowColor="@color/searchTabShadowAmbientColor"
+                android:outlineSpotShadowColor="@color/searchTabShadowColor"
+                app:cardBackgroundColor="@color/tabSelectedColor"
+                android:layout_margin="3dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="4dp"
+                app:cardPreventCornerOverlap="false"
+                app:cardUseCompatPadding="false" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:elevation="6dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tab_apple_music"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Apple Music"
+                    android:textSize="13sp"
+                    android:textColor="@color/onSurfaceColor"
+                    android:fontFamily="@font/inter_semibold"
+                    android:includeFontPadding="false"
+                    android:gravity="center"
+                    android:paddingVertical="0dp" />
+
+                <TextView
+                    android:id="@+id/tab_library"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Library"
+                    android:textSize="13sp"
+                    android:textColor="@color/onSurfaceColorInactive"
+                    android:fontFamily="@font/inter_semibold"
+                    android:includeFontPadding="false"
+                    android:gravity="center"
+                    android:paddingVertical="0dp" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="12dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/recently_searched_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Recently Searched"
+            android:textColor="@color/onSurfaceColor"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/recently_searched_clear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/inter_semibold"
+            android:includeFontPadding="false"
+            android:text="Clear"
+            android:textColor="@color/accentColor"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:background="@color/bottomNavigationDividerColor" />
+
+
+    <!-- Content Area -->
+    <LinearLayout
+        android:id="@+id/content_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@color/surfaceColor">
+
+        <include layout="@layout/layout_song_item" />
+
+        <include layout="@layout/layout_song_item" />
+
+        <include layout="@layout/layout_song_item" />
+
+    </LinearLayout>
+
+</LinearLayout>

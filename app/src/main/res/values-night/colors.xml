@@ -54,4 +54,10 @@
     <!-- Playlist fragment -->
     <color name="playlistAccentBackground">#101011</color>
     <color name="playlistMusicIconTint">@color/onSurfaceColorInactive</color>
+
+    <!-- Navigation tab -->
+    <color name="tabContainerColor">#54444444</color>
+    <color name="tabSelectedColor">#000000</color>
+    <color name="searchTabShadowColor">#4D000000</color>
+    <color name="searchTabShadowAmbientColor">#4D000000</color>
 </resources>

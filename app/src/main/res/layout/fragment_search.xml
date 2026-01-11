@@ -26,7 +26,9 @@
         app:layout_constraintTop_toTopOf="parent"
         app:title="@string/bottom_nav_search">
 
-        <include layout="@layout/layout_search_bar" />
+        <include
+            android:id="@+id/search_bar_nav"
+            layout="@layout/layout_search_bar" />
 
     </uk.akane.accord.ui.components.NavigationBar>
 
@@ -58,5 +60,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         />
+
+    <include
+        android:id="@+id/detailed_search_container"
+        layout="@layout/layout_detailed_search"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginVertical="28dp"
+        android:alpha="0"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
