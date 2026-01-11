@@ -10,16 +10,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import coil3.load
 import coil3.request.crossfade
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -42,20 +39,6 @@ class PlaylistAdapter(
 
     private val mainActivity
         get() = fragment.activity as MainActivity
-
-    init {
-        fragment.viewLifecycleOwner.lifecycleScope.launch {
-            fragment.viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-                mainActivity.reader.playlistListFlow
-                    .combine(mainActivity.reader.songListFlow) { playlists, songs ->
-                        playlists to songs
-                    }
-                    .collectLatest { (playlists, songs) ->
-                        submitPlaylists(playlists, songs)
-                    }
-            }
-        }
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(
@@ -110,11 +93,12 @@ class PlaylistAdapter(
         val divider: View = view.findViewById(R.id.divider)
     }
 
-    private suspend fun submitPlaylists(playlists: List<Playlist>, songs: List<MediaItem>) {
-        val oldList = list.toList()
-        val coverPrefs = mainActivity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val favoriteKeys = loadFavoriteKeys(mainActivity)
-        val result = withContext(Dispatchers.Default) {
+    fun submitPlaylists(playlists: List<Playlist>, songs: List<MediaItem>, query: String = "") {
+        CoroutineScope(Dispatchers.Default).launch {
+            val oldList = list.toList()
+            val coverPrefs = mainActivity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val favoriteKeys = loadFavoriteKeys(mainActivity)
+            
             val songMap = songs.associateBy { buildSongKey(it) }
             val favoriteSongs = favoriteKeys.mapNotNull { songMap[it] }
 
@@ -177,15 +161,24 @@ class PlaylistAdapter(
             }
 
             val regularItems = items.filter { !it.isFavorite && !it.isRecentlyAdded }
-            val orderedItems = listOf(favoriteRow) + regularItems
+            
+            val showFavorites = query.isEmpty() || FAVORITE_PLAYLIST_TITLE.contains(query, true)
+            
+            val orderedItems = if (showFavorites) {
+                listOf(favoriteRow) + regularItems
+            } else {
+                regularItems
+            }
 
-            orderedItems to DiffUtil.calculateDiff(PlaylistDiffCallback(oldList, orderedItems))
+            val diffResult = DiffUtil.calculateDiff(PlaylistDiffCallback(oldList, orderedItems))
+
+            withContext(Dispatchers.Main) {
+                list.clear()
+                list.addAll(orderedItems)
+                diffResult.dispatchUpdatesTo(this@PlaylistAdapter)
+                recyclerView.post { onContentLoaded.invoke() }
+            }
         }
-
-        list.clear()
-        list.addAll(result.first)
-        result.second.dispatchUpdatesTo(this@PlaylistAdapter)
-        recyclerView.post { onContentLoaded.invoke() }
     }
 
     private fun coverKey(name: String): String = "$COVER_KEY_PREFIX$name"

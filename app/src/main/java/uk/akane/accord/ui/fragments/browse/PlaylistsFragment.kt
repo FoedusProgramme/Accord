@@ -1,18 +1,28 @@
 package uk.akane.accord.ui.fragments.browse
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import uk.akane.accord.R
 import uk.akane.accord.ui.MainActivity
 import uk.akane.accord.ui.adapters.browse.PlaylistAdapter
 import uk.akane.accord.ui.components.NavigationBar
+import uk.akane.accord.ui.fragments.browse.AddPlaylistFragment
 import uk.akane.cupertino.widget.navigation.SwitcherPostponeFragment
+import uk.akane.libphonograph.items.Playlist
 
 class PlaylistsFragment : SwitcherPostponeFragment() {
 
@@ -23,6 +33,10 @@ class PlaylistsFragment : SwitcherPostponeFragment() {
     private lateinit var playlistAdapter: PlaylistAdapter
     private lateinit var layoutManager: LinearLayoutManager
     private lateinit var navigationBar: NavigationBar
+    
+    private lateinit var searchInput: EditText
+    private var allPlaylists: List<Playlist> = emptyList()
+    private var allSongs: List<MediaItem> = emptyList()
 
     init {
         postponeSwitcherAnimation()
@@ -36,6 +50,7 @@ class PlaylistsFragment : SwitcherPostponeFragment() {
         val rootView = inflater.inflate(R.layout.fragment_browse_playlists, container, false)
 
         navigationBar = rootView.findViewById(R.id.navigation_bar)
+        searchInput = navigationBar.findViewById(R.id.search_input)
 
         ViewCompat.setOnApplyWindowInsetsListener(navigationBar) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -57,7 +72,42 @@ class PlaylistsFragment : SwitcherPostponeFragment() {
             activity.showContainer(AddPlaylistFragment())
         }
 
+        lifecycleScope.launch {
+            activity.reader.playlistListFlow
+                .combine(activity.reader.songListFlow) { playlists, songs ->
+                    playlists to songs
+                }
+                .collectLatest { (playlists, songs) ->
+                    allPlaylists = playlists
+                    allSongs = songs
+                    performSearch(searchInput.text.toString())
+                }
+        }
+
+        searchInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                performSearch(s.toString())
+            }
+        })
+
         return rootView
+    }
+
+    private fun performSearch(query: String) {
+        val trimmedQuery = query.trim()
+        
+        val filteredPlaylists = if (trimmedQuery.isEmpty()) {
+            allPlaylists
+        } else {
+            allPlaylists.filter { playlist ->
+                val title = playlist.title ?: ""
+                title.contains(trimmedQuery, ignoreCase = true)
+            }
+        }
+        
+        playlistAdapter.submitPlaylists(filteredPlaylists, allSongs, trimmedQuery)
     }
 
     override fun onHiddenChanged(hidden: Boolean) {

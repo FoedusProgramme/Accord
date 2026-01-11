@@ -37,16 +37,6 @@ class SongAdapter(
     private val mainActivity
         get() = fragment.activity as MainActivity
 
-    init {
-        fragment.viewLifecycleOwner.lifecycleScope.launch {
-            fragment.viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-                (fragment.activity as MainActivity).reader.songListFlow.collectLatest { newList ->
-                    submitList(newList)
-                }
-            }
-        }
-    }
-
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
@@ -140,7 +130,7 @@ class SongAdapter(
         }
     }
 
-    private fun submitList(newList: List<MediaItem>) {
+    fun submitList(newList: List<MediaItem>) {
         CoroutineScope(Dispatchers.Default).launch {
             val grouped = newList
                 .groupBy { it.mediaMetadata.title?.firstOrNull()?.uppercaseChar() ?: '#' }

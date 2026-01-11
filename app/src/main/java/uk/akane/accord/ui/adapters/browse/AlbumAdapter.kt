@@ -39,17 +39,6 @@ class AlbumAdapter(
 
     private var latestSongList: List<MediaItem> = emptyList()
 
-    init {
-        fragment.viewLifecycleOwner.lifecycleScope.launch {
-            fragment.viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-                mainActivity.reader.songListFlow.collectLatest { songs ->
-                    latestSongList = songs
-                    submitFromSongs(songs)
-                }
-            }
-        }
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val layoutId = when (viewType) {
             VIEW_TYPE_CONTROL -> R.layout.layout_master_control
@@ -119,7 +108,7 @@ class AlbumAdapter(
         val subtitle: TextView? = view.findViewById(R.id.subtitle)
     }
 
-    private fun submitFromSongs(songs: List<MediaItem>) {
+    fun submitFromSongs(songs: List<MediaItem>) {
         CoroutineScope(Dispatchers.Default).launch {
             // Build album groups from the song list
             val albumMap = LinkedHashMap<String, MutableList<MediaItem>>()

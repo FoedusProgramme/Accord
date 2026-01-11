@@ -34,18 +34,6 @@ class ArtistAdapter(
     private val mainActivity
         get() = fragment.activity as MainActivity
 
-    init {
-        fragment.viewLifecycleOwner.lifecycleScope.launch {
-            fragment.viewLifecycleOwner.repeatOnLifecycle(
-                androidx.lifecycle.Lifecycle.State.STARTED
-            ) {
-                mainActivity.reader.songListFlow.collectLatest { songs ->
-                    submitFromSongs(songs)
-                }
-            }
-        }
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(
             LayoutInflater.from(parent.context)
@@ -77,7 +65,7 @@ class ArtistAdapter(
         val artistName: TextView = view.findViewById(R.id.artistName)
     }
 
-    private fun submitFromSongs(songs: List<MediaItem>) {
+    fun submitFromSongs(songs: List<MediaItem>) {
         CoroutineScope(Dispatchers.Default).launch {
             val artistMap = LinkedHashMap<String, MutableList<MediaItem>>()
 
